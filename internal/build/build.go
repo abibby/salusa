@@ -18,6 +18,7 @@ func main() {
 		panic(err)
 	}
 	file := os.Getenv("GOFILE")
+	pkg := os.Getenv("GOPACKAGE")
 
 	structName, structParams, structFields, err := GetStruct(file, line)
 	if err != nil {
@@ -31,7 +32,7 @@ func main() {
 	// matches := regexp.MustCompile(`\nfunc \((\w+ +)?([^)]+)\) ([\w)]+)\((.*)\) (\*?\w+(?:\[.+\])?) {`).FindAllStringSubmatch(goSrc, -1)
 	matches := regexp.MustCompile(`((?:\/\/[^\n]+\n)*)func \((\w+ +)?([^)]+)\) ([\w)]+)\((.*)\) (\*?\w+(?:\[.+\])?) {`).FindAllStringSubmatch(goSrc, -1)
 
-	src := "package selects\n\n"
+	src := "package " + pkg + "\n\n"
 	for _, match := range matches {
 		comment := match[1]
 		fieldType := match[3]
@@ -142,7 +143,7 @@ func GetStruct(file string, line int) (string, string, map[string][]string, erro
 		m[parts[1]] = a
 	}
 
-	return "", "", nil, fmt.Errorf("No struct found in %s:%d", file, line)
+	return "", "", nil, fmt.Errorf("no struct found in %s:%d", file, line)
 }
 
 func ReadSource(root string) (string, error) {

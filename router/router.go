@@ -37,6 +37,10 @@ func (r *Router) Delete(path string, handler http.Handler) {
 	r.router.Handle(path, handler).Methods(http.MethodDelete)
 }
 
+func (r *Router) Handle(path string, handler http.Handler) {
+	r.router.PathPrefix(path).Handler(handler)
+}
+
 func (r *Router) Use(middleware MiddlewareFunc) {
 	r.router.Use(middleware)
 }
@@ -46,4 +50,8 @@ func (r *Router) Group(prefix string, cb func(r *Router)) {
 		prefix: path.Join(r.prefix, prefix),
 		router: r.router.PathPrefix(prefix).Subrouter(),
 	})
+}
+
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.router.ServeHTTP(w, req)
 }

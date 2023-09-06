@@ -14,7 +14,7 @@ type QueryBuilder interface {
 	imALittleQueryBuilderShortAndStout()
 }
 
-//go:generate go run ../build/build.go
+//go:generate go run ../../internal/build/build.go
 type SubBuilder struct {
 	selects  *selects
 	from     fromTable
@@ -30,7 +30,7 @@ type SubBuilder struct {
 
 // Builder represents an sql query and any bindings needed to run it.
 //
-//go:generate go run ../build/build.go
+//go:generate go run ../../internal/build/build.go
 type Builder[T models.Model] struct {
 	subBuilder    *SubBuilder
 	withs         []string

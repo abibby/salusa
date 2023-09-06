@@ -10,7 +10,7 @@ import (
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/models"
 	"github.com/abibby/salusa/request"
-	"github.com/gorilla/mux"
+	"github.com/abibby/salusa/router"
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -65,7 +65,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	r := mux.NewRouter()
+	r := router.New()
 
 	c, err := migrate.CreateFromModel(&Foo{})
 	if err != nil {
@@ -79,9 +79,9 @@ func main() {
 
 	r.Use(request.WithDB(db))
 
-	r.Handle("/foo", list)
-	r.Handle("/foo/create", add)
-	r.Handle("/foo/{foo}", get)
+	r.Get("/foo", list)
+	r.Get("/foo/create", add)
+	r.Get("/foo/{foo}", get)
 
 	http.ListenAndServe(":8087", r)
 }
