@@ -1,0 +1,18 @@
+package packageName
+
+import (
+	"github.com/abibby/salusa/database/migrate"
+	"github.com/abibby/salusa/database/schema"
+)
+
+func init() {
+	migrations.Add(&migrate.Migration{
+		Name: "2023-01-01T00:00:00Z create test model",
+		Up: schema.Table("test_models", func(table *schema.Blueprint) {
+			table.ForeignKey("related_model_ID", "related_models", "ID")
+		}),
+		Down: schema.Table("test_models", func(table *schema.Blueprint) {
+		}),
+	})
+}
+
