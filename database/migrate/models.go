@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/abibby/salusa/database/internal/helpers"
 	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 func RunModelCreate(ctx context.Context, db helpers.QueryExecer, models ...models.Model) error {

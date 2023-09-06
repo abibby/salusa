@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/salusa/database/internal/helpers"
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 func Load(tx helpers.QueryExecer, v any, relation string) error {

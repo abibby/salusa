@@ -3,7 +3,7 @@ package builder_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/internal/test"
+	"github.com/abibby/salusa/internal/test"
 )
 
 func TestLimit(t *testing.T) {

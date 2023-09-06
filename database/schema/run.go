@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/internal/helpers"
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 type Runner interface {

@@ -3,7 +3,7 @@ package models
 import (
 	"context"
 
-	"github.com/abibby/salusa/database/internal/helpers"
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 type Contexter interface {

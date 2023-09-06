@@ -3,7 +3,7 @@ package schema
 import (
 	"context"
 
-	"github.com/abibby/salusa/database/internal/helpers"
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 func Drop(table string) Runner {

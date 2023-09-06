@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/abibby/salusa/database/internal/test"
 	"github.com/abibby/salusa/database/schema"
+	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )

@@ -8,8 +8,8 @@ import (
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/database/insert"
-	"github.com/abibby/salusa/database/internal/helpers"
-	"github.com/abibby/salusa/database/internal/test"
+	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )

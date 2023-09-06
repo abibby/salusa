@@ -6,9 +6,9 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/insert"
-	"github.com/abibby/salusa/database/internal/helpers"
-	"github.com/abibby/salusa/database/internal/test"
 	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/test"
 	"github.com/stretchr/testify/assert"
 )
 

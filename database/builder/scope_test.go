@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/internal/test"
+	"github.com/abibby/salusa/internal/test"
 )
 
 type ScopeFoo struct {

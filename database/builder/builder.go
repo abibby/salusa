@@ -3,8 +3,8 @@ package builder
 import (
 	"context"
 
-	"github.com/abibby/salusa/database/internal/helpers"
 	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/set"
 )
 
