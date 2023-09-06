@@ -1,4 +1,4 @@
-package requests
+package request
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/requests/rules"
+	"github.com/abibby/salusa/request/rules"
 )
 
 type Validator interface {

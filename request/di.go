@@ -1,4 +1,4 @@
-package requests
+package request
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/models"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/router"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )
@@ -46,7 +47,7 @@ var (
 	ErrCompositePrimaryKey = fmt.Errorf("can't use models with composite primary keys")
 )
 
-func WithDB(db *sqlx.DB) mux.MiddlewareFunc {
+func WithDB(db *sqlx.DB) router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			wrapper := &txWrapper{}

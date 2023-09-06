@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/abibby/wishist/config"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -29,7 +28,7 @@ func authenticate(r *http.Request) (jwt.MapClaims, error) {
 			return nil, fmt.Errorf("expected HMAC received %v: %w", token.Header["alg"], ErrUnexpectedAlgorithm)
 		}
 
-		return config.AppKey, nil
+		return appKey, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)

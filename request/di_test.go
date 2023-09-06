@@ -1,4 +1,4 @@
-package requests
+package request
 
 import (
 	"context"
@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/abibby/bob"
-	"github.com/abibby/bob/bobtest"
-	"github.com/abibby/bob/migrate"
-	"github.com/abibby/bob/models"
+	"github.com/abibby/salusa/database/dbtest"
+	"github.com/abibby/salusa/database/insert"
+	"github.com/abibby/salusa/database/migrate"
+	"github.com/abibby/salusa/database/models"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func TestDI(t *testing.T) {
 		ID   int    `db:"id,primary"`
 		Name string `db:"name"`
 	}
-	r := bobtest.NewRunner(func() (*sqlx.DB, error) {
+	r := dbtest.NewRunner(func() (*sqlx.DB, error) {
 		db, err := sqlx.Open("sqlite3", ":memory:")
 		if err != nil {
 			return nil, err
@@ -40,7 +40,7 @@ func TestDI(t *testing.T) {
 	})
 	r.Run(t, "fetches model", func(t *testing.T, tx *sqlx.Tx) {
 
-		err := bob.Save(tx, &Model{ID: 1, Name: "test"})
+		err := insert.Save(tx, &Model{ID: 1, Name: "test"})
 		assert.NoError(t, err)
 
 		type Req struct {
@@ -60,7 +60,7 @@ func TestDI(t *testing.T) {
 
 	r.Run(t, "doesn't fetch wrong model", func(t *testing.T, tx *sqlx.Tx) {
 
-		err := bob.Save(tx, &Model{ID: 1, Name: "test"})
+		err := insert.Save(tx, &Model{ID: 1, Name: "test"})
 		assert.NoError(t, err)
 
 		type Req struct {

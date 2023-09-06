@@ -1,9 +1,9 @@
-package requests
+package request
 
 import (
 	"testing"
 
-	"github.com/abibby/requests/rules"
+	"github.com/abibby/salusa/request/rules"
 	"github.com/stretchr/testify/assert"
 )
 

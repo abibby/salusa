@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/abibby/wishist/config"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +13,7 @@ import (
 func TestAuthenticate(t *testing.T) {
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 		"sub": "test",
-	}).SignedString(config.AppKey)
+	}).SignedString(appKey)
 	if err != nil {
 		assert.NoError(t, err)
 		return

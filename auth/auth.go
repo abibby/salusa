@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/abibby/validate/handler"
+	"github.com/abibby/salusa/request"
+	"github.com/abibby/salusa/router"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/gorilla/mux"
 )
+
+var appKey string
+
+func SetAppKey(key string) {
+	appKey = key
+}
 
 func Claims(ctx context.Context) (jwt.MapClaims, bool) {
 	iClaims := ctx.Value("jwt-claims")
@@ -48,7 +54,7 @@ func LoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, ok := Claims(r.Context())
 		if !ok {
-			handler.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w)
+			request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
 			return
 		}
 
@@ -56,21 +62,21 @@ func LoggedIn(next http.Handler) http.Handler {
 	})
 }
 
-func HasClaim(key string, value any) mux.MiddlewareFunc {
+func HasClaim(key string, value any) router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := Claims(r.Context())
 			if !ok {
-				handler.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w)
+				request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
 				return
 			}
 			claim, ok := claims[key]
 			if !ok {
-				handler.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w)
+				request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
 				return
 			}
 			if claim != value {
-				handler.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w)
+				request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
 				return
 			}
 			next.ServeHTTP(w, r)

@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/abibby/requests"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/insert"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/request"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 
@@ -26,8 +26,8 @@ type ListRequest struct {
 	Request *http.Request
 }
 
-var list = requests.Handler(func(r *ListRequest) ([]*Foo, error) {
-	tx := requests.UseTx(r.Request)
+var list = request.Handler(func(r *ListRequest) ([]*Foo, error) {
+	tx := request.UseTx(r.Request)
 
 	foos, err := builder.From[*Foo]().Get(tx)
 	if err != nil {
@@ -41,8 +41,8 @@ type AddRequest struct {
 	Name    string `query:"name"`
 }
 
-var add = requests.Handler(func(r *AddRequest) (*Foo, error) {
-	tx := requests.UseTx(r.Request)
+var add = request.Handler(func(r *AddRequest) (*Foo, error) {
+	tx := request.UseTx(r.Request)
 	foo := &Foo{Name: r.Name}
 	err := insert.Save(tx, foo)
 	if err != nil {
@@ -55,7 +55,7 @@ type GetRequest struct {
 	Foo *Foo `di:"foo"`
 }
 
-var get = requests.Handler(func(r *GetRequest) (*Foo, error) {
+var get = request.Handler(func(r *GetRequest) (*Foo, error) {
 	return r.Foo, nil
 })
 
@@ -77,11 +77,11 @@ func main() {
 		panic(err)
 	}
 
-	r.Use(requests.WithDB(db))
+	r.Use(request.WithDB(db))
 
-	r.HandleFunc("/foo", list)
-	r.HandleFunc("/foo/create", add)
-	r.HandleFunc("/foo/{foo}", get)
+	r.Handle("/foo", list)
+	r.Handle("/foo/create", add)
+	r.Handle("/foo/{foo}", get)
 
 	http.ListenAndServe(":8087", r)
 }

@@ -3,7 +3,6 @@ package auth
 import (
 	"time"
 
-	"github.com/abibby/wishist/config"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -18,7 +17,7 @@ func GenerateToken(modifyClaims ...TokenOptions) (string, error) {
 	for _, m := range modifyClaims {
 		claims = m(claims)
 	}
-	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(config.AppKey)
+	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(appKey)
 }
 
 func WithLifetime(duration time.Duration) TokenOptions {
