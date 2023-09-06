@@ -10,9 +10,9 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var appKey string
+var appKey []byte
 
-func SetAppKey(key string) {
+func SetAppKey(key []byte) {
 	appKey = key
 }
 
