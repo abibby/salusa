@@ -24,8 +24,6 @@ func (b *SubBuilder) Clone() *SubBuilder {
 
 func cloneSlice[T any](arr []T) []T {
 	l := make([]T, len(arr))
-	for i, v := range arr {
-		l[i] = v
-	}
+	copy(l, arr)
 	return l
 }

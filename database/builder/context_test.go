@@ -12,10 +12,10 @@ func TestContext(t *testing.T) {
 	q := NewTestBuilder()
 
 	assert.Equal(t, context.Background(), q.Context())
+	ctx := context.WithValue(context.Background(), "foo", "bar")
+	q = q.WithContext(ctx).Where("1", "=", 2)
 
-	q = q.WithContext(context.WithValue(context.Background(), "foo", "bar")).Where("1", "=", 2)
-
-	assert.NotEqual(t, context.Background(), q.Context())
+	assert.Same(t, ctx, q.Context())
 	assert.NotNil(t, q.Context())
 }
 

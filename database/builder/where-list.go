@@ -57,7 +57,7 @@ func (c *Conditions) ToSQL(d dialects.Dialect) (string, []any, error) {
 	}
 	for i, c := range c.list {
 		if i != 0 {
-			if c.Or == true {
+			if c.Or {
 				r.AddString("OR")
 			} else {
 				r.AddString("AND")
