@@ -18,7 +18,7 @@ type ErrResponse struct {
 	Fields     ValidationError `json:"fields,omitempty"`
 }
 
-func ErrorResponse(err error, status int, r *http.Request) Responder {
+func errorResponse(err error, status int, r *http.Request) Responder {
 	response := ErrResponse{
 		Error:      err.Error(),
 		Status:     status,

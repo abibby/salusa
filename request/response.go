@@ -6,7 +6,7 @@ import (
 )
 
 type Responder interface {
-	Respond(w http.ResponseWriter) error
+	Respond(w http.ResponseWriter, r *http.Request) error
 }
 
 type Response struct {
@@ -34,7 +34,7 @@ func (r *Response) AddHeader(key, value string) *Response {
 	return r
 }
 
-func (r *Response) Respond(w http.ResponseWriter) error {
+func (r *Response) Respond(w http.ResponseWriter, _ *http.Request) error {
 	if r.status != 0 {
 		w.WriteHeader(r.status)
 	}

@@ -12,10 +12,10 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 	var req TRequest
 	err := Run(r, &req)
 	if validationErr, ok := err.(ValidationError); ok {
-		respond(w, ErrorResponse(validationErr, http.StatusUnprocessableEntity, r))
+		respond(w, r, errorResponse(validationErr, http.StatusUnprocessableEntity, r))
 		return
 	} else if err != nil {
-		respond(w, ErrorResponse(err, http.StatusInternalServerError, r))
+		respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
 		return
 	}
 
@@ -24,9 +24,9 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 	err = di(&req, r)
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
-			respond(w, responder)
+			respond(w, r, responder)
 		} else {
-			respond(w, ErrorResponse(err, http.StatusInternalServerError, r))
+			respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
 		}
 		return
 	}
@@ -34,70 +34,27 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 	resp, err := h(&req)
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
-			respond(w, responder)
+			respond(w, r, responder)
 		} else {
-			respond(w, ErrorResponse(err, http.StatusInternalServerError, r))
+			respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
 		}
 		return
 	}
 
 	var anyResp any = resp
 	if responder, ok := anyResp.(Responder); ok {
-		respond(w, responder)
+		respond(w, r, responder)
 		return
 	}
-	respond(w, NewJSONResponse(resp))
+	respond(w, r, NewJSONResponse(resp))
 }
 
 func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) RequestHandler[TRequest, TResponse] {
 	return RequestHandler[TRequest, TResponse](callback)
 }
 
-// func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) http.HandlerFunc {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		var req TRequest
-// 		err := Run(r, &req)
-// 		if validationErr, ok := err.(ValidationError); ok {
-// 			respond(w, ErrorResponse(validationErr, http.StatusUnprocessableEntity, r))
-// 			return
-// 		} else if err != nil {
-// 			respond(w, ErrorResponse(err, http.StatusInternalServerError, r))
-// 			return
-// 		}
-
-// 		injectRequest(&req, r)
-// 		injectResponseWriter(&req, w)
-// 		err = di(&req, r)
-// 		if err != nil {
-// 			if responder, ok := err.(Responder); ok {
-// 				respond(w, responder)
-// 			} else {
-// 				respond(w, ErrorResponse(err, http.StatusInternalServerError, r))
-// 			}
-// 			return
-// 		}
-
-// 		resp, err := callback(&req)
-// 		if err != nil {
-// 			if responder, ok := err.(Responder); ok {
-// 				respond(w, responder)
-// 			} else {
-// 				respond(w, ErrorResponse(err, http.StatusInternalServerError, r))
-// 			}
-// 			return
-// 		}
-
-// 		var anyResp any = resp
-// 		if responder, ok := anyResp.(Responder); ok {
-// 			respond(w, responder)
-// 			return
-// 		}
-// 		respond(w, NewJSONResponse(resp))
-// 	})
-// }
-
-func respond(w http.ResponseWriter, r Responder) {
-	err := r.Respond(w)
+func respond(w http.ResponseWriter, req *http.Request, r Responder) {
+	err := r.Respond(w, req)
 	if err != nil {
 		log.Print(err)
 	}

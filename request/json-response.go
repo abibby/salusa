@@ -30,7 +30,7 @@ func (r *JSONResponse) AddHeader(key, value string) *JSONResponse {
 	return r
 }
 
-func (r *JSONResponse) Respond(w http.ResponseWriter) error {
+func (r *JSONResponse) Respond(w http.ResponseWriter, _ *http.Request) error {
 	if r.status != 0 {
 		w.WriteHeader(r.status)
 	}

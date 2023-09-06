@@ -54,7 +54,7 @@ func LoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, ok := Claims(r.Context())
 		if !ok {
-			request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
+			request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
 			return
 		}
 
@@ -67,16 +67,16 @@ func HasClaim(key string, value any) router.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := Claims(r.Context())
 			if !ok {
-				request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
+				request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
 				return
 			}
 			claim, ok := claims[key]
 			if !ok {
-				request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
+				request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
 				return
 			}
 			if claim != value {
-				request.ErrorResponse(fmt.Errorf("unauthorized"), http.StatusUnauthorized, r).Respond(w)
+				request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
 				return
 			}
 			next.ServeHTTP(w, r)
