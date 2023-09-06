@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/abibby/requests/rules"
-	"github.com/pkg/errors"
 )
 
 type Validator interface {
@@ -17,7 +16,7 @@ type Validator interface {
 func Validate(request *http.Request, keys []string, v any) error {
 	s, err := getStruct(reflect.ValueOf(v))
 	if err != nil {
-		return errors.Wrap(err, "Validate mast take a struct or pointer to a struct")
+		return fmt.Errorf("Validate mast take a struct or pointer to a struct: %w", err)
 	}
 	t := s.Type()
 

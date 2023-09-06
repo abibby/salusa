@@ -3,11 +3,11 @@ package requests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/gorilla/schema"
-	"github.com/pkg/errors"
 )
 
 func Run(requestHttp *http.Request, requestStruct any) error {
@@ -21,7 +21,7 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	if multiErr, ok := err.(schema.MultiError); ok {
 		return fromSchemaMultiError(multiErr)
 	} else if err != nil {
-		return errors.Wrap(err, "Could decode query string")
+		return fmt.Errorf("could decode query string: %w", err)
 	}
 	for k := range requestHttp.URL.Query() {
 		keys = append(keys, k)
@@ -37,13 +37,13 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 		if jsonErr, ok := err.(*json.UnmarshalTypeError); ok {
 			return fromJsonUnmarshalTypeError(jsonErr, requestStruct)
 		} else if err != nil {
-			return errors.Wrap(err, "Could decode body")
+			return fmt.Errorf("could decode body: %w", err)
 		}
 
 		m := map[string]json.RawMessage{}
 		err = json.Unmarshal(bodyBuff.Bytes(), &m)
 		if err != nil {
-			return errors.Wrap(err, "Could decode body")
+			return fmt.Errorf("could decode body: %w", err)
 		}
 
 		for k := range m {

@@ -4,11 +4,10 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 	"text/template"
-
-	"github.com/pkg/errors"
 )
 
 type MessageOptions struct {
@@ -48,7 +47,7 @@ var lang []byte
 func init() {
 	err := json.Unmarshal(lang, &messages)
 	if err != nil {
-		panic(errors.Wrap(err, "could not parse lang.json"))
+		panic(fmt.Errorf("could not parse lang.json: %w", err))
 	}
 }
 
@@ -77,13 +76,13 @@ func getMessage(ruleName string, options *MessageOptions) string {
 
 	t, err := template.New(ruleName).Parse(messageTemplate)
 	if err != nil {
-		log.Print(errors.Wrap(err, "failed to parse template"))
+		log.Print(fmt.Errorf("failed to parse template: %w", err))
 		return defaultMessage()
 	}
 	buff := &bytes.Buffer{}
 	err = t.Execute(buff, options)
 	if err != nil {
-		log.Print(errors.Wrap(err, "failed to execute template"))
+		log.Print(fmt.Errorf("failed to execute template: %w", err))
 		return defaultMessage()
 	}
 	return buff.String()
