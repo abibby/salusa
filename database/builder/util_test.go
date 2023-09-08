@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/insert"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/stretchr/testify/assert"
@@ -16,8 +15,8 @@ func NewTestBuilder() *builder.Builder[*test.Foo] {
 	return builder.From[*test.Foo]()
 }
 
-func MustSave(tx helpers.QueryExecer, v models.Model) {
-	err := insert.Save(tx, v)
+func MustSave(tx helpers.QueryExecer, v model.Model) {
+	err := model.Save(tx, v)
 	if err != nil {
 		panic(err)
 	}

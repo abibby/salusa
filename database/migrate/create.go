@@ -2,14 +2,15 @@ package migrate
 
 import (
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/relationship"
 	"github.com/abibby/salusa/slices"
 )
 
-func CreateFromModel(m models.Model) (*schema.CreateTableBuilder, error) {
-	err := builder.InitializeRelationships(m)
+func CreateFromModel(m model.Model) (*schema.CreateTableBuilder, error) {
+	err := relationship.InitializeRelationships(m)
 	if err != nil {
 		panic(err)
 	}

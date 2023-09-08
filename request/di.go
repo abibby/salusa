@@ -9,7 +9,7 @@ import (
 	"reflect"
 
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/router"
 	"github.com/gorilla/mux"
@@ -128,7 +128,7 @@ func di(v any, r *http.Request) error {
 			return ErrNoTx
 		}
 
-		f, ok := fv.Interface().(models.Model)
+		f, ok := fv.Interface().(model.Model)
 		if !ok {
 			return ErrNotModel
 		}
@@ -136,7 +136,7 @@ func di(v any, r *http.Request) error {
 		if len(pKey) != 1 {
 			return ErrCompositePrimaryKey
 		}
-		q := builder.New[models.Model]().
+		q := builder.New[model.Model]().
 			From(helpers.GetTable(f)).
 			Where(pKey[0], "=", id).
 			WithContext(r.Context())
@@ -144,7 +144,7 @@ func di(v any, r *http.Request) error {
 		if fv.Kind() != reflect.Pointer {
 			return fmt.Errorf("expected pointer")
 		}
-		f = reflect.New(fv.Type().Elem()).Interface().(models.Model)
+		f = reflect.New(fv.Type().Elem()).Interface().(model.Model)
 		err := q.LoadOne(tx, f)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil

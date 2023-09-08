@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/relationship"
 )
 
 type ForeignKey struct {
@@ -20,10 +21,9 @@ func (f *ForeignKey) Equal(v *ForeignKey) bool {
 }
 
 type Relationship interface {
+	relationship.Relationship
 	Subquery() *SubBuilder
-	Initialize(self any, field reflect.StructField) error
 	Load(ctx context.Context, tx helpers.QueryExecer, relations []Relationship) error
-	Loaded() bool
 	ForeignKeys() []*ForeignKey
 }
 
@@ -84,7 +84,7 @@ func getRelation(rv reflect.Value, relation string) (Relationship, bool) {
 	if rv.Kind() == reflect.Ptr {
 		if rv.IsZero() {
 			rv = reflect.New(rv.Type().Elem())
-			err := InitializeRelationships(rv.Interface())
+			err := relationship.InitializeRelationships(rv.Interface())
 			if err != nil {
 				panic(err)
 			}

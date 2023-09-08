@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/relationship"
 )
 
 func Load(tx helpers.QueryExecer, v any, relation string) error {
@@ -22,10 +23,14 @@ func LoadMissingContext(ctx context.Context, tx helpers.QueryExecer, v any, rela
 	return loadContext(ctx, tx, v, relation, true)
 }
 func loadContext(ctx context.Context, tx helpers.QueryExecer, v any, relation string, onlyMissing bool) error {
+	err := relationship.InitializeRelationships(v)
+	if err != nil {
+		return err
+	}
 	relations := strings.Split(relation, ".")
 	for i, rel := range relations {
 		relations := []Relationship{}
-		err := each(v, func(v reflect.Value, pointer bool) error {
+		err := helpers.Each(v, func(v reflect.Value, pointer bool) error {
 			r, ok := getRelation(v, rel)
 			if !ok {
 				return fmt.Errorf("%s has no relation %s: %w", v.Type().Name(), rel, ErrMissingRelationship)
@@ -52,7 +57,7 @@ func loadContext(ctx context.Context, tx helpers.QueryExecer, v any, relation st
 
 		if i <= len(relations)-1 {
 			values := []any{}
-			err := each(v, func(v reflect.Value, pointer bool) error {
+			err := helpers.Each(v, func(v reflect.Value, pointer bool) error {
 				related, ok := getValue(v, rel)
 				if !ok {
 					return nil
@@ -108,27 +113,4 @@ func ofType[T Relationship](relations []Relationship) []T {
 		}
 	}
 	return relationsOfType
-}
-
-func each(v any, cb func(v reflect.Value, pointer bool) error) error {
-	pointer := false
-	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
-		pointer = true
-	}
-	if rv.Kind() == reflect.Slice {
-		for i := 0; i < rv.Len(); i++ {
-			err := each(rv.Index(i).Interface(), cb)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	if rv.Kind() != reflect.Struct {
-		return nil
-	}
-
-	return cb(rv, pointer)
 }

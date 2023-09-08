@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 )
 
@@ -16,13 +16,13 @@ type iHasOneOrMany interface {
 	relatedKeyValue() (any, bool)
 }
 
-type hasOneOrMany[T models.Model] struct {
+type hasOneOrMany[T model.Model] struct {
 	parent     any
 	relatedKey string
 	parentKey  string
 }
 
-var _ iHasOneOrMany = hasOneOrMany[models.Model]{}
+var _ iHasOneOrMany = hasOneOrMany[model.Model]{}
 
 // Subquery returns a SubBuilder scoped to the relationship.
 func (r hasOneOrMany[T]) Subquery() *SubBuilder {
@@ -65,9 +65,9 @@ func (r hasOneOrMany[T]) getRelated(ctx context.Context, tx helpers.QueryExecer,
 		Get(tx)
 }
 
-type relatedMap[T models.Model] map[any][]T
+type relatedMap[T model.Model] map[any][]T
 
-func newRelatedMap[T models.Model]() relatedMap[T] {
+func newRelatedMap[T model.Model]() relatedMap[T] {
 	return relatedMap[T]{}
 }
 

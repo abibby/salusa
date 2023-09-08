@@ -7,9 +7,8 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/database/insert"
 	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -19,13 +18,13 @@ import (
 func ExampleBelongsTo() {
 	sqlite.UseSQLite()
 	type Bar struct {
-		models.BaseModel
+		model.BaseModel
 		ID   int    `db:"id,autoincrement,primary"`
 		Name string `db:"name"`
 	}
 
 	type Foo struct {
-		models.BaseModel
+		model.BaseModel
 		ID    int `db:"id,autoincrement,primary"`
 		BarID int `db:"bar_id"`
 		Bar   *builder.BelongsTo[*Bar]
@@ -39,9 +38,9 @@ func ExampleBelongsTo() {
 	createBar.Run(context.Background(), db)
 
 	foo := &Foo{BarID: 1}
-	insert.Save(db, foo)
+	model.Save(db, foo)
 	bar := &Bar{ID: 1, Name: "bar name"}
-	insert.Save(db, bar)
+	model.Save(db, bar)
 
 	builder.Load(db, foo, "Bar")
 	relatedBar, _ := foo.Bar.Value()
@@ -59,7 +58,7 @@ func TestBelongsToLoad(t *testing.T) {
 			{ID: 3},
 		}
 		for _, f := range foos {
-			assert.NoError(t, insert.Save(tx, f))
+			assert.NoError(t, model.Save(tx, f))
 		}
 		bars := []*test.Bar{
 			{ID: 4, FooID: 1},
@@ -67,7 +66,7 @@ func TestBelongsToLoad(t *testing.T) {
 			{ID: 6, FooID: 3},
 		}
 		for _, b := range bars {
-			assert.NoError(t, insert.Save(tx, b))
+			assert.NoError(t, model.Save(tx, b))
 		}
 
 		err := builder.Load(tx, bars, "Foo")
@@ -85,12 +84,12 @@ func TestBelongsToLoad(t *testing.T) {
 
 	test.Run(t, "uuids", func(t *testing.T, tx *sqlx.Tx) {
 		type Foo struct {
-			models.BaseModel
+			model.BaseModel
 			ID   int       `json:"id" db:"id,primary,autoincrement"`
 			Name uuid.UUID `json:"name" db:"name"`
 		}
 		type Bar struct {
-			models.BaseModel
+			model.BaseModel
 			FooName *uuid.UUID               `json:"foo_id" db:"foo_id"`
 			Foo     *builder.BelongsTo[*Foo] `json:"foo"    db:"-" foreign:"foo_id" owner:"name"`
 		}
@@ -106,7 +105,6 @@ func TestBelongsToLoad(t *testing.T) {
 				MustSave(tx, &Foo{Name: *b.FooName})
 			}
 		}
-		builder.InitializeRelationships(bars)
 		builder.Load(tx, bars, "Foo")
 
 		for i, b := range bars {

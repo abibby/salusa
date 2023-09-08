@@ -8,7 +8,7 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 )
 
@@ -19,7 +19,7 @@ type field struct {
 	relation builder.Relationship
 }
 
-func getFields(m models.Model) ([]*field, error) {
+func getFields(m model.Model) ([]*field, error) {
 	fields := []*field{}
 	relationshipInterface := reflect.TypeOf((*builder.Relationship)(nil)).Elem()
 	err := helpers.EachField(reflect.ValueOf(m), func(sf reflect.StructField, fv reflect.Value) error {

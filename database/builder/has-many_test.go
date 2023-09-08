@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/insert"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ func TestHasMany_Load(t *testing.T) {
 			{ID: 3},
 		}
 		for _, f := range foos {
-			assert.NoError(t, insert.Save(tx, f))
+			assert.NoError(t, model.Save(tx, f))
 		}
 		bars := []*test.Bar{
 			{ID: 2, FooID: 1},
@@ -29,7 +29,7 @@ func TestHasMany_Load(t *testing.T) {
 			{ID: 7, FooID: 3},
 		}
 		for _, b := range bars {
-			assert.NoError(t, insert.Save(tx, b))
+			assert.NoError(t, model.Save(tx, b))
 		}
 
 		err := builder.Load(tx, foos, "Bars")

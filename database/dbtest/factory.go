@@ -3,18 +3,18 @@ package dbtest
 import (
 	"reflect"
 
-	"github.com/abibby/salusa/database/insert"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/relationship"
 )
 
-type Factory[T models.Model] func() T
+type Factory[T model.Model] func() T
 
-func NewFactory[T models.Model](cb func() T) Factory[T] {
+func NewFactory[T model.Model](cb func() T) Factory[T] {
 	return Factory[T](cb)
 }
 
-type CountFactory[T models.Model] struct {
+type CountFactory[T model.Model] struct {
 	factory Factory[T]
 	count   int
 }
@@ -38,7 +38,11 @@ func (f Factory[T]) State(s func(T) T) Factory[T] {
 
 func (f Factory[T]) Create(tx helpers.QueryExecer) T {
 	m := f()
-	err := insert.Save(tx, m)
+	err := model.Save(tx, m)
+	if err != nil {
+		panic(err)
+	}
+	err = relationship.InitializeRelationships(m)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +53,7 @@ func (f *CountFactory[T]) Create(tx helpers.QueryExecer) []T {
 	models := make([]T, f.count)
 	for i := 0; i < f.count; i++ {
 		m := f.factory()
-		err := insert.Save(tx, m)
+		err := model.Save(tx, m)
 		if err != nil {
 			panic(err)
 		}

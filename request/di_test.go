@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/dbtest"
-	"github.com/abibby/salusa/database/insert"
 	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +18,7 @@ import (
 
 func TestDI(t *testing.T) {
 	type Model struct {
-		models.BaseModel
+		model.BaseModel
 		ID   int    `db:"id,primary"`
 		Name string `db:"name"`
 	}
@@ -39,8 +38,7 @@ func TestDI(t *testing.T) {
 		return db, nil
 	})
 	r.Run(t, "fetches model", func(t *testing.T, tx *sqlx.Tx) {
-
-		err := insert.Save(tx, &Model{ID: 1, Name: "test"})
+		err := model.Save(tx, &Model{ID: 1, Name: "test"})
 		assert.NoError(t, err)
 
 		type Req struct {
@@ -59,8 +57,7 @@ func TestDI(t *testing.T) {
 	})
 
 	r.Run(t, "doesn't fetch wrong model", func(t *testing.T, tx *sqlx.Tx) {
-
-		err := insert.Save(tx, &Model{ID: 1, Name: "test"})
+		err := model.Save(tx, &Model{ID: 1, Name: "test"})
 		assert.NoError(t, err)
 
 		type Req struct {

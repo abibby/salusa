@@ -6,15 +6,14 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/insert"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/set"
 )
 
 type DBMigration struct {
-	models.BaseModel
+	model.BaseModel
 	Name  string `db:"name,primary"`
 	Run   bool   `db:"run"`
 	table string
@@ -56,7 +55,7 @@ func (m *Migrations) isTableCreated(table string) bool {
 	return false
 }
 
-func (m *Migrations) GenerateMigration(migrationName, packageName string, model models.Model) (string, error) {
+func (m *Migrations) GenerateMigration(migrationName, packageName string, model model.Model) (string, error) {
 	if !m.isTableCreated(helpers.GetTable(model)) {
 		up, err := CreateFromModel(model)
 		if err != nil {
@@ -134,7 +133,7 @@ func (m *Migrations) Up(ctx context.Context, db helpers.QueryExecer) error {
 			Run:   false,
 			table: m.table,
 		}
-		err = insert.SaveContext(ctx, db, m)
+		err = model.SaveContext(ctx, db, m)
 		if err != nil {
 			return err
 		}
@@ -144,7 +143,7 @@ func (m *Migrations) Up(ctx context.Context, db helpers.QueryExecer) error {
 		}
 
 		m.Run = true
-		err = insert.SaveContext(ctx, db, m)
+		err = model.SaveContext(ctx, db, m)
 		if err != nil {
 			return err
 		}

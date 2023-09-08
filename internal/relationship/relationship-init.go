@@ -1,13 +1,15 @@
-package builder
+package relationship
 
 import (
 	"reflect"
+
+	"github.com/abibby/salusa/internal/helpers"
 )
 
-var relationType = reflect.TypeOf((*Relationship)(nil)).Elem()
+var RelationType = reflect.TypeOf((*Relationship)(nil)).Elem()
 
 func InitializeRelationships(v any) error {
-	return each(v, initializeRelationships)
+	return helpers.Each(v, initializeRelationships)
 }
 
 func initializeRelationships(v reflect.Value, pointer bool) error {
@@ -23,7 +25,7 @@ func initializeRelationships(v reflect.Value, pointer bool) error {
 			continue
 		}
 
-		if ft.Type.Implements(relationType) {
+		if ft.Type.Implements(RelationType) {
 			fv := v.Field(i)
 			if ft.Type.Kind() == reflect.Ptr {
 				fv.Set(reflect.New(ft.Type.Elem()))

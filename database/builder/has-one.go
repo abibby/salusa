@@ -4,19 +4,19 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 )
 
 // # Tags:
 //   - local: parent model
 //   - foreign: related model
-type HasOne[T models.Model] struct {
+type HasOne[T model.Model] struct {
 	hasOneOrMany[T]
 	relationValue[T]
 }
 
-var _ Relationship = &HasOne[models.Model]{}
+var _ Relationship = &HasOne[model.Model]{}
 
 func (r *HasOne[T]) Initialize(parent any, field reflect.StructField) error {
 	r.parent = parent

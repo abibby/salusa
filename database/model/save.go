@@ -1,19 +1,18 @@
-package insert
+package model
 
 import (
 	"context"
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/hooks"
-	"github.com/abibby/salusa/database/models"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/relationship"
 	"github.com/abibby/salusa/slices"
 )
 
-var relationshipInterface = reflect.TypeOf((*builder.Relationship)(nil)).Elem()
+var relationshipInterface = reflect.TypeOf((*relationship.Relationship)(nil)).Elem()
 
 func columnsAndValues(v reflect.Value) ([]string, []any) {
 	t := v.Type()
@@ -43,9 +42,9 @@ func columnsAndValues(v reflect.Value) ([]string, []any) {
 	return columns, values
 }
 
-func Save(tx helpers.QueryExecer, v models.Model) error {
+func Save(tx helpers.QueryExecer, v Model) error {
 	ctx := context.Background()
-	if v, ok := v.(models.Contexter); ok {
+	if v, ok := v.(Contexter); ok {
 		modelCtx := v.Context()
 		if modelCtx != nil {
 			ctx = modelCtx
@@ -53,7 +52,7 @@ func Save(tx helpers.QueryExecer, v models.Model) error {
 	}
 	return SaveContext(ctx, tx, v)
 }
-func SaveContext(ctx context.Context, tx helpers.QueryExecer, v models.Model) error {
+func SaveContext(ctx context.Context, tx helpers.QueryExecer, v Model) error {
 	err := hooks.BeforeSave(ctx, tx, v)
 	if err != nil {
 		return fmt.Errorf("before save hooks: %w", err)
@@ -73,7 +72,6 @@ func SaveContext(ctx context.Context, tx helpers.QueryExecer, v models.Model) er
 		}
 	}
 
-	err = builder.InitializeRelationships(v)
 	if err != nil {
 		return fmt.Errorf("initialize relationships: %w", err)
 	}
@@ -222,10 +220,10 @@ func update(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect, v a
 	return nil
 }
 
-func InsertMany[T models.Model](tx helpers.QueryExecer, models []T) error {
+func InsertMany[T Model](tx helpers.QueryExecer, models []T) error {
 	return InsertManyContext(context.Background(), tx, models)
 }
-func InsertManyContext[T models.Model](ctx context.Context, tx helpers.QueryExecer, models []T) error {
+func InsertManyContext[T Model](ctx context.Context, tx helpers.QueryExecer, models []T) error {
 	for _, v := range models {
 		err := hooks.BeforeSave(ctx, tx, v)
 		if err != nil {
@@ -249,7 +247,6 @@ func InsertManyContext[T models.Model](ctx context.Context, tx helpers.QueryExec
 		return fmt.Errorf("insert: %w", err)
 	}
 	for _, v := range models {
-		err = builder.InitializeRelationships(v)
 		if err != nil {
 			return fmt.Errorf("initialize relationships: %w", err)
 		}

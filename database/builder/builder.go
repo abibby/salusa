@@ -3,7 +3,7 @@ package builder
 import (
 	"context"
 
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/set"
 )
@@ -31,26 +31,26 @@ type SubBuilder struct {
 // Builder represents an sql query and any bindings needed to run it.
 //
 //go:generate go run ../../internal/build/build.go
-type Builder[T models.Model] struct {
+type Builder[T model.Model] struct {
 	subBuilder    *SubBuilder
 	withs         []string
 	withoutScopes set.Set[string]
 }
 
 // New creates a new Builder with * selected
-func New[T models.Model]() *Builder[T] {
+func New[T model.Model]() *Builder[T] {
 	return NewEmpty[T]().Select("*")
 }
 
 // From creates a new query from the models table and with table.* selected
-func From[T models.Model]() *Builder[T] {
+func From[T model.Model]() *Builder[T] {
 	var m T
 	table := helpers.GetTable(m)
 	return NewEmpty[T]().Select(table + ".*").From(table)
 }
 
 // NewEmpty creates a new helpers without anything selected
-func NewEmpty[T models.Model]() *Builder[T] {
+func NewEmpty[T model.Model]() *Builder[T] {
 	var m T
 	sb := NewSubBuilder()
 	sb.wheres.withParent(m)

@@ -6,9 +6,8 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/database/insert"
 	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/jmoiron/sqlx"
@@ -17,7 +16,7 @@ import (
 )
 
 type Foo struct {
-	models.BaseModel
+	model.BaseModel
 	ID   int    `db:"id,autoincrement"`
 	Name string `db:"name"`
 }
@@ -44,7 +43,7 @@ type AddRequest struct {
 var add = request.Handler(func(r *AddRequest) (*Foo, error) {
 	tx := request.UseTx(r.Request)
 	foo := &Foo{Name: r.Name}
-	err := insert.Save(tx, foo)
+	err := model.Save(tx, foo)
 	if err != nil {
 		return nil, err
 	}

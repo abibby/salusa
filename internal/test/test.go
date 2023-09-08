@@ -9,7 +9,7 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -54,7 +54,7 @@ var Run = runner.Run
 var RunBenchmark = runner.RunBenchmark
 
 type Foo struct {
-	models.BaseModel
+	model.BaseModel
 	ID   int                    `json:"id"   db:"id,primary,autoincrement"`
 	Name string                 `json:"name" db:"name"`
 	Bar  *builder.HasOne[*Bar]  `json:"bar"`
@@ -66,7 +66,7 @@ func (h *Foo) Table() string {
 }
 
 type Bar struct {
-	models.BaseModel
+	model.BaseModel
 	ID    int                      `json:"id"     db:"id,primary,autoincrement"`
 	FooID int                      `json:"foo_id" db:"foo_id"`
 	Foo   *builder.BelongsTo[*Foo] `json:"foo"`

@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 )
 
@@ -19,12 +19,12 @@ import (
 // # Tags:
 //   - owner: parent model
 //   - foreign: related model
-type BelongsTo[T models.Model] struct {
+type BelongsTo[T model.Model] struct {
 	hasOneOrMany[T]
 	relationValue[T]
 }
 
-var _ Relationship = &BelongsTo[models.Model]{}
+var _ Relationship = &BelongsTo[model.Model]{}
 
 func (r *BelongsTo[T]) Initialize(parent any, field reflect.StructField) error {
 	var related T

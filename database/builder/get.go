@@ -6,6 +6,7 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/relationship"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -67,7 +68,7 @@ func (b *Builder[T]) Load(tx helpers.QueryExecer, v any) error {
 		return err
 	}
 
-	err = InitializeRelationships(v)
+	err = relationship.InitializeRelationships(v)
 	if err != nil {
 		return err
 	}
@@ -93,7 +94,7 @@ func (b *Builder[T]) LoadOne(tx helpers.QueryExecer, v any) error {
 	if err != nil {
 		return err
 	}
-	err = InitializeRelationships(v)
+	err = relationship.InitializeRelationships(v)
 	if err != nil {
 		return err
 	}

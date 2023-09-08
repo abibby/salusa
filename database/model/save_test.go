@@ -1,4 +1,4 @@
-package insert_test
+package model_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/hooks"
-	"github.com/abibby/salusa/database/insert"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
@@ -20,7 +20,7 @@ func TestSave_create(t *testing.T) {
 			ID:   1,
 			Name: "test",
 		}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		rows, err := tx.QueryContext(context.Background(), "select id, name from foos")
@@ -44,11 +44,11 @@ func TestSave_update(t *testing.T) {
 			ID:   1,
 			Name: "test",
 		}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		f.Name = "new name"
-		err = insert.Save(tx, f)
+		err = model.Save(tx, f)
 		assert.NoError(t, err)
 
 		rows, err := tx.QueryContext(context.Background(), "select id, name from foos")
@@ -71,7 +71,7 @@ func TestSave_model_is_in_database_after_saving(t *testing.T) {
 		f := &test.Foo{
 			ID: 1,
 		}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		assert.True(t, f.InDatabase())
@@ -81,7 +81,7 @@ func TestSave_model_is_in_database_after_saving(t *testing.T) {
 func TestSave_autoincrement(t *testing.T) {
 	test.Run(t, "autoincrement", func(t *testing.T, tx *sqlx.Tx) {
 		f := &test.Foo{}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		assert.Equal(t, f.ID, 1)
@@ -90,7 +90,7 @@ func TestSave_autoincrement(t *testing.T) {
 		f := &test.Foo{
 			ID: 100,
 		}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		assert.Equal(t, f.ID, 100)
@@ -123,7 +123,7 @@ func TestSave_hooks(t *testing.T) {
 				ID: 1,
 			},
 		}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		assert.True(t, f.saved)
@@ -137,7 +137,7 @@ func TestSave_hooks(t *testing.T) {
 				},
 			},
 		}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		assert.True(t, f.saved)
@@ -161,7 +161,7 @@ func TestSave_readonly(t *testing.T) {
 			},
 			Readonly: "yes",
 		}
-		err := insert.Save(tx, f)
+		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
 		newFoo, err := builder.From[*SaveFooReadonly]().First(tx)
@@ -173,7 +173,7 @@ func TestSave_readonly(t *testing.T) {
 
 func TestInsertManyContext(t *testing.T) {
 	test.Run(t, "insert", func(t *testing.T, tx *sqlx.Tx) {
-		err := insert.InsertManyContext(context.TODO(), tx, []*test.Foo{{Name: "1"}, {Name: "2"}, {Name: "3"}})
+		err := model.InsertManyContext(context.TODO(), tx, []*test.Foo{{Name: "1"}, {Name: "2"}, {Name: "3"}})
 		assert.NoError(t, err)
 
 		foos, err := builder.From[*SaveFooReadonly]().Get(tx)

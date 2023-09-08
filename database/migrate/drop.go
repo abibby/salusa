@@ -3,13 +3,13 @@ package migrate
 import (
 	"fmt"
 
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 )
 
 type dropTable string
 
-func drop(table models.Model) dropTable {
+func drop(table model.Model) dropTable {
 	return dropTable(helpers.GetTable(table))
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/models"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
 	"github.com/bradleyjkemp/cupaloy"
 	"github.com/google/uuid"
@@ -24,7 +24,7 @@ func (d Date) DataType() dialects.DataType {
 func TestGenerateMigration(t *testing.T) {
 	t.Run("create", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID       int           `db:"id,primary"`
 			Nullable *nulls.String `db:"nullable"`
 			Indexed  bool          `db:"indexed,index"`
@@ -45,7 +45,7 @@ func TestGenerateMigration(t *testing.T) {
 		})
 
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID    int    `db:"id,primary"`
 			ToAdd string `db:"to_add"`
 		}
@@ -66,7 +66,7 @@ func TestGenerateMigration(t *testing.T) {
 		})
 
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID int `db:"id,primary"`
 		}
 		src, err := m.GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -85,7 +85,7 @@ func TestGenerateMigration(t *testing.T) {
 		})
 
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID string `db:"id,primary"`
 		}
 		src, err := m.GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -104,7 +104,7 @@ func TestGenerateMigration(t *testing.T) {
 		})
 
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID int `db:"id,primary"`
 		}
 		_, err := m.GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -129,7 +129,7 @@ func TestGenerateMigration(t *testing.T) {
 		})
 
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID int `db:"id,primary"`
 		}
 		src, err := m.GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -139,7 +139,7 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("ignore - fields", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID     int `db:"id,primary"`
 			Ignore int `db:"-"`
 		}
@@ -150,7 +150,7 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("dates", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID   int       `db:"id,primary"`
 			Time time.Time `db:"time"`
 		}
@@ -161,7 +161,7 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("uuid", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID   uuid.UUID `db:"id,primary"`
 			Time time.Time `db:"time"`
 		}
@@ -172,7 +172,7 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("custom type", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID int `db:"id,primary,type:date"`
 		}
 		src, err := migrate.New().GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -182,7 +182,7 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("custom type DataTyper", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID *Date `db:"id,primary"`
 		}
 		src, err := migrate.New().GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -192,7 +192,7 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("custom type DataTyper not pointer", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID Date `db:"id,primary"`
 		}
 		src, err := migrate.New().GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -202,11 +202,11 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("relationships", func(t *testing.T) {
 		type RelatedModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID int
 		}
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			Related *builder.BelongsTo[*RelatedModel]
 		}
 		src, err := migrate.New().GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
@@ -216,11 +216,11 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("add relationship", func(t *testing.T) {
 		type RelatedModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID int
 		}
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			Related *builder.BelongsTo[*RelatedModel]
 		}
 		m := migrate.New()
@@ -237,7 +237,7 @@ func TestGenerateMigration(t *testing.T) {
 
 	t.Run("composite primary key", func(t *testing.T) {
 		type TestModel struct {
-			models.BaseModel
+			model.BaseModel
 			ID1 int `db:"id1,primary"`
 			ID2 int `db:"id2,primary"`
 		}
