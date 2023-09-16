@@ -18,7 +18,8 @@ var Kernel = kernel.NewDefaultKernel(
 		database.Init,
 	),
 	kernel.Services(
-		cron.NewService().Schedule("* * * * *", &events.LogEvent{}),
+		cron.Service().
+			Schedule("* * * * *", &events.LogEvent{Message: "cron event"}),
 	),
 	kernel.Listeners(
 		kernel.NewListener(jobs.LogJob),

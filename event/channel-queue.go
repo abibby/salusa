@@ -1,5 +1,7 @@
 package event
 
+import "github.com/barkimedes/go-deepcopy"
+
 type ChannelQueue struct {
 	channel chan Event
 }
@@ -11,7 +13,7 @@ func NewChannelQueue() *ChannelQueue {
 }
 
 func (q ChannelQueue) Push(e Event) {
-	q.channel <- e
+	q.channel <- deepcopy.MustAnything(e).(Event)
 }
 func (q ChannelQueue) Pop() Event {
 	return <-q.channel

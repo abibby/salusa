@@ -25,7 +25,7 @@ type CronService struct {
 	events map[string][]Event
 }
 
-func NewService() *CronService {
+func Service() *CronService {
 	return &CronService{
 		events: map[string][]Event{},
 	}
