@@ -12,6 +12,21 @@ func (k *Kernel) Run() error {
 	for _, m := range k.middleware {
 		handler = m.Middleware(handler)
 	}
+	for _, s := range k.services {
+		go func(s Service) {
+			for {
+				err := s.Run(k)
+				if err != nil {
+					log.Print(err)
+				}
+				if !s.Restart() {
+					return
+				}
+			}
+		}(s)
+	}
+
+	go k.runListeners()
 
 	log.Printf("http://localhost:%d", k.port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", k.port), handler)

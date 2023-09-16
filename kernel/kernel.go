@@ -3,8 +3,8 @@ package kernel
 import (
 	"net/http"
 
+	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/static/template/config"
 )
 
 type Kernel struct {
@@ -12,14 +12,21 @@ type Kernel struct {
 	port        int
 	rootHandler http.Handler
 	middleware  []router.MiddlewareFunc
+	services    []Service
+	listeners   map[event.EventType][]runner
+	queue       event.Queue
 }
+
+var defaultKernel *Kernel
 
 func New(options ...KernelOption) *Kernel {
 	k := &Kernel{
 		bootstrap:   []func() error{},
-		port:        config.Port,
+		port:        8080,
 		rootHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
 		middleware:  []router.MiddlewareFunc{},
+		services:    []Service{},
+		queue:       event.NewChannelQueue(),
 	}
 
 	for _, o := range options {
@@ -27,4 +34,9 @@ func New(options ...KernelOption) *Kernel {
 	}
 
 	return k
+}
+
+func NewDefaultKernel(options ...KernelOption) *Kernel {
+	defaultKernel = New(options...)
+	return defaultKernel
 }

@@ -8,8 +8,8 @@ import (
 	"path"
 
 	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/salusa-cli/pkg"
-	"github.com/abibby/salusa/salusa-cli/util"
+	"github.com/abibby/salusa/spice/pkg"
+	"github.com/abibby/salusa/spice/util"
 	"github.com/spf13/cobra"
 )
 

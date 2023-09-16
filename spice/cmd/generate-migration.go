@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/abibby/salusa/salusa-cli/util"
+	"github.com/abibby/salusa/spice/util"
 	"github.com/spf13/cobra"
 )
 

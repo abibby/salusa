@@ -7,4 +7,4 @@ import (
 	"os"
 )
 
-var Content fs.FS = os.DirFS("dist")
+var Content fs.FS = os.DirFS("resources")

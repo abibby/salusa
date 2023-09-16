@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/abibby/salusa/kernel"
 	"github.com/abibby/salusa/request"
+	"github.com/abibby/salusa/static/template/app/events"
 )
 
 type AddRequest struct {
@@ -13,6 +15,7 @@ type AddResponse struct {
 }
 
 var Add = request.Handler(func(r *AddRequest) (*AddResponse, error) {
+	kernel.Dispatch(&events.LogEvent{Message: "test"})
 	return &AddResponse{
 		Sum: r.A + r.B,
 	}, nil

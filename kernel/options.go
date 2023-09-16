@@ -3,6 +3,7 @@ package kernel
 import (
 	"net/http"
 
+	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/router"
 )
 
@@ -41,6 +42,27 @@ func InitRoutes(cb func(r *router.Router)) KernelOption {
 func Middleware(middleware ...router.MiddlewareFunc) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.middleware = middleware
+		return k
+	}
+}
+
+func Services(services ...Service) KernelOption {
+	return func(k *Kernel) *Kernel {
+		k.services = services
+		return k
+	}
+}
+
+func Listeners(listeners ...*Listener) KernelOption {
+	return func(k *Kernel) *Kernel {
+		k.listeners = map[event.EventType][]runner{}
+		for _, l := range listeners {
+			jobs, ok := k.listeners[l.eventType]
+			if !ok {
+				jobs = []runner{}
+			}
+			k.listeners[l.eventType] = append(jobs, l.runner)
+		}
 		return k
 	}
 }
