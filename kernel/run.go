@@ -1,12 +1,13 @@
 package kernel
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 )
 
-func (k *Kernel) Run() error {
+func (k *Kernel) Run(ctx context.Context) error {
 	handler := k.rootHandler
 
 	for _, m := range k.middleware {
@@ -15,7 +16,7 @@ func (k *Kernel) Run() error {
 	for _, s := range k.services {
 		go func(s Service) {
 			for {
-				err := s.Run(k)
+				err := s.Run(ctx, k)
 				if err != nil {
 					log.Print(err)
 				}
@@ -29,5 +30,6 @@ func (k *Kernel) Run() error {
 	go k.runListeners()
 
 	log.Printf("http://localhost:%d", k.port)
+
 	return http.ListenAndServe(fmt.Sprintf(":%d", k.port), handler)
 }

@@ -11,7 +11,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "salusa-cli",
+	Use:   "spice",
 	Short: "",
 	Long:  ``,
 }

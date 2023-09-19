@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"log"
 
 	"github.com/abibby/salusa/env"
@@ -10,7 +11,7 @@ import (
 var Port int
 var DBPath string
 
-func Load() error {
+func Load(ctx context.Context) error {
 	err := godotenv.Load("./.env")
 	if err != nil {
 		log.Print(err)

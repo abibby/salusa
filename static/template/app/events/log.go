@@ -15,3 +15,7 @@ var _ event.Event = (*LogEvent)(nil)
 func (e *LogEvent) Type() event.EventType {
 	return "template:example-event"
 }
+
+// func init() {
+// 	kernel.RegisterEvent(&LogEvent{})
+// }

@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"github.com/abibby/salusa/kernel"
@@ -15,7 +15,7 @@ type AddResponse struct {
 }
 
 var Add = request.Handler(func(r *AddRequest) (*AddResponse, error) {
-	kernel.Dispatch(&events.LogEvent{Message: "test"})
+	kernel.Dispatch(&events.LogEvent{Message: "add handler run"})
 	return &AddResponse{
 		Sum: r.A + r.B,
 	}, nil

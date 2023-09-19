@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"time"
 
 	"github.com/abibby/salusa/event"
@@ -31,7 +32,7 @@ func Service() *CronService {
 	}
 }
 
-func (c *CronService) Run(k *kernel.Kernel) error {
+func (c *CronService) Run(ctx context.Context, k *kernel.Kernel) error {
 	runner := cron.New()
 	for spec, events := range c.events {
 		for _, e := range events {

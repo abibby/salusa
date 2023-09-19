@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-//go:generate salusa-cli generate:migration
+//go:generate spice generate:migration
 type User struct {
 	model.BaseModel
 

@@ -1,18 +1,20 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/abibby/salusa/static/template/app"
 )
 
 func main() {
-	err := app.Kernel.Bootstrap()
+	ctx := context.Background()
+	err := app.Kernel.Bootstrap(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = app.Kernel.Run()
+	err = app.Kernel.Run(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

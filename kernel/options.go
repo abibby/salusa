@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/abibby/salusa/event"
@@ -9,16 +10,18 @@ import (
 
 type KernelOption func(*Kernel) *Kernel
 
-func Bootstrap(bootstrap ...func() error) KernelOption {
+func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.bootstrap = bootstrap
 		return k
 	}
 }
 
-func Port(port int) KernelOption {
+func Port(cb func() int) KernelOption {
 	return func(k *Kernel) *Kernel {
-		k.port = port
+		k.postBootstrap = append(k.postBootstrap, func() {
+			k.port = cb()
+		})
 		return k
 	}
 }

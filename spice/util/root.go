@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/abibby/salusa/slices"
 	"golang.org/x/mod/modfile"
@@ -37,6 +38,7 @@ func PackageRoot(from string) (string, string, error) {
 		if current == "/" {
 			return "", "", ErrNoPackage
 		}
+		current = strings.TrimSuffix(current, "/")
 		current, name = path.Split(current)
 		relPackage = path.Join(name, relPackage)
 	}
