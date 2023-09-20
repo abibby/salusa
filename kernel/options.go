@@ -41,13 +41,6 @@ func InitRoutes(cb func(r *router.Router)) KernelOption {
 	})
 }
 
-func Middleware(middleware ...router.MiddlewareFunc) KernelOption {
-	return func(k *Kernel) *Kernel {
-		k.middleware = middleware
-		return k
-	}
-}
-
 func Services(services ...Service) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.services = services

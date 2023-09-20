@@ -10,9 +10,6 @@ import (
 func (k *Kernel) Run(ctx context.Context) error {
 	handler := k.rootHandler()
 
-	for _, m := range k.middleware {
-		handler = m.Middleware(handler)
-	}
 	for _, s := range k.services {
 		go func(s Service) {
 			for {
