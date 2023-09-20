@@ -107,7 +107,7 @@ var generateCmd = &cobra.Command{
 		// fmt.Printf("%s\n", src)
 
 		tmp := os.TempDir()
-		outFile := path.Join(tmp, fmt.Sprintf("bob-generate-main-%s.go", name))
+		outFile := path.Join(tmp, fmt.Sprintf("spice-generate-main-%s.go", name))
 
 		err = os.WriteFile(outFile, src, 0644)
 		if err != nil {

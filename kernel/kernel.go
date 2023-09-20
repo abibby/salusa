@@ -12,7 +12,7 @@ type Kernel struct {
 	bootstrap     []func(context.Context) error
 	postBootstrap []func()
 	port          int
-	rootHandler   http.Handler
+	rootHandler   func() http.Handler
 	middleware    []router.MiddlewareFunc
 	services      []Service
 	listeners     map[event.EventType][]runner
@@ -26,10 +26,12 @@ func New(options ...KernelOption) *Kernel {
 		bootstrap:     []func(context.Context) error{},
 		postBootstrap: []func(){},
 		port:          8080,
-		rootHandler:   http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
-		middleware:    []router.MiddlewareFunc{},
-		services:      []Service{},
-		queue:         event.NewChannelQueue(),
+		rootHandler: func() http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		},
+		middleware: []router.MiddlewareFunc{},
+		services:   []Service{},
+		queue:      event.NewChannelQueue(),
 	}
 
 	for _, o := range options {

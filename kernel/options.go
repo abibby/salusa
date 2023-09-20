@@ -26,7 +26,7 @@ func Port(cb func() int) KernelOption {
 	}
 }
 
-func RootHandler(rootHandler http.Handler) KernelOption {
+func RootHandler(rootHandler func() http.Handler) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.rootHandler = rootHandler
 		return k
@@ -34,12 +34,11 @@ func RootHandler(rootHandler http.Handler) KernelOption {
 }
 
 func InitRoutes(cb func(r *router.Router)) KernelOption {
-	return func(k *Kernel) *Kernel {
+	return RootHandler(func() http.Handler {
 		r := router.New()
 		cb(r)
-		k.rootHandler = r
-		return k
-	}
+		return r
+	})
 }
 
 func Middleware(middleware ...router.MiddlewareFunc) KernelOption {
