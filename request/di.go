@@ -31,7 +31,7 @@ func (w *ResponseWriter) WriteHeader(statusCode int) {
 }
 
 func (w *ResponseWriter) OK() bool {
-	return w.Status >= 200 && w.Status < 300
+	return w.Status >= 200 && w.Status < 400
 }
 
 type contextKey int

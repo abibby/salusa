@@ -57,6 +57,9 @@ func blueprintFromFields(tableName string, fields []*field) *schema.Blueprint {
 			if f.tag.Primary {
 				primaryColumns = append(primaryColumns, b)
 			}
+			if f.tag.Unique {
+				b.Unique()
+			}
 		}
 	}
 

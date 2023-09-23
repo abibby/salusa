@@ -13,6 +13,7 @@ type Tag struct {
 	AutoIncrement bool
 	Readonly      bool
 	Index         bool
+	Unique        bool
 	Type          dialects.DataType
 }
 
