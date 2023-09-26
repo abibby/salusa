@@ -1,7 +1,9 @@
 package kernel
 
 import (
+	"context"
 	"log"
+	"reflect"
 
 	"github.com/abibby/salusa/event"
 )
@@ -43,9 +45,20 @@ func NewListener[E event.Event](cb func(event E) error) *Listener {
 	}
 }
 
-func (k *Kernel) runListeners() {
+func (k *Kernel) RunListeners(ctx context.Context) {
+	events := map[event.EventType]reflect.Type{}
+	for eventType, runners := range k.listeners {
+		f, ok := reflect.TypeOf(runners[0]).Elem().FieldByName("callback")
+		if ok {
+			events[eventType] = f.Type.In(0)
+		}
+	}
 	for {
-		e := k.queue.Pop()
+		e, err := k.queue.Pop(events)
+		if err != nil {
+			log.Printf("could not pop event off queue: %v", err)
+			continue
+		}
 		runners, ok := k.listeners[e.Type()]
 		if !ok {
 			log.Printf("no listeners for event with type %s", e.Type())

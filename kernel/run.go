@@ -8,8 +8,21 @@ import (
 )
 
 func (k *Kernel) Run(ctx context.Context) error {
-	handler := k.rootHandler()
 
+	go k.RunListeners(ctx)
+	go k.RunServices(ctx)
+
+	return k.RunHttpServer(ctx)
+}
+
+func (k *Kernel) RunHttpServer(ctx context.Context) error {
+	log.Printf("http://localhost:%d", k.port)
+
+	handler := k.rootHandler()
+	return http.ListenAndServe(fmt.Sprintf(":%d", k.port), handler)
+}
+
+func (k *Kernel) RunServices(ctx context.Context) error {
 	for _, s := range k.services {
 		go func(s Service) {
 			for {
@@ -23,10 +36,5 @@ func (k *Kernel) Run(ctx context.Context) error {
 			}
 		}(s)
 	}
-
-	go k.runListeners()
-
-	log.Printf("http://localhost:%d", k.port)
-
-	return http.ListenAndServe(fmt.Sprintf(":%d", k.port), handler)
+	return nil
 }

@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/abibby/salusa/kernel"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/static/template/app/events"
@@ -15,7 +17,7 @@ type AddResponse struct {
 }
 
 var Add = request.Handler(func(r *AddRequest) (*AddResponse, error) {
-	kernel.Dispatch(&events.LogEvent{Message: "add handler run"})
+	kernel.Dispatch(&events.LogEvent{Message: fmt.Sprintf("add handler run with %f and %f", r.A, r.B)})
 	return &AddResponse{
 		Sum: r.A + r.B,
 	}, nil
