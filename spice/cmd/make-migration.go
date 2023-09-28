@@ -15,34 +15,31 @@ import (
 
 // makeMigrationCmd represents the makeMigration command
 var makeMigrationCmd = &cobra.Command{
-	Use:   "make:migration",
+	Use:   "make:migration [name]",
 	Short: "",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		name := util.Name(args)
+		name := util.MigrationName(args)
 
-		root, _, err := util.PackageRoot(".")
+		c, err := util.LoadConfig(".")
 		if err != nil {
 			return err
 		}
 
-		packageName := "migrations"
-		migrationsDir := path.Join(root, packageName)
-
-		err = os.MkdirAll(migrationsDir, 0755)
+		err = os.MkdirAll(c.Migration.Dir, 0755)
 		if err != nil {
 			return err
 		}
 		run := "schema.Run(func(ctx context.Context, tx builder.QueryExecer) error {\n" +
 			"return nil\n" +
 			"})"
-		src, err := migrate.SrcFile(name, packageName, pkg.Raw(run), pkg.Raw(run))
+		src, err := migrate.SrcFile(name, c.Migration.Pkg, pkg.Raw(run), pkg.Raw(run))
 		if err != nil {
 			return err
 		}
 
-		return os.WriteFile(path.Join(migrationsDir, name+".go"), []byte(src), 0644)
+		return os.WriteFile(path.Join(c.Migration.Dir, name+".go"), []byte(src), 0644)
 	},
 }
 

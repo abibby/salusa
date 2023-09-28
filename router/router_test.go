@@ -7,7 +7,7 @@ import (
 	"github.com/abibby/salusa/router"
 )
 
-func TestRouter(t *testing.T) {
+func ExampleRouter(t *testing.T) {
 	r := router.New()
 
 	r.Group("/test", func(r *router.Router) {

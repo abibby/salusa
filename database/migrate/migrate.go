@@ -21,6 +21,7 @@ func SrcFile(migrationName, packageName string, up, down ToGoer) (string, error)
 import (
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/schema"
 )
 
 func init() {
@@ -32,14 +33,15 @@ func init() {
 }`
 
 	src := []byte(fmt.Sprintf(initSrc, packageName, migrationName, up.ToGo(), down.ToGo()))
+	// fmt.Printf("%s\n", src)
 	src, err := imports.Process(outFile, src, nil)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	src, err = format.Source(src)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	return string(src), nil
 }

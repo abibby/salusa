@@ -11,9 +11,7 @@ import (
 )
 
 var Kernel = kernel.NewDefaultKernel(
-	kernel.Port(func() int {
-		return config.Port
-	}),
+	kernel.Config(config.Kernel),
 	kernel.Bootstrap(
 		config.Load,
 		database.Init,

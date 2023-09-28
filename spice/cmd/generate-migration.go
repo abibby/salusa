@@ -24,14 +24,14 @@ import (
 	"os"
 
 	"github.com/abibby/salusa/database/migrate"
-	%#v
-	%#v
+	migrations %#v
+	models %#v
 )
 
 func main() {
-	m := %s.Use()
+	m := migrations.Use()
 
-	src, err := m.GenerateMigration(%#v, %#v, &%s.%s{})
+	src, err := m.GenerateMigration(%#v, %#v, &models.%s{})
 	if errors.Is(err, migrate.ErrNoChanges) {
 		return
 	} else if err != nil {
@@ -64,24 +64,29 @@ var generateCmd = &cobra.Command{
 	Short: "Run from go generate",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		info, err := util.PkgInfo(".")
+		// info, err := util.PkgInfo(".")
+		// if err != nil {
+		// 	return err
+		// }
+
+		// packageName := "migrations"
+		// migrationsDir := path.Join(info.PackageRoot, packageName)
+
+		c, err := util.LoadConfig(".")
 		if err != nil {
 			return err
 		}
 
-		packageName := "migrations"
-		migrationsDir := path.Join(info.PackageRoot, packageName)
-
-		err = os.MkdirAll(migrationsDir, 0755)
+		err = os.MkdirAll(c.Migration.Dir, 0755)
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(path.Join(migrationsDir, "migrations.go"), []byte(fmt.Sprintf(srcMigrations, packageName)), 0644)
+		err = os.WriteFile(path.Join(c.Migration.Dir, "migrations.go"), []byte(fmt.Sprintf(srcMigrations, c.Migration.Pkg)), 0644)
 		if err != nil {
 			return err
 		}
 
-		modelPackage := os.Getenv("GOPACKAGE")
+		// modelPackage := os.Getenv("GOPACKAGE")
 		modelFile := os.Getenv("GOFILE")
 		modelLineStr := os.Getenv("GOLINE")
 		modelLine, err := strconv.Atoi(modelLineStr)
@@ -100,10 +105,17 @@ var generateCmd = &cobra.Command{
 		if len(matches) < 2 {
 			return fmt.Errorf("could not find model struct")
 		}
-		name := util.Name([]string{string(matches[1])})
-		migrationFile := path.Join(migrationsDir, name+".go")
-		migrationsImport := path.Join(info.RootPackage, packageName)
-		src := []byte(fmt.Sprintf(srcMain, migrationsImport, info.CurrentPackage, packageName, name, packageName, modelPackage, matches[1], migrationFile))
+		name := util.MigrationName([]string{string(matches[1])})
+		migrationFile := path.Join(c.Migration.Dir, name+".go")
+		src := []byte(fmt.Sprintf(srcMain,
+			// imports
+			c.Migration.Import,
+			c.Model.Import,
+			// GenerateMigration
+			name, c.Migration.Pkg, matches[1],
+			// write file
+			migrationFile,
+		))
 		// fmt.Printf("%s\n", src)
 
 		tmp := os.TempDir()

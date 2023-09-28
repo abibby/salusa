@@ -10,6 +10,10 @@ import (
 
 type KernelOption func(*Kernel) *Kernel
 
+type KernelConfig struct {
+	Port int
+}
+
 func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.bootstrap = bootstrap
@@ -17,10 +21,11 @@ func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
 	}
 }
 
-func Port(cb func() int) KernelOption {
+func Config(cb func() *KernelConfig) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.postBootstrap = append(k.postBootstrap, func() {
-			k.port = cb()
+			cfg := cb()
+			k.port = cfg.Port
 		})
 		return k
 	}
