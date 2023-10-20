@@ -1,9 +1,11 @@
 package request
 
 import (
-	"log"
+	"context"
 	"net/http"
 	"reflect"
+
+	"github.com/abibby/salusa/clog"
 )
 
 type RequestHandler[TRequest, TResponse any] func(r *TRequest) (TResponse, error)
@@ -21,6 +23,8 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 
 	injectRequest(&req, r)
 	injectResponseWriter(&req, w)
+	injectContext(&req, r.Context())
+
 	err = di(&req, r)
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
@@ -56,7 +60,7 @@ func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, err
 func respond(w http.ResponseWriter, req *http.Request, r Responder) {
 	err := r.Respond(w, req)
 	if err != nil {
-		log.Print(err)
+		clog.Use(req.Context()).Error("request failed", "error", err)
 	}
 }
 
@@ -83,6 +87,20 @@ func injectResponseWriter[TRequest any](req TRequest, httpRW http.ResponseWriter
 			continue
 		}
 		f.Set(reflect.ValueOf(httpRW))
+	}
+
+}
+
+func injectContext[TRequest any](req TRequest, ctx context.Context) {
+	v := reflect.ValueOf(req).Elem()
+
+	ctxType := reflect.TypeOf(&ctx).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		if !f.Type().Implements(ctxType) {
+			continue
+		}
+		f.Set(reflect.ValueOf(ctx))
 	}
 
 }

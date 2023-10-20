@@ -14,11 +14,11 @@ type Event interface {
 	SetTime(t time.Time)
 }
 
-type BaseEvent struct {
+type CronEvent struct {
 	Time time.Time
 }
 
-func (b *BaseEvent) SetTime(t time.Time) {
+func (b *CronEvent) SetTime(t time.Time) {
 	b.Time = t
 }
 
@@ -38,7 +38,7 @@ func (c *CronService) Run(ctx context.Context, k *kernel.Kernel) error {
 		for _, e := range events {
 			runner.AddFunc(spec, func() {
 				e.SetTime(time.Now())
-				k.Dispatch(e)
+				k.Dispatch(ctx, e)
 			})
 		}
 	}
@@ -46,8 +46,8 @@ func (c *CronService) Run(ctx context.Context, k *kernel.Kernel) error {
 
 	return nil
 }
-func (c *CronService) Restart() bool {
-	return false
+func (c *CronService) Name() string {
+	return "cron-service"
 }
 
 func (c *CronService) Schedule(cron string, e Event) *CronService {

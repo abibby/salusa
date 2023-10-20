@@ -8,6 +8,7 @@ import (
 )
 
 type TestEvent1 struct {
+	EventLogger
 	Foo string
 }
 
@@ -16,6 +17,7 @@ func (e *TestEvent1) Type() EventType {
 }
 
 type TestEvent2 struct {
+	EventLogger
 	Bar string
 }
 

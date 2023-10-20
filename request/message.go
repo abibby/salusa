@@ -2,12 +2,14 @@ package request
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"text/template"
+
+	"github.com/abibby/salusa/clog"
 )
 
 type MessageOptions struct {
@@ -51,7 +53,7 @@ func init() {
 	}
 }
 
-func getMessage(ruleName string, options *MessageOptions) string {
+func getMessage(ctx context.Context, ruleName string, options *MessageOptions) string {
 	defaultMessage := func() string {
 		if len(options.Arguments) == 0 {
 			return ruleName
@@ -76,13 +78,13 @@ func getMessage(ruleName string, options *MessageOptions) string {
 
 	t, err := template.New(ruleName).Parse(messageTemplate)
 	if err != nil {
-		log.Print(fmt.Errorf("failed to parse template: %w", err))
+		clog.Use(ctx).Error("failed to parse template", "error", err)
 		return defaultMessage()
 	}
 	buff := &bytes.Buffer{}
 	err = t.Execute(buff, options)
 	if err != nil {
-		log.Print(fmt.Errorf("failed to execute template: %w", err))
+		clog.Use(ctx).Error("failed to execute template", "error", err)
 		return defaultMessage()
 	}
 	return buff.String()

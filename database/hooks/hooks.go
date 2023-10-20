@@ -7,18 +7,20 @@ import (
 	"github.com/abibby/salusa/internal/helpers"
 )
 
+type DB = helpers.QueryExecer
+
 type BeforeSaver interface {
-	BeforeSave(ctx context.Context, tx helpers.QueryExecer) error
+	BeforeSave(ctx context.Context, tx DB) error
 }
 type AfterSaver interface {
-	AfterSave(ctx context.Context, tx helpers.QueryExecer) error
+	AfterSave(ctx context.Context, tx DB) error
 }
 
 type AfterLoader interface {
-	AfterLoad(ctx context.Context, tx helpers.QueryExecer) error
+	AfterLoad(ctx context.Context, tx DB) error
 }
 
-func BeforeSave(ctx context.Context, tx helpers.QueryExecer, model interface{}) error {
+func BeforeSave(ctx context.Context, tx DB, model interface{}) error {
 	if model, ok := model.(BeforeSaver); ok {
 		err := model.BeforeSave(ctx, tx)
 		if err != nil {
@@ -30,7 +32,7 @@ func BeforeSave(ctx context.Context, tx helpers.QueryExecer, model interface{}) 
 	})
 }
 
-func AfterSave(ctx context.Context, tx helpers.QueryExecer, model interface{}) error {
+func AfterSave(ctx context.Context, tx DB, model interface{}) error {
 	if model, ok := model.(AfterSaver); ok {
 		err := model.AfterSave(ctx, tx)
 		if err != nil {
@@ -42,7 +44,7 @@ func AfterSave(ctx context.Context, tx helpers.QueryExecer, model interface{}) e
 	})
 }
 
-func AfterLoad(ctx context.Context, tx helpers.QueryExecer, model interface{}) error {
+func AfterLoad(ctx context.Context, tx DB, model interface{}) error {
 	if model, ok := model.(AfterLoader); ok {
 		err := model.AfterLoad(ctx, tx)
 		if err != nil {

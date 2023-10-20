@@ -3,7 +3,7 @@ package fileserver
 import (
 	"io"
 	"io/fs"
-	"log"
+	"log/slog"
 	"mime"
 	"net/http"
 	"path"
@@ -18,14 +18,14 @@ func WithFallback(root fs.FS, basePath, fallbackPath string, templateData any) h
 		if err != nil || info.IsDir() {
 			t, err := template.ParseFS(root, path.Join(basePath, fallbackPath))
 			if err != nil {
-				log.Print(err)
+				slog.Warn("Failed to serve static file", slog.Any("error", err))
 				return
 			}
 
 			w.Header().Add("Content-Type", "text/html")
 			err = t.Execute(w, templateData)
 			if err != nil {
-				log.Print(err)
+				slog.Warn("Failed to serve static file", slog.Any("error", err))
 				return
 			}
 			return
@@ -33,7 +33,7 @@ func WithFallback(root fs.FS, basePath, fallbackPath string, templateData any) h
 
 		f, err := root.Open(p)
 		if err != nil {
-			log.Print(err)
+			slog.Warn("Failed to serve static file", slog.Any("error", err))
 			return
 		}
 
@@ -41,7 +41,7 @@ func WithFallback(root fs.FS, basePath, fallbackPath string, templateData any) h
 
 		_, err = io.Copy(w, f)
 		if err != nil {
-			log.Print(err)
+			slog.Warn("Failed to serve static file", slog.Any("error", err))
 			return
 		}
 	})

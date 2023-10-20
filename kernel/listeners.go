@@ -2,15 +2,16 @@ package kernel
 
 import (
 	"context"
-	"log"
 	"reflect"
+
+	"log/slog"
 
 	"github.com/abibby/salusa/event"
 )
 
 type runner interface {
 	UpdateValue(v event.Event) bool
-	Run() error
+	Run(ctx context.Context) error
 }
 type Listener struct {
 	eventType event.EventType
@@ -19,11 +20,11 @@ type Listener struct {
 
 type job[E event.Event] struct {
 	value    E
-	callback func(event E) error
+	callback func(ctx context.Context, event E) error
 }
 
-func (j *job[E]) Run() error {
-	return j.callback(j.value)
+func (j *job[E]) Run(ctx context.Context) error {
+	return j.callback(ctx, j.value)
 }
 func (j *job[E]) UpdateValue(v event.Event) bool {
 	ev, ok := v.(E)
@@ -34,7 +35,7 @@ func (j *job[E]) UpdateValue(v event.Event) bool {
 	return true
 }
 
-func NewListener[E event.Event](cb func(event E) error) *Listener {
+func NewListener[E event.Event](cb func(ctx context.Context, event E) error) *Listener {
 	var e E
 	return &Listener{
 		eventType: e.Type(),
@@ -50,41 +51,42 @@ func (k *Kernel) RunListeners(ctx context.Context) {
 	for eventType, runners := range k.listeners {
 		f, ok := reflect.TypeOf(runners[0]).Elem().FieldByName("callback")
 		if ok {
-			events[eventType] = f.Type.In(0)
+			events[eventType] = f.Type.In(1)
 		}
 	}
 	for {
 		e, err := k.queue.Pop(events)
 		if err != nil {
-			log.Printf("could not pop event off queue: %v", err)
+			slog.Warn("could not pop event off queue", slog.Any("error", err))
 			continue
 		}
 		runners, ok := k.listeners[e.Type()]
 		if !ok {
-			log.Printf("no listeners for event with type %s", e.Type())
+			slog.Warn("no listeners for event with matching type", slog.Any("type", e.Type()))
 			continue
 		}
 
 		for _, r := range runners {
 			if r.UpdateValue(e) {
-				go func(l runner) {
-					err := l.Run()
+				go func(job runner) {
+					err := job.Run(e.Context(ctx))
 					if err != nil {
-						log.Print(err)
+						slog.Warn("job failed", slog.Any("error", err))
 					}
 				}(r)
 			} else {
-				log.Printf("mismatched event and type, there may be a conflict")
+				slog.Warn("mismatched event and type, there may be a conflict")
 			}
 		}
 
 	}
 }
 
-func (k *Kernel) Dispatch(e event.Event) {
-	k.queue.Push(e)
+func (k *Kernel) Dispatch(ctx context.Context, e event.Event) error {
+	// e.WithContext(ctx)
+	return k.queue.Push(e)
 }
 
-func Dispatch(e event.Event) {
-	defaultKernel.Dispatch(e)
+func Dispatch(ctx context.Context, e event.Event) error {
+	return defaultKernel.Dispatch(ctx, e)
 }

@@ -1,6 +1,7 @@
 package request
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -26,7 +27,7 @@ func Validate(request *http.Request, keys []string, v any) error {
 		ft := t.Field(i)
 		fv := s.Field(i)
 		name := getName(ft)
-		err := validateField(name, request, keys, ft, fv)
+		err := validateField(request.Context(), name, request, keys, ft, fv)
 		if err != nil {
 			vErr.Merge(err)
 		}
@@ -39,7 +40,7 @@ func Validate(request *http.Request, keys []string, v any) error {
 	return nil
 }
 
-func validateField(attribute string, request *http.Request, keys []string, ft reflect.StructField, fv reflect.Value) ValidationError {
+func validateField(ctx context.Context, attribute string, request *http.Request, keys []string, ft reflect.StructField, fv reflect.Value) ValidationError {
 	validate, ok := ft.Tag.Lookup("validate")
 	if !ok {
 		return nil
@@ -61,7 +62,7 @@ func validateField(attribute string, request *http.Request, keys []string, ft re
 		hasKey := includes(keys, attribute)
 		if !hasKey {
 			if ruleName == "required" {
-				vErr.AddError(attribute, getMessage(ruleName, &MessageOptions{
+				vErr.AddError(attribute, getMessage(ctx, ruleName, &MessageOptions{
 					Attribute: attribute,
 					Value:     fv.Interface(),
 					Arguments: args,
@@ -82,7 +83,7 @@ func validateField(attribute string, request *http.Request, keys []string, ft re
 				Name:      attribute,
 			})
 			if !valid {
-				vErr.AddError(attribute, getMessage(ruleName, &MessageOptions{
+				vErr.AddError(attribute, getMessage(ctx, ruleName, &MessageOptions{
 					Attribute: attribute,
 					Value:     fv.Interface(),
 					Arguments: args,

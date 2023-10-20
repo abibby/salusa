@@ -1,12 +1,13 @@
 package jobs
 
 import (
-	"log"
+	"context"
 
+	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/static/template/app/events"
 )
 
-func LogJob(e *events.LogEvent) error {
-	log.Print(e.Message)
+func LogJob(ctx context.Context, e *events.LogEvent) error {
+	clog.Use(ctx).Info(e.Message)
 	return nil
 }

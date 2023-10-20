@@ -1,7 +1,7 @@
 package env
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -32,7 +32,7 @@ func Int(key string, defaultValue int) int {
 
 	v, err := strconv.Atoi(vStr)
 	if err != nil {
-		log.Print(err)
+		slog.Warn("failed to parse int", slog.String("value", vStr), slog.Any("error", err))
 		return defaultValue
 	}
 	return v
@@ -46,7 +46,7 @@ func Float64(key string, defaultValue float64) float64 {
 
 	v, err := strconv.ParseFloat(vStr, 64)
 	if err != nil {
-		log.Print(err)
+		slog.Warn("failed to parse float", slog.String("value", vStr), slog.Any("error", err))
 		return defaultValue
 	}
 	return v
