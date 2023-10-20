@@ -57,6 +57,10 @@ func (*Posgtgres) CurrentTime() string {
 	return "CURRENT_TIMESTAMP()"
 }
 
+func (*Posgtgres) AutoIncrement() string {
+	return ""
+}
+
 func (s *Posgtgres) Escape(v any) string {
 	switch v := v.(type) {
 	case string:

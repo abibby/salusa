@@ -65,6 +65,9 @@ func (t *Blueprint) AddColumn(c *ColumnBuilder) *Blueprint {
 func (t *Blueprint) String(name string) *ColumnBuilder {
 	return t.OfType(dialects.DataTypeString, name)
 }
+func (t *Blueprint) Text(name string) *ColumnBuilder {
+	return t.OfType(dialects.DataTypeText, name)
+}
 
 func (t *Blueprint) Bool(name string) *ColumnBuilder {
 	return t.OfType(dialects.DataTypeBoolean, name)
