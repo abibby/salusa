@@ -20,7 +20,7 @@ func (*SQLite) Identifier(s string) string {
 
 func (*SQLite) DataType(t dialects.DataType) string {
 	switch t {
-	case dialects.DataTypeString, dialects.DataTypeJSON:
+	case dialects.DataTypeString, dialects.DataTypeText, dialects.DataTypeJSON:
 		return "TEXT"
 	case dialects.DataTypeDate, dialects.DataTypeDateTime:
 		return "TIMESTAMP"
@@ -34,6 +34,10 @@ func (*SQLite) DataType(t dialects.DataType) string {
 
 func (*SQLite) CurrentTime() string {
 	return "CURRENT_TIMESTAMP"
+}
+
+func (*SQLite) AutoIncrement() string {
+	return "AUTOINCREMENT"
 }
 
 func (s *SQLite) Escape(v any) string {

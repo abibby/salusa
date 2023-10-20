@@ -20,14 +20,22 @@ func (*MySQL) Identifier(s string) string {
 
 func (*MySQL) DataType(t dialects.DataType) string {
 	switch t {
-	case dialects.DataTypeString, dialects.DataTypeJSON, dialects.DataTypeDate, dialects.DataTypeDateTime:
+	case dialects.DataTypeString:
 		return "VARCHAR(255)"
-	case dialects.DataTypeInt32, dialects.DataTypeBoolean:
+	case dialects.DataTypeText, dialects.DataTypeJSON:
+		return "MEDIUMTEXT"
+	case dialects.DataTypeInt32:
+		return "INTEGER"
+	case dialects.DataTypeBoolean:
 		return "INTEGER"
 	case dialects.DataTypeUInt32:
 		return "INTEGER UNSIGNED"
 	case dialects.DataTypeFloat32:
 		return "FLOAT"
+	case dialects.DataTypeDate:
+		return "DATE"
+	case dialects.DataTypeDateTime:
+		return "DATETIME"
 	}
 
 	return string(t)
@@ -35,6 +43,9 @@ func (*MySQL) DataType(t dialects.DataType) string {
 
 func (*MySQL) CurrentTime() string {
 	return "CURRENT_TIMESTAMP"
+}
+func (*MySQL) AutoIncrement() string {
+	return "AUTO_INCREMENT"
 }
 
 func (s *MySQL) Escape(v any) string {

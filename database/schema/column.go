@@ -94,7 +94,7 @@ func (b *ColumnBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
 	r.AddString(d.DataType(b.datatype))
 
 	if b.autoIncrement {
-		r.AddString("PRIMARY KEY AUTOINCREMENT")
+		r.AddString("PRIMARY KEY " + d.AutoIncrement())
 	} else if b.primary {
 		r.AddString("PRIMARY KEY")
 	}

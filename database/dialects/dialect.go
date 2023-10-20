@@ -9,6 +9,7 @@ type DataType string
 const (
 	DataTypeBlob   = DataType("blob")
 	DataTypeString = DataType("string")
+	DataTypeText   = DataType("text")
 	DataTypeEnum   = DataType("enum")
 
 	DataTypeBoolean = DataType("bool")
@@ -35,6 +36,7 @@ const (
 var dataTypes = set.Set[DataType]{
 	DataTypeBlob:   struct{}{},
 	DataTypeString: struct{}{},
+	DataTypeText:   struct{}{},
 	DataTypeEnum:   struct{}{},
 
 	DataTypeBoolean: struct{}{},
@@ -71,6 +73,7 @@ type Dialect interface {
 	Identifier(string) string
 	DataType(DataType) string
 	CurrentTime() string
+	AutoIncrement() string
 	Escape(v any) string
 	Binding() string
 }
@@ -87,6 +90,10 @@ func (*unsetDialect) DataType(t DataType) string {
 
 func (*unsetDialect) CurrentTime() string {
 	return "CURRENT_TIMESTAMP"
+}
+
+func (*unsetDialect) AutoIncrement() string {
+	return "AUTO_INCREMENT"
 }
 
 func (*unsetDialect) Escape(v any) string {
