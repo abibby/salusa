@@ -5,10 +5,7 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
-	"log/slog"
 	"reflect"
-
-	"github.com/abibby/salusa/clog"
 )
 
 type EventType string
@@ -20,19 +17,20 @@ type Event interface {
 }
 
 type EventLogger struct {
-	Logger *slog.Logger
+	// Logger *slog.Logger
 }
 
 func (e *EventLogger) Context(ctx context.Context) context.Context {
-	if e.Logger == nil {
-		return ctx
-	}
-	return clog.Update(ctx, func(l *slog.Logger) *slog.Logger {
-		return e.Logger
-	})
+	return ctx
+	// if e.Logger == nil {
+	// 	return ctx
+	// }
+	// return clog.Update(ctx, func(l *slog.Logger) *slog.Logger {
+	// 	return e.Logger
+	// })
 }
 func (e *EventLogger) WithContext(ctx context.Context) {
-	e.Logger = clog.Use(ctx)
+	// e.Logger = clog.Use(ctx)
 }
 
 var (
