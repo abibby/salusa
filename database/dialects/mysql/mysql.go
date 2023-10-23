@@ -24,14 +24,28 @@ func (*MySQL) DataType(t dialects.DataType) string {
 		return "VARCHAR(255)"
 	case dialects.DataTypeText, dialects.DataTypeJSON:
 		return "MEDIUMTEXT"
+	case dialects.DataTypeInt8:
+		return "TINYINT"
+	case dialects.DataTypeInt16:
+		return "SMALLINT"
 	case dialects.DataTypeInt32:
-		return "INTEGER"
-	case dialects.DataTypeBoolean:
-		return "INTEGER"
+		return "INT"
+	case dialects.DataTypeInt64:
+		return "BIGINT"
+	case dialects.DataTypeUInt8:
+		return "TINYINT UNSIGNED"
+	case dialects.DataTypeUInt16:
+		return "SMALLINT UNSIGNED"
 	case dialects.DataTypeUInt32:
-		return "INTEGER UNSIGNED"
+		return "INT UNSIGNED"
+	case dialects.DataTypeUInt64:
+		return "BIGINT UNSIGNED"
+	case dialects.DataTypeBoolean:
+		return "BOOLEAN"
 	case dialects.DataTypeFloat32:
 		return "FLOAT"
+	case dialects.DataTypeFloat64:
+		return "DOUBLE"
 	case dialects.DataTypeDate:
 		return "DATE"
 	case dialects.DataTypeDateTime:

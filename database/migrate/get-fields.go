@@ -75,7 +75,7 @@ func getFields(m model.Model) ([]*field, error) {
 				case reflect.Int32:
 					f.dataType = dialects.DataTypeInt32
 				case reflect.Int, reflect.Int64:
-					f.dataType = dialects.DataTypeInt32
+					f.dataType = dialects.DataTypeInt64
 				case reflect.Uint8:
 					f.dataType = dialects.DataTypeUInt8
 				case reflect.Uint16:
@@ -83,7 +83,7 @@ func getFields(m model.Model) ([]*field, error) {
 				case reflect.Uint32:
 					f.dataType = dialects.DataTypeUInt32
 				case reflect.Uint, reflect.Uint64:
-					f.dataType = dialects.DataTypeUInt32
+					f.dataType = dialects.DataTypeUInt64
 				case reflect.Float32:
 					f.dataType = dialects.DataTypeFloat32
 				case reflect.Float64:
