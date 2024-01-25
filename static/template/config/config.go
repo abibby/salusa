@@ -20,7 +20,7 @@ func Load(ctx context.Context) error {
 		return err
 	}
 
-	Port = env.Int("PORT", 6900)
+	Port = env.Int("PORT", 2303)
 	DBPath = env.String("DATABASE_PATH", "./db.sqlite")
 
 	return nil

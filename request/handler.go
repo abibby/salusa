@@ -53,6 +53,8 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 	respond(w, r, NewJSONResponse(resp))
 }
 
+// Handler is a helper to create http handlers with built in input validation
+// and error handling.
 func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) RequestHandler[TRequest, TResponse] {
 	return RequestHandler[TRequest, TResponse](callback)
 }

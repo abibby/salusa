@@ -31,6 +31,13 @@ var initCmd = &cobra.Command{
 			return err
 		}
 
+		err = exec.Command("go", "mod", "init", args[0]).Run()
+		if err != nil {
+			return err
+		}
+
+		// TODO: set git origin
+
 		return nil
 	},
 }

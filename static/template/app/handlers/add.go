@@ -23,6 +23,7 @@ var Add = request.Handler(func(r *AddRequest) (*AddResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &AddResponse{
 		Sum: r.A + r.B,
 	}, nil
