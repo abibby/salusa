@@ -72,9 +72,9 @@ func getFields(m model.Model) ([]*field, error) {
 					f.dataType = dialects.DataTypeInt8
 				case reflect.Int16:
 					f.dataType = dialects.DataTypeInt16
-				case reflect.Int32:
+				case reflect.Int, reflect.Int32:
 					f.dataType = dialects.DataTypeInt32
-				case reflect.Int, reflect.Int64:
+				case reflect.Int64:
 					f.dataType = dialects.DataTypeInt64
 				case reflect.Uint8:
 					f.dataType = dialects.DataTypeUInt8

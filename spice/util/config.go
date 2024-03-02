@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
@@ -112,7 +113,7 @@ func FileDir(from, file string) (string, error) {
 		}
 
 		if current == "/" {
-			return "", ErrNotFound
+			return "", fmt.Errorf("no file %s: %w", file, ErrNotFound)
 		}
 		current = strings.TrimSuffix(current, "/")
 		current, name = path.Split(current)

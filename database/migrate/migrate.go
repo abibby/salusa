@@ -15,7 +15,7 @@ type Migration struct {
 }
 
 func SrcFile(migrationName, packageName string, up, down ToGoer) (string, error) {
-	outFile := "test.go"
+	outFile := "migration.go"
 	initSrc := `package %s
 	
 import (
