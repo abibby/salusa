@@ -15,6 +15,10 @@ type Validator interface {
 }
 
 func Validate(request *http.Request, keys []string, v any) error {
+	ctx := context.Background()
+	if request != nil {
+		ctx = request.Context()
+	}
 	s, err := getStruct(reflect.ValueOf(v))
 	if err != nil {
 		return fmt.Errorf("Validate mast take a struct or pointer to a struct: %w", err)
@@ -27,7 +31,7 @@ func Validate(request *http.Request, keys []string, v any) error {
 		ft := t.Field(i)
 		fv := s.Field(i)
 		name := getName(ft)
-		err := validateField(request.Context(), name, request, keys, ft, fv)
+		err := validateField(ctx, name, request, keys, ft, fv)
 		if err != nil {
 			vErr.Merge(err)
 		}
