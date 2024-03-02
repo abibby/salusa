@@ -1,5 +1,8 @@
 # Salusa
 
+[![Test](https://github.com/abibby/salusa/actions/workflows/test.yaml/badge.svg)](https://github.com/abibby/salusa/actions/workflows/test.yaml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/abibby/salusa.svg)](https://pkg.go.dev/github.com/abibby/salusa)
+
 <!-- TODO: add tagline -->
 
 ## What is Salusa?
