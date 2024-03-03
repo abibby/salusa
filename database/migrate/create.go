@@ -1,10 +1,10 @@
 package migrate
 
 import (
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
 	"github.com/abibby/salusa/slices"
 )
@@ -15,7 +15,7 @@ func CreateFromModel(m model.Model) (*schema.CreateTableBuilder, error) {
 		panic(err)
 	}
 
-	tableName := helpers.GetTable(m)
+	tableName := database.GetTable(m)
 	fields, err := getFields(m)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 )
@@ -63,7 +64,7 @@ func (r *BelongsTo[T]) ForeignKeys() []*ForeignKey {
 	var related T
 	return []*ForeignKey{{
 		LocalKey:     r.getParentKey(),
-		RelatedTable: helpers.GetTable(related),
+		RelatedTable: database.GetTable(related),
 		RelatedKey:   r.getRelatedKey(),
 	}}
 }

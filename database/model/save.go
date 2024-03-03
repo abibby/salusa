@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/internal/helpers"
@@ -98,7 +99,7 @@ func insert(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect, v a
 	}
 	r := helpers.Result().
 		AddString("INSERT INTO").
-		Add(helpers.Identifier(helpers.GetTable(v))).
+		Add(helpers.Identifier(database.GetTable(v))).
 		Add(
 			helpers.Group(
 				helpers.Join(
@@ -179,7 +180,7 @@ func update(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect, v a
 	pKey := helpers.PrimaryKey(v)
 	r := helpers.Result().
 		AddString("UPDATE").
-		Add(helpers.Identifier(helpers.GetTable(v))).
+		Add(helpers.Identifier(database.GetTable(v))).
 		AddString("SET")
 
 	for i, column := range columns {
@@ -274,7 +275,7 @@ func insertMany(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect,
 	}
 	r := helpers.Result().
 		AddString("INSERT INTO").
-		Add(helpers.Identifier(helpers.GetTable(v))).
+		Add(helpers.Identifier(database.GetTable(v))).
 		Add(
 			helpers.Group(
 				helpers.Join(

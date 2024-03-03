@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 )
@@ -27,7 +28,7 @@ var _ iHasOneOrMany = hasOneOrMany[model.Model]{}
 // Subquery returns a SubBuilder scoped to the relationship.
 func (r hasOneOrMany[T]) Subquery() *SubBuilder {
 	return From[T]().
-		WhereColumn(r.relatedKey, "=", helpers.GetTable(r.parent)+"."+r.parentKey).
+		WhereColumn(r.relatedKey, "=", database.GetTable(r.parent)+"."+r.parentKey).
 		subBuilder
 }
 

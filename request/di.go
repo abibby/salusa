@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
@@ -137,7 +138,7 @@ func di(v any, r *http.Request) error {
 			return ErrCompositePrimaryKey
 		}
 		q := builder.New[model.Model]().
-			From(helpers.GetTable(f)).
+			From(database.GetTable(f)).
 			Where(pKey[0], "=", id).
 			WithContext(r.Context())
 

@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/set"
@@ -45,7 +46,7 @@ func New[T model.Model]() *Builder[T] {
 // From creates a new query from the models table and with table.* selected
 func From[T model.Model]() *Builder[T] {
 	var m T
-	table := helpers.GetTable(m)
+	table := database.GetTable(m)
 	return NewEmpty[T]().Select(table + ".*").From(table)
 }
 

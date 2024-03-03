@@ -24,7 +24,6 @@ type Case struct {
 }
 
 func QueryTest(t *testing.T, testCases []Case) {
-
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			q, bindings, err := tc.Builder.ToSQL(dialects.New())

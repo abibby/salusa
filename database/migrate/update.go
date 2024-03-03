@@ -3,9 +3,9 @@ package migrate
 import (
 	"fmt"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
 )
 
@@ -19,7 +19,7 @@ func (m *Migrations) update(mod model.Model) (*schema.UpdateTableBuilder, *schem
 		return nil, nil, err
 	}
 
-	tableName := helpers.GetTable(mod)
+	tableName := database.GetTable(mod)
 	fields, err := getFields(mod)
 	if err != nil {
 		return nil, nil, err

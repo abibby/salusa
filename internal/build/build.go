@@ -32,6 +32,8 @@ func main() {
 	// matches := regexp.MustCompile(`\nfunc \((\w+ +)?([^)]+)\) ([\w)]+)\((.*)\) (\*?\w+(?:\[.+\])?) {`).FindAllStringSubmatch(goSrc, -1)
 	matches := regexp.MustCompile(`((?:\/\/[^\n]+\n)*)func \((\w+ +)?([^)]+)\) ([\w)]+)\((.*)\) (\*?\w+(?:\[.+\])?) {`).FindAllStringSubmatch(goSrc, -1)
 
+	fmt.Printf("Generating code for %s in %s:%d\n", structName, file, line)
+
 	src := "package " + pkg + "\n\n"
 	for _, match := range matches {
 		comment := match[1]

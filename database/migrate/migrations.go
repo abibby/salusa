@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/model"
@@ -56,7 +57,7 @@ func (m *Migrations) isTableCreated(table string) bool {
 }
 
 func (m *Migrations) GenerateMigration(migrationName, packageName string, model model.Model) (string, error) {
-	if !m.isTableCreated(helpers.GetTable(model)) {
+	if !m.isTableCreated(database.GetTable(model)) {
 		up, err := CreateFromModel(model)
 		if err != nil {
 			return "", err

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
 )
@@ -65,7 +66,7 @@ func foreignKeyName(field reflect.StructField, tag string, tableType any) (strin
 	if len(pKeys) != 1 {
 		return "", fmt.Errorf("you must specify keys for relationships with compound primary keys")
 	}
-	return helpers.GetTableSingular(tableType) + "_" + pKeys[0], nil
+	return database.GetTableSingular(tableType) + "_" + pKeys[0], nil
 }
 
 func primaryKeyName(field reflect.StructField, tag string, tableType any) (string, error) {
