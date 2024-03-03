@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/helpers"
 )
@@ -16,10 +17,10 @@ func (d *Deleter) ToSQL(dialect dialects.Dialect) (string, []any, error) {
 	).ToSQL(dialect)
 }
 
-func (b *Builder[T]) Delete(tx helpers.QueryExecer) error {
+func (b *Builder[T]) Delete(tx database.DB) error {
 	return b.subBuilder.Delete(tx)
 }
-func (b *SubBuilder) Delete(tx helpers.QueryExecer) error {
+func (b *SubBuilder) Delete(tx database.DB) error {
 	q, bindings, err := b.Deleter().ToSQL(dialects.New())
 	if err != nil {
 		return err

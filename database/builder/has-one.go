@@ -4,8 +4,8 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 // # Tags:
@@ -33,7 +33,7 @@ func (r *HasOne[T]) Initialize(parent any, field reflect.StructField) error {
 	return nil
 }
 
-func (r *HasOne[T]) Load(ctx context.Context, tx helpers.QueryExecer, relations []Relationship) error {
+func (r *HasOne[T]) Load(ctx context.Context, tx database.DB, relations []Relationship) error {
 	rm, err := r.relatedMap(ctx, tx, relations)
 	if err != nil {
 		return err

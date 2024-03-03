@@ -3,6 +3,7 @@ package builder
 import (
 	"fmt"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/internal/helpers"
@@ -11,7 +12,7 @@ import (
 )
 
 // Get executes the query as a select statement and returns the result.
-func (b *Builder[T]) Get(tx helpers.QueryExecer) ([]T, error) {
+func (b *Builder[T]) Get(tx database.DB) ([]T, error) {
 	v := []T{}
 	err := b.Load(tx, &v)
 	if err != nil {
@@ -29,7 +30,7 @@ func (b *Builder[T]) Get(tx helpers.QueryExecer) ([]T, error) {
 }
 
 // Get executes the query as a select statement and returns the first record.
-func (b *Builder[T]) First(tx helpers.QueryExecer) (T, error) {
+func (b *Builder[T]) First(tx database.DB) (T, error) {
 	v, err := b.Clone().
 		Limit(1).
 		Get(tx)
@@ -45,7 +46,7 @@ func (b *Builder[T]) First(tx helpers.QueryExecer) (T, error) {
 }
 
 // Find returns the record with a matching primary key. It will fail on tables with multiple primary keys.
-func (b *Builder[T]) Find(tx helpers.QueryExecer, primaryKeyValue any) (T, error) {
+func (b *Builder[T]) Find(tx database.DB, primaryKeyValue any) (T, error) {
 	var m T
 	pKeys := helpers.PrimaryKey(m)
 	if len(pKeys) != 1 {
@@ -57,7 +58,7 @@ func (b *Builder[T]) Find(tx helpers.QueryExecer, primaryKeyValue any) (T, error
 }
 
 // Load executes the query as a select statement and sets v to the result.
-func (b *Builder[T]) Load(tx helpers.QueryExecer, v any) error {
+func (b *Builder[T]) Load(tx database.DB, v any) error {
 	q, bindings, err := b.ToSQL(dialects.New())
 	if err != nil {
 		return err
@@ -81,7 +82,7 @@ func (b *Builder[T]) Load(tx helpers.QueryExecer, v any) error {
 }
 
 // Load executes the query as a select statement and sets v to the first record.
-func (b *Builder[T]) LoadOne(tx helpers.QueryExecer, v any) error {
+func (b *Builder[T]) LoadOne(tx database.DB, v any) error {
 	q, bindings, err := b.Clone().
 		Limit(1).
 		ToSQL(dialects.New())
@@ -106,7 +107,7 @@ func (b *Builder[T]) LoadOne(tx helpers.QueryExecer, v any) error {
 	return nil
 }
 
-func (b *Builder[T]) Each(tx helpers.QueryExecer, cb func(v T) error) error {
+func (b *Builder[T]) Each(tx database.DB, cb func(v T) error) error {
 	limit := 1000
 	offset := 0
 	for {

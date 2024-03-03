@@ -6,10 +6,9 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
 )
 
-func RunModelCreate(ctx context.Context, db helpers.QueryExecer, models ...model.Model) error {
+func RunModelCreate(ctx context.Context, db database.DB, models ...model.Model) error {
 	for _, m := range models {
 		m, err := CreateFromModel(m)
 		if err != nil {

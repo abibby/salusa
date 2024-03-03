@@ -3,7 +3,7 @@ package model
 import (
 	"context"
 
-	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/database"
 )
 
 type Contexter interface {
@@ -28,12 +28,12 @@ func (m *BaseModel) Context() context.Context {
 	return m.ctx
 }
 
-func (m *BaseModel) AfterLoad(ctx context.Context, tx helpers.QueryExecer) error {
+func (m *BaseModel) AfterLoad(ctx context.Context, tx database.DB) error {
 	m.inDatabase = true
 	m.ctx = ctx
 	return nil
 }
-func (m *BaseModel) AfterSave(ctx context.Context, tx helpers.QueryExecer) error {
+func (m *BaseModel) AfterSave(ctx context.Context, tx database.DB) error {
 	m.inDatabase = true
 	m.ctx = ctx
 	return nil

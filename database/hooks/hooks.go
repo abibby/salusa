@@ -4,23 +4,21 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/database"
 )
 
-type DB = helpers.QueryExecer
-
 type BeforeSaver interface {
-	BeforeSave(ctx context.Context, tx DB) error
+	BeforeSave(ctx context.Context, tx database.DB) error
 }
 type AfterSaver interface {
-	AfterSave(ctx context.Context, tx DB) error
+	AfterSave(ctx context.Context, tx database.DB) error
 }
 
 type AfterLoader interface {
-	AfterLoad(ctx context.Context, tx DB) error
+	AfterLoad(ctx context.Context, tx database.DB) error
 }
 
-func BeforeSave(ctx context.Context, tx DB, model interface{}) error {
+func BeforeSave(ctx context.Context, tx database.DB, model interface{}) error {
 	if model, ok := model.(BeforeSaver); ok {
 		err := model.BeforeSave(ctx, tx)
 		if err != nil {
@@ -32,7 +30,7 @@ func BeforeSave(ctx context.Context, tx DB, model interface{}) error {
 	})
 }
 
-func AfterSave(ctx context.Context, tx DB, model interface{}) error {
+func AfterSave(ctx context.Context, tx database.DB, model interface{}) error {
 	if model, ok := model.(AfterSaver); ok {
 		err := model.AfterSave(ctx, tx)
 		if err != nil {
@@ -44,7 +42,7 @@ func AfterSave(ctx context.Context, tx DB, model interface{}) error {
 	})
 }
 
-func AfterLoad(ctx context.Context, tx DB, model interface{}) error {
+func AfterLoad(ctx context.Context, tx database.DB, model interface{}) error {
 	if model, ok := model.(AfterLoader); ok {
 		err := model.AfterLoad(ctx, tx)
 		if err != nil {

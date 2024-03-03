@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/helpers"
 )
@@ -82,7 +83,7 @@ func (b *CreateTableBuilder) ToGo() string {
 		b.blueprint.ToGo(),
 	)
 }
-func (b *CreateTableBuilder) Run(ctx context.Context, tx helpers.QueryExecer) error {
+func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {
 	return runQuery(ctx, tx, b)
 }
 func (b *CreateTableBuilder) IfNotExists() *CreateTableBuilder {

@@ -3,8 +3,8 @@ package dbtest
 import (
 	"reflect"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
 )
 
@@ -36,7 +36,7 @@ func (f Factory[T]) State(s func(T) T) Factory[T] {
 	}
 }
 
-func (f Factory[T]) Create(tx helpers.QueryExecer) T {
+func (f Factory[T]) Create(tx database.DB) T {
 	m := f()
 	err := model.Save(tx, m)
 	if err != nil {
@@ -49,7 +49,7 @@ func (f Factory[T]) Create(tx helpers.QueryExecer) T {
 	return m
 }
 
-func (f *CountFactory[T]) Create(tx helpers.QueryExecer) []T {
+func (f *CountFactory[T]) Create(tx database.DB) []T {
 	models := make([]T, f.count)
 	for i := 0; i < f.count; i++ {
 		m := f.factory()

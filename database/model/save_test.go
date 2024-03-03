@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -108,7 +108,7 @@ type FooSaveHookTestWrapper struct {
 
 var _ hooks.AfterSaver = &FooSaveHookTest{}
 
-func (f *FooSaveHookTest) AfterSave(context.Context, helpers.QueryExecer) error {
+func (f *FooSaveHookTest) AfterSave(context.Context, database.DB) error {
 	f.saved = true
 	return nil
 }

@@ -43,7 +43,7 @@ func columnsAndValues(v reflect.Value) ([]string, []any) {
 	return columns, values
 }
 
-func Save(tx helpers.QueryExecer, v Model) error {
+func Save(tx database.DB, v Model) error {
 	ctx := context.Background()
 	if v, ok := v.(Contexter); ok {
 		modelCtx := v.Context()
@@ -53,7 +53,7 @@ func Save(tx helpers.QueryExecer, v Model) error {
 	}
 	return SaveContext(ctx, tx, v)
 }
-func SaveContext(ctx context.Context, tx helpers.QueryExecer, v Model) error {
+func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 	err := hooks.BeforeSave(ctx, tx, v)
 	if err != nil {
 		return fmt.Errorf("before save hooks: %w", err)
@@ -83,7 +83,7 @@ func SaveContext(ctx context.Context, tx helpers.QueryExecer, v Model) error {
 	return nil
 }
 
-func insert(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect, v any, columns []string, values []any) error {
+func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values []any) error {
 	rPKey, pKey, isAuto := isAutoIncrementing(v)
 	if isAuto {
 		newColumns := make([]string, 0, len(columns))
@@ -176,7 +176,7 @@ func isAutoIncrementing(v any) (reflect.Value, string, bool) {
 	return rPKey, pKey, true
 }
 
-func update(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect, v any, columns []string, values []any) error {
+func update(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values []any) error {
 	pKey := helpers.PrimaryKey(v)
 	r := helpers.Result().
 		AddString("UPDATE").
@@ -221,10 +221,10 @@ func update(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect, v a
 	return nil
 }
 
-func InsertMany[T Model](tx helpers.QueryExecer, models []T) error {
+func InsertMany[T Model](tx database.DB, models []T) error {
 	return InsertManyContext(context.Background(), tx, models)
 }
-func InsertManyContext[T Model](ctx context.Context, tx helpers.QueryExecer, models []T) error {
+func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T) error {
 	for _, v := range models {
 		err := hooks.BeforeSave(ctx, tx, v)
 		if err != nil {
@@ -259,7 +259,7 @@ func InsertManyContext[T Model](ctx context.Context, tx helpers.QueryExecer, mod
 	return nil
 }
 
-func insertMany(ctx context.Context, tx helpers.QueryExecer, d dialects.Dialect, v any, columns []string, values [][]any) error {
+func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values [][]any) error {
 	_, pKey, isAuto := isAutoIncrementing(v)
 	pKeyIndex := -1
 	if isAuto {

@@ -24,7 +24,7 @@ func (f *ForeignKey) Equal(v *ForeignKey) bool {
 type Relationship interface {
 	relationship.Relationship
 	Subquery() *SubBuilder
-	Load(ctx context.Context, tx helpers.QueryExecer, relations []Relationship) error
+	Load(ctx context.Context, tx database.DB, relations []Relationship) error
 	ForeignKeys() []*ForeignKey
 }
 

@@ -1,8 +1,8 @@
-package helpers
+package database
 
 import "github.com/jmoiron/sqlx"
 
-type QueryExecer interface {
+type DB interface {
 	sqlx.QueryerContext
 	sqlx.ExecerContext
 }

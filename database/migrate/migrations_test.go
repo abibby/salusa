@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/schema"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +39,7 @@ func TestMigrations(t *testing.T) {
 		m := migrate.New()
 		m1 := &migrate.Migration{
 			Name: "1",
-			Up: schema.Run(func(ctx context.Context, tx helpers.QueryExecer) error {
+			Up: schema.Run(func(ctx context.Context, tx database.DB) error {
 				return fmt.Errorf("error")
 			}),
 		}

@@ -9,7 +9,6 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/set"
 )
 
@@ -94,7 +93,7 @@ func (m *Migrations) Blueprint(tableName string) *schema.Blueprint {
 	return result
 }
 
-func (m *Migrations) Up(ctx context.Context, db helpers.QueryExecer) error {
+func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 	sql, bindings, err := schema.Create(m.table, func(b *schema.Blueprint) {
 		b.String("name")
 		b.Bool("run")

@@ -6,23 +6,24 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
 )
 
-func Load(tx helpers.QueryExecer, v any, relation string) error {
+func Load(tx database.DB, v any, relation string) error {
 	return LoadContext(context.Background(), tx, v, relation)
 }
-func LoadContext(ctx context.Context, tx helpers.QueryExecer, v any, relation string) error {
+func LoadContext(ctx context.Context, tx database.DB, v any, relation string) error {
 	return loadContext(ctx, tx, v, relation, false)
 }
-func LoadMissing(tx helpers.QueryExecer, v any, relation string) error {
+func LoadMissing(tx database.DB, v any, relation string) error {
 	return LoadMissingContext(context.Background(), tx, v, relation)
 }
-func LoadMissingContext(ctx context.Context, tx helpers.QueryExecer, v any, relation string) error {
+func LoadMissingContext(ctx context.Context, tx database.DB, v any, relation string) error {
 	return loadContext(ctx, tx, v, relation, true)
 }
-func loadContext(ctx context.Context, tx helpers.QueryExecer, v any, relation string, onlyMissing bool) error {
+func loadContext(ctx context.Context, tx database.DB, v any, relation string, onlyMissing bool) error {
 	err := relationship.InitializeRelationships(v)
 	if err != nil {
 		return err

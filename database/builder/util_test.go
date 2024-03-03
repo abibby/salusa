@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +15,7 @@ func NewTestBuilder() *builder.Builder[*test.Foo] {
 	return builder.From[*test.Foo]()
 }
 
-func MustSave(tx helpers.QueryExecer, v model.Model) {
+func MustSave(tx database.DB, v model.Model) {
 	err := model.Save(tx, v)
 	if err != nil {
 		panic(err)
