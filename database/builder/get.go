@@ -42,7 +42,7 @@ func (b *Builder[T]) First(tx database.DB) (T, error) {
 		var zero T
 		return zero, nil
 	}
-	return v[0], err
+	return v[0], nil
 }
 
 // Find returns the record with a matching primary key. It will fail on tables with multiple primary keys.

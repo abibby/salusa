@@ -80,7 +80,7 @@ func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 	if err != nil {
 		return fmt.Errorf("after save hooks: %w", err)
 	}
-	return nil
+	return relationship.InitializeRelationships(v)
 }
 
 func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values []any) error {

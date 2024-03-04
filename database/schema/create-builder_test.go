@@ -72,6 +72,14 @@ func TestBuilder(t *testing.T) {
 			ExpectedSQL:      "CREATE TABLE \"foo\" (\"id\" INTEGER NOT NULL, CONSTRAINT \"id-bar-foo_id\" FOREIGN KEY (\"id\") REFERENCES \"bar\"(\"foo_id\"));",
 			ExpectedBindings: []any{},
 		},
+		{
+			Name: "null",
+			Builder: schema.Create("foo", func(table *schema.Blueprint) {
+				table.Int("id").Nullable()
+			}),
+			ExpectedSQL:      "CREATE TABLE \"foo\" (\"id\" INTEGER);",
+			ExpectedBindings: []any{},
+		},
 	})
 }
 
