@@ -1,29 +1,35 @@
 package di
 
+import (
+	"reflect"
+
+	"github.com/abibby/salusa/internal/helpers"
+)
+
 type DependancyProvider struct {
-	factories map[string]func() any
+	factories map[reflect.Type]func() any
 }
 
-var defaultProvider = NewDependamcyProvider()
+var DefaultProvider = NewDependamcyProvider()
 
 func NewDependamcyProvider() *DependancyProvider {
 	return &DependancyProvider{
-		factories: map[string]func() any{},
+		factories: map[reflect.Type]func() any{},
 	}
 }
 
 type Registerer[T any] struct {
-	dp     *DependancyProvider
-	typeID string
+	dp          *DependancyProvider
+	reflectType reflect.Type
 }
 
 func Register[T any]() *Registerer[T] {
-	return RegisterP[T](defaultProvider)
+	return RegisterProvider[T](DefaultProvider)
 }
-func RegisterP[T any](dp *DependancyProvider) *Registerer[T] {
+func RegisterProvider[T any](dp *DependancyProvider) *Registerer[T] {
 	return &Registerer[T]{
-		dp:     dp,
-		typeID: "something from the reflected type",
+		dp:          dp,
+		reflectType: getType[T](),
 	}
 }
 
@@ -33,22 +39,45 @@ func (r *Registerer[T]) Singlton(instance T) {
 	})
 }
 func (r *Registerer[T]) Factory(f func() T) {
-	r.dp.factories[r.typeID] = func() any {
+	r.dp.factories[getType[T]()] = func() any {
 		return f()
 	}
 }
 
-func Fill(v any) error {
-	return FillP(defaultProvider, v)
+func Fill(v any, options ...any) error {
+	return FillProvider(DefaultProvider, v, options...)
 }
-func FillP(dp *DependancyProvider, v any) error {
-	return nil
+func FillProvider(dp *DependancyProvider, v any, options ...any) error {
+	return helpers.EachField(reflect.ValueOf(v), func(sf reflect.StructField, fv reflect.Value) error {
+		v, ok := resolvePReflect(dp, sf.Type)
+		if !ok {
+			return nil
+		}
+		fv.Set(reflect.ValueOf(v))
+		return nil
+	})
 }
 
-func Resolve[T any]() T {
-	return ResolveP[T](defaultProvider)
+func Resolve[T any]() (T, bool) {
+	return ResolveProvider[T](DefaultProvider)
 }
-func ResolveP[T any](dp *DependancyProvider) T {
-	var zero T
-	return zero
+func ResolveProvider[T any](dp *DependancyProvider) (T, bool) {
+	v, ok := resolvePReflect(dp, getType[T]())
+	if v == nil {
+		var zero T
+		return zero, ok
+	}
+	return v.(T), ok
+}
+func resolvePReflect(dp *DependancyProvider, t reflect.Type) (any, bool) {
+	f, ok := dp.factories[t]
+	if !ok {
+		return nil, false
+	}
+	return f(), true
+}
+
+func getType[T any]() reflect.Type {
+	var v T
+	return reflect.TypeOf(&v).Elem()
 }
