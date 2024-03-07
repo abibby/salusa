@@ -4,15 +4,12 @@ import (
 	"context"
 
 	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/request"
-	"github.com/abibby/salusa/router"
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/abibby/salusa/static/template/migrations"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )
-
-var DB *sqlx.DB
 
 func Init(ctx context.Context) error {
 	sqlite.UseSQLite()
@@ -26,11 +23,9 @@ func Init(ctx context.Context) error {
 		return err
 	}
 
-	DB = db
+	di.RegisterSinglton(func() *sqlx.DB {
+		return db
+	})
 
 	return nil
-}
-
-func WithDB() router.MiddlewareFunc {
-	return request.WithDB(DB)
 }

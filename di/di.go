@@ -18,7 +18,11 @@ var (
 	stringType  = getType[string]()
 )
 
-var DefaultProvider = NewDependamcyProvider()
+var defaultProvider = NewDependamcyProvider()
+
+func SetDefaultProvider(dp *DependancyProvider) {
+	defaultProvider = dp
+}
 
 func NewDependamcyProvider() *DependancyProvider {
 	return &DependancyProvider{
@@ -27,12 +31,12 @@ func NewDependamcyProvider() *DependancyProvider {
 }
 
 func Register[T any](factory DependancyFactory[T]) {
-	DefaultProvider.register(factory)
+	defaultProvider.Register(factory)
 }
 
 func RegisterSinglton[T any](factory func() T) {
 	v := factory()
-	DefaultProvider.register(func(ctx context.Context, tag string) T {
+	defaultProvider.Register(func(ctx context.Context, tag string) T {
 		return v
 	})
 }
@@ -40,7 +44,7 @@ func RegisterSinglton[T any](factory func() T) {
 func RegisterLazySinglton[T any](factory func() T) {
 	var v T
 	initialized := false
-	DefaultProvider.register(func(ctx context.Context, tag string) T {
+	defaultProvider.Register(func(ctx context.Context, tag string) T {
 		if !initialized {
 			v = factory()
 		}
@@ -48,7 +52,7 @@ func RegisterLazySinglton[T any](factory func() T) {
 	})
 }
 
-func (d *DependancyProvider) register(factory any) {
+func (d *DependancyProvider) Register(factory any) {
 	v := reflect.ValueOf(factory)
 	t := v.Type()
 	if t.Kind() != reflect.Func ||
@@ -69,7 +73,7 @@ func (d *DependancyProvider) register(factory any) {
 }
 
 func Fill(ctx context.Context, v any, options ...any) error {
-	return DefaultProvider.Fill(ctx, v, options...)
+	return defaultProvider.Fill(ctx, v, options...)
 }
 func (dp *DependancyProvider) Fill(ctx context.Context, v any, options ...any) error {
 	return dp.fill(ctx, reflect.ValueOf(v), options...)
@@ -101,7 +105,7 @@ func (dp *DependancyProvider) fill(ctx context.Context, v reflect.Value, options
 }
 
 func Resolve[T any](ctx context.Context) (T, bool) {
-	return ResolveProvider[T](DefaultProvider, ctx)
+	return ResolveProvider[T](defaultProvider, ctx)
 }
 
 func ResolveProvider[T any](dp *DependancyProvider, ctx context.Context) (T, bool) {
@@ -113,6 +117,10 @@ func ResolveProvider[T any](dp *DependancyProvider, ctx context.Context) (T, boo
 	return v.(T), ok
 }
 func (dp *DependancyProvider) resolve(t reflect.Type, ctx context.Context, tag string) (any, bool) {
+	if t == contextType {
+		return ctx, true
+	}
+
 	f, ok := dp.factories[t]
 	if !ok {
 		return nil, false

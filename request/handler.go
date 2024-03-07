@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/abibby/salusa/clog"
+	"github.com/abibby/salusa/di"
 )
 
 type RequestHandler[TRequest, TResponse any] func(r *TRequest) (TResponse, error)
@@ -21,11 +22,12 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
-	injectRequest(&req, r)
-	injectResponseWriter(&req, w)
-	injectContext(&req, r.Context())
+	// injectRequest(&req, r)
+	// injectResponseWriter(&req, w)
+	// injectContext(&req, r.Context())
 
-	err = di(&req, r)
+	err = di.Fill(r.Context(), &req)
+	// err = di(&req, r)
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
 			respond(w, r, responder)

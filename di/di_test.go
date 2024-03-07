@@ -10,7 +10,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	di.DefaultProvider = di.NewDependamcyProvider()
+	di.SetDefaultProvider(di.NewDependamcyProvider())
 
 	code := m.Run()
 
@@ -88,6 +88,13 @@ func TestRegister(t *testing.T) {
 			assert.Nil(t, v)
 			assert.False(t, ok)
 		}
+	})
+
+	t.Run("invalid type", func(t *testing.T) {
+		assert.Panics(t, func() {
+			dp := di.NewDependamcyProvider()
+			dp.Register(func() {})
+		})
 	})
 }
 
