@@ -10,7 +10,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	di.SetDefaultProvider(di.NewDependamcyProvider())
+	di.SetDefaultProvider(di.NewDependencyProvider())
 
 	code := m.Run()
 
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 func TestRegister(t *testing.T) {
 	t.Run("singlton", func(t *testing.T) {
 		type Struct struct{}
-		di.RegisterSinglton(func() *Struct {
+		di.RegisterSingleton(func() *Struct {
 			return &Struct{}
 		})
 		ctx := context.Background()
@@ -78,7 +78,7 @@ func TestRegister(t *testing.T) {
 	t.Run("same name", func(t *testing.T) {
 		{
 			type Struct struct{}
-			di.RegisterSinglton(func() *Struct {
+			di.RegisterSingleton(func() *Struct {
 				return &Struct{}
 			})
 		}
@@ -91,8 +91,8 @@ func TestRegister(t *testing.T) {
 	})
 
 	t.Run("invalid type", func(t *testing.T) {
-		assert.Panics(t, func() {
-			dp := di.NewDependamcyProvider()
+		assert.PanicsWithValue(t, di.ErrInvalidDependencyFactory, func() {
+			dp := di.NewDependencyProvider()
 			dp.Register(func() {})
 		})
 	})
@@ -106,7 +106,7 @@ func TestFill(t *testing.T) {
 			NoTag   *Struct
 		}
 
-		di.RegisterSinglton(func() *Struct {
+		di.RegisterSingleton(func() *Struct {
 			return &Struct{}
 		})
 
@@ -124,7 +124,7 @@ func TestFill(t *testing.T) {
 		type FillableA struct {
 			B *FillableB `inject:""`
 		}
-		di.RegisterSinglton(func() *Struct {
+		di.RegisterSingleton(func() *Struct {
 			return &Struct{}
 		})
 

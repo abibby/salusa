@@ -2,46 +2,51 @@ package di
 
 import (
 	"context"
+	"errors"
 	"reflect"
 
 	"github.com/abibby/salusa/internal/helpers"
 )
 
-type DependancyProvider struct {
+type DependencyProvider struct {
 	factories map[reflect.Type]func(ctx context.Context, tag string) any
 }
 
-type DependancyFactory[T any] func(ctx context.Context, tag string) T
+type DependencyFactory[T any] func(ctx context.Context, tag string) T
 
 var (
 	contextType = getType[context.Context]()
 	stringType  = getType[string]()
 )
 
-var defaultProvider = NewDependamcyProvider()
+var (
+	ErrInvalidDependencyFactory = errors.New("dependency factories must match the type di.DependencyFactory")
+)
 
-func SetDefaultProvider(dp *DependancyProvider) {
+var defaultProvider = NewDependencyProvider()
+
+func SetDefaultProvider(dp *DependencyProvider) {
 	defaultProvider = dp
 }
 
-func NewDependamcyProvider() *DependancyProvider {
-	return &DependancyProvider{
+func NewDependencyProvider() *DependencyProvider {
+	return &DependencyProvider{
 		factories: map[reflect.Type]func(ctx context.Context, tag string) any{},
 	}
 }
 
-func Register[T any](factory DependancyFactory[T]) {
+func Register[T any](factory DependencyFactory[T]) {
 	defaultProvider.Register(factory)
 }
 
-func RegisterSinglton[T any](factory func() T) {
+func RegisterSingleton[T any](factory func() T) {
 	v := factory()
 	defaultProvider.Register(func(ctx context.Context, tag string) T {
 		return v
 	})
 }
 
-func RegisterLazySinglton[T any](factory func() T) {
+func RegisterLazySingleton[T any](factory func() T) {
 	var v T
 	initialized := false
 	defaultProvider.Register(func(ctx context.Context, tag string) T {
@@ -52,7 +57,7 @@ func RegisterLazySinglton[T any](factory func() T) {
 	})
 }
 
-func (d *DependancyProvider) Register(factory any) {
+func (d *DependencyProvider) Register(factory any) {
 	v := reflect.ValueOf(factory)
 	t := v.Type()
 	if t.Kind() != reflect.Func ||
@@ -60,7 +65,7 @@ func (d *DependancyProvider) Register(factory any) {
 		t.In(0) != contextType ||
 		t.In(1) != stringType ||
 		t.NumOut() != 1 {
-		panic("dependancy factories must match the type di.DependancyFactory")
+		panic(ErrInvalidDependencyFactory)
 	}
 
 	d.factories[t.Out(0)] = func(ctx context.Context, tag string) any {
@@ -75,10 +80,10 @@ func (d *DependancyProvider) Register(factory any) {
 func Fill(ctx context.Context, v any, options ...any) error {
 	return defaultProvider.Fill(ctx, v, options...)
 }
-func (dp *DependancyProvider) Fill(ctx context.Context, v any, options ...any) error {
+func (dp *DependencyProvider) Fill(ctx context.Context, v any, options ...any) error {
 	return dp.fill(ctx, reflect.ValueOf(v), options...)
 }
-func (dp *DependancyProvider) fill(ctx context.Context, v reflect.Value, options ...any) error {
+func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, options ...any) error {
 	return helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
 		tag, ok := sf.Tag.Lookup("inject")
 		if !ok {
@@ -108,7 +113,7 @@ func Resolve[T any](ctx context.Context) (T, bool) {
 	return ResolveProvider[T](defaultProvider, ctx)
 }
 
-func ResolveProvider[T any](dp *DependancyProvider, ctx context.Context) (T, bool) {
+func ResolveProvider[T any](dp *DependencyProvider, ctx context.Context) (T, bool) {
 	v, ok := dp.resolve(getType[T](), ctx, "")
 	if v == nil {
 		var zero T
@@ -116,7 +121,7 @@ func ResolveProvider[T any](dp *DependancyProvider, ctx context.Context) (T, boo
 	}
 	return v.(T), ok
 }
-func (dp *DependancyProvider) resolve(t reflect.Type, ctx context.Context, tag string) (any, bool) {
+func (dp *DependencyProvider) resolve(t reflect.Type, ctx context.Context, tag string) (any, bool) {
 	if t == contextType {
 		return ctx, true
 	}

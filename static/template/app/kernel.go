@@ -18,7 +18,7 @@ var Kernel = kernel.NewDefaultKernel(
 		config.Load,
 		providers.Init,
 		database.Init,
-		request.Init,
+		request.InitDI,
 	),
 	kernel.Services(
 		cron.Service().

@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"net/http"
-	"reflect"
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
@@ -22,12 +21,11 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
-	// injectRequest(&req, r)
-	// injectResponseWriter(&req, w)
-	// injectContext(&req, r.Context())
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, requestKey, r)
+	ctx = context.WithValue(ctx, responseKey, w)
 
-	err = di.Fill(r.Context(), &req)
-	// err = di(&req, r)
+	err = di.Fill(ctx, &req)
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
 			respond(w, r, responder)
@@ -66,45 +64,4 @@ func respond(w http.ResponseWriter, req *http.Request, r Responder) {
 	if err != nil {
 		clog.Use(req.Context()).Error("request failed", "error", err)
 	}
-}
-
-func injectRequest[TRequest any](req TRequest, httpR *http.Request) {
-	v := reflect.ValueOf(req).Elem()
-
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		if (f.Type() != reflect.TypeOf(&http.Request{})) {
-			continue
-		}
-		f.Set(reflect.ValueOf(httpR))
-	}
-
-}
-
-func injectResponseWriter[TRequest any](req TRequest, httpRW http.ResponseWriter) {
-	v := reflect.ValueOf(req).Elem()
-
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		var rw http.ResponseWriter
-		if !f.Type().Implements(reflect.TypeOf(&rw).Elem()) {
-			continue
-		}
-		f.Set(reflect.ValueOf(httpRW))
-	}
-
-}
-
-func injectContext[TRequest any](req TRequest, ctx context.Context) {
-	v := reflect.ValueOf(req).Elem()
-
-	ctxType := reflect.TypeOf(&ctx).Elem()
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		if !f.Type().Implements(ctxType) {
-			continue
-		}
-		f.Set(reflect.ValueOf(ctx))
-	}
-
 }

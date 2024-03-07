@@ -23,7 +23,7 @@ func Init(ctx context.Context) error {
 		return err
 	}
 
-	di.RegisterSinglton(func() *sqlx.DB {
+	di.RegisterSingleton(func() *sqlx.DB {
 		return db
 	})
 

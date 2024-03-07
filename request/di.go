@@ -2,48 +2,26 @@ package request
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"net/http"
-	"strings"
+	"reflect"
 
 	"github.com/abibby/salusa/di"
-	"github.com/jmoiron/sqlx"
 )
 
-type contextKey struct{}
+type contextKey uint8
 
-var (
-	txKey       = contextKey{}
-	requestKey  = contextKey{}
-	responseKey = contextKey{}
+const (
+	requestKey contextKey = iota
+	responseKey
 )
 
-func Init(context.Context) error {
-	di.Register(func(ctx context.Context, tag string) *sqlx.Tx {
-		wrapper, ok := ctx.Value(txKey).(*txWrapper)
-		if !ok {
-			log.Print("no transaction wrapper")
-			return nil
-		}
-
-		if wrapper.tx == nil {
-			db, ok := di.Resolve[*sqlx.DB](ctx)
-			if !ok {
-				return nil
-			}
-			tx, err := db.BeginTxx(ctx, &sql.TxOptions{
-				ReadOnly: strings.ToLower(tag) == "r",
-			})
-			if err != nil {
-				return nil
-			}
-			wrapper.tx = tx
-		}
-		return wrapper.tx
-	})
+func InitDI(context.Context) error {
 	di.Register(func(ctx context.Context, tag string) *http.Request {
+
+		v := ctx.Value(requestKey)
 		req, ok := ctx.Value(requestKey).(*http.Request)
+		log.Printf("%#v", reflect.TypeOf(v).String())
 		if !ok {
 			return nil
 		}
