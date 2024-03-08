@@ -2,22 +2,28 @@ package kernel
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"os"
 	"testing"
+
+	"github.com/abibby/salusa/di"
+	"github.com/jmoiron/sqlx"
 )
 
-func RunTest(t *testing.T, k *Kernel, name string, cb func(t *testing.T, h http.Handler)) {
+func RunTest(t *testing.T, k *Kernel, name string, cb func(t *testing.T, h http.Handler, db *sqlx.DB)) {
 	t.Run(name, func(t *testing.T) {
 		ctx := context.Background()
 		err := k.Bootstrap(ctx)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to bootstrap: %v", err)
-			t.Fail()
+			t.Errorf("failed to bootstrap: %v", err)
 			return
 		}
 
-		cb(t, k.rootHandler())
+		db, err := di.Resolve[*sqlx.DB](ctx)
+		if err != nil {
+			t.Errorf("no db in di: %w", err)
+			return
+		}
+
+		cb(t, k.rootHandler(), db)
 	})
 }

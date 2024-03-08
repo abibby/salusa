@@ -2,9 +2,8 @@ package request
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
-	"reflect"
 
 	"github.com/abibby/salusa/di"
 )
@@ -17,22 +16,19 @@ const (
 )
 
 func InitDI(context.Context) error {
-	di.Register(func(ctx context.Context, tag string) *http.Request {
-
-		v := ctx.Value(requestKey)
+	di.Register(func(ctx context.Context, tag string) (*http.Request, error) {
 		req, ok := ctx.Value(requestKey).(*http.Request)
-		log.Printf("%#v", reflect.TypeOf(v).String())
 		if !ok {
-			return nil
+			return nil, fmt.Errorf("request not in context")
 		}
-		return req
+		return req, nil
 	})
-	di.Register(func(ctx context.Context, tag string) http.ResponseWriter {
+	di.Register(func(ctx context.Context, tag string) (http.ResponseWriter, error) {
 		resp, ok := ctx.Value(responseKey).(http.ResponseWriter)
 		if !ok {
-			return nil
+			return nil, fmt.Errorf("response not in context")
 		}
-		return resp
+		return resp, nil
 	})
 	return nil
 }

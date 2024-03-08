@@ -24,26 +24,26 @@ func TestRegister(t *testing.T) {
 			return &Struct{}
 		})
 		ctx := context.Background()
-		a, aOk := di.Resolve[*Struct](ctx)
-		b, bOk := di.Resolve[*Struct](ctx)
+		a, aErr := di.Resolve[*Struct](ctx)
+		b, bErr := di.Resolve[*Struct](ctx)
 		assert.NotNil(t, a)
-		assert.True(t, aOk)
+		assert.NoError(t, aErr)
 		assert.NotNil(t, b)
-		assert.True(t, bOk)
+		assert.NoError(t, bErr)
 		assert.Same(t, a, b)
 	})
 	t.Run("interface", func(t *testing.T) {
 		type Interface interface{}
 		type Struct struct{}
-		di.Register(func(ctx context.Context, tag string) Interface {
-			return &Struct{}
+		di.Register(func(ctx context.Context, tag string) (Interface, error) {
+			return &Struct{}, nil
 		})
 
-		s, ok := di.Resolve[Interface](context.Background())
+		s, err := di.Resolve[Interface](context.Background())
 		assert.NotNil(t, s)
-		assert.True(t, ok)
+		assert.NoError(t, err)
 
-		_, ok = s.(*Struct)
+		_, ok := s.(*Struct)
 		assert.True(t, ok)
 	})
 
@@ -52,11 +52,11 @@ func TestRegister(t *testing.T) {
 			A int
 		}
 		i := 0
-		di.Register(func(ctx context.Context, tag string) *Struct {
+		di.Register(func(ctx context.Context, tag string) (*Struct, error) {
 			i++
 			return &Struct{
 				A: i,
-			}
+			}, nil
 		})
 
 		ctx := context.Background()
@@ -70,9 +70,9 @@ func TestRegister(t *testing.T) {
 	t.Run("not registered", func(t *testing.T) {
 		type Struct struct{}
 
-		v, ok := di.Resolve[*Struct](context.Background())
+		v, err := di.Resolve[*Struct](context.Background())
 		assert.Nil(t, v)
-		assert.False(t, ok)
+		assert.ErrorIs(t, err, di.ErrNotRegistered)
 	})
 
 	t.Run("same name", func(t *testing.T) {
@@ -84,9 +84,9 @@ func TestRegister(t *testing.T) {
 		}
 		{
 			type Struct struct{}
-			v, ok := di.Resolve[*Struct](context.Background())
+			v, err := di.Resolve[*Struct](context.Background())
 			assert.Nil(t, v)
-			assert.False(t, ok)
+			assert.ErrorIs(t, err, di.ErrNotRegistered)
 		}
 	})
 
@@ -142,10 +142,10 @@ func TestFill(t *testing.T) {
 			WithTag *Struct `inject:"with tag"`
 			Empty   *Struct `inject:""`
 		}
-		di.Register(func(ctx context.Context, tag string) *Struct {
+		di.Register(func(ctx context.Context, tag string) (*Struct, error) {
 			return &Struct{
 				Value: tag,
-			}
+			}, nil
 		})
 
 		f := &Fillable{}

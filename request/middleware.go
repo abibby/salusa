@@ -24,7 +24,8 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 				for _, handler := range handlers {
 					handler(err)
 				}
-				if responder, ok := err.(Responder); ok {
+
+				if responder, ok := getResponder(err); ok {
 					respond(w, r, responder)
 				} else {
 					respond(w, r, errorResponse(err, http.StatusInternalServerError, r))

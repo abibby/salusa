@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/kernel"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/static/template/app/events"
@@ -11,27 +12,46 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type UserRequest struct {
-	ID  int             `query:"user_id" validate:"required"`
-	TX  *sqlx.DB        `inject:""`
-	Ctx context.Context `inject:""`
+type GetUserRequest struct {
+	User *models.User `inject:"user_id"`
 }
-type UaerResponse struct {
+type GetUaerResponse struct {
 	User *models.User `json:"user"`
 }
 
-var User = request.Handler(func(r *UserRequest) (*UaerResponse, error) {
-	err := kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("fetch user wiht id %d", r.ID)})
+var GetUser = request.Handler(func(r *GetUserRequest) (*GetUaerResponse, error) {
+	return &GetUaerResponse{
+		User: r.User,
+	}, nil
+})
+
+type CreateUserRequest struct {
+	Username string          `json:"username" validate:"required"`
+	Password []byte          `json:"password" validate:"required"`
+	Tx       *sqlx.Tx        `inject:""`
+	Ctx      context.Context `inject:""`
+}
+type CreateUaerResponse struct {
+	User *models.User `json:"user"`
+}
+
+var CreateUser = request.Handler(func(r *CreateUserRequest) (*GetUaerResponse, error) {
+	err := kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
 	if err != nil {
 		return nil, err
 	}
 
-	u, err := models.UserQuery(r.Ctx).Find(r.TX, r.ID)
+	u := &models.User{
+		Username: r.Username,
+		Password: r.Password,
+	}
+
+	err = model.SaveContext(r.Ctx, r.Tx, u)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UaerResponse{
+	return &GetUaerResponse{
 		User: u,
 	}, nil
 })

@@ -27,7 +27,7 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 
 	err = di.Fill(ctx, &req)
 	if err != nil {
-		if responder, ok := err.(Responder); ok {
+		if responder, ok := getResponder(err); ok {
 			respond(w, r, responder)
 		} else {
 			respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
