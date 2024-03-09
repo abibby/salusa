@@ -10,6 +10,7 @@ import (
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/model/modeldi"
+	"github.com/abibby/salusa/static/template/app"
 )
 
 //go:generate spice generate:migration
@@ -25,7 +26,7 @@ type User struct {
 var _ hooks.BeforeSaver = (*User)(nil)
 
 func init() {
-	modeldi.Register[*User]()
+	app.Kernel.Register(modeldi.Register[*User])
 }
 
 func UserQuery(ctx context.Context) *builder.Builder[*User] {

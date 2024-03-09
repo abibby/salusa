@@ -16,6 +16,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var DP = di.NewDependencyProvider()
+
 type Foo struct {
 	model.BaseModel
 	ID   int    `db:"id,autoincrement"`
@@ -74,7 +76,7 @@ func main() {
 		panic(err)
 	}
 
-	di.RegisterSingleton(func() *sqlx.DB {
+	di.RegisterSingleton(DP, func() *sqlx.DB {
 		return db
 	})
 

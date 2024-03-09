@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/router"
 )
@@ -63,6 +64,13 @@ func Listeners(listeners ...*Listener) KernelOption {
 			}
 			k.listeners[l.eventType] = append(jobs, l.runner)
 		}
+		return k
+	}
+}
+
+func Providers(providers ...func(*di.DependencyProvider)) KernelOption {
+	return func(k *Kernel) *Kernel {
+		k.providers = providers
 		return k
 	}
 }

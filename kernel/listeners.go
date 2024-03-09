@@ -83,10 +83,5 @@ func (k *Kernel) RunListeners(ctx context.Context) {
 }
 
 func (k *Kernel) Dispatch(ctx context.Context, e event.Event) error {
-	// e.WithContext(ctx)
 	return k.queue.Push(e)
-}
-
-func Dispatch(ctx context.Context, e event.Event) error {
-	return defaultKernel.Dispatch(ctx, e)
 }

@@ -1,9 +1,10 @@
-package providers
+package salusadi
 
 import (
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/request"
 )
 
-// Register registers any custom di providers
 func Register(dp *di.DependencyProvider) {
+	request.InitDI(dp)
 }

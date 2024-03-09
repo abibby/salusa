@@ -7,12 +7,14 @@ import (
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/static/template/app"
+	"github.com/abibby/salusa/static/template/app/appkernel"
 )
 
 func main() {
 	ctx := clog.Init(context.Background(), slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		AddSource: true,
 	})))
+	appkernel.Init()
 	err := app.Kernel.Bootstrap(ctx)
 	if err != nil {
 		clog.Use(ctx).Error("error bootstrapping", "error", err)

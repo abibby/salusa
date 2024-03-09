@@ -16,7 +16,7 @@ type {{ .Name }} struct {
 }
 
 func init() {
-	modeldi.Register[*{{ .Name }}]()
+	app.Kernel.Register(modeldi.Register[*{{ .Name }}])
 }
 
 func {{ .Name }}Query(ctx context.Context) *builder.Builder[*{{ .Name }}] {

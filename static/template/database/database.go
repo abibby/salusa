@@ -5,6 +5,7 @@ import (
 
 	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/database/dialects/sqlite"
+	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/abibby/salusa/static/template/migrations"
 	"github.com/jmoiron/sqlx"
@@ -23,7 +24,7 @@ func Init(ctx context.Context) error {
 		return err
 	}
 
-	databasedi.Register(db)
+	databasedi.Register(app.Kernel.DependencyProvider(), db)
 
 	return nil
 }

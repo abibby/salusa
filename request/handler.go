@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/clog"
-	"github.com/abibby/salusa/di"
 )
 
 type RequestHandler[TRequest, TResponse any] func(r *TRequest) (TResponse, error)
@@ -25,7 +24,7 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 	ctx = context.WithValue(ctx, requestKey, r)
 	ctx = context.WithValue(ctx, responseKey, w)
 
-	err = di.Fill(ctx, &req)
+	err = dp.Fill(ctx, &req)
 	if err != nil {
 		if responder, ok := getResponder(err); ok {
 			respond(w, r, responder)

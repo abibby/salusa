@@ -16,9 +16,10 @@ type DependencyProvider struct {
 type DependencyFactory[T any] func(ctx context.Context, tag string) (T, error)
 
 var (
-	contextType = getType[context.Context]()
-	stringType  = getType[string]()
-	errorType   = getType[error]()
+	contextType            = getType[context.Context]()
+	stringType             = getType[string]()
+	errorType              = getType[error]()
+	dependencyProviderType = getType[*DependencyProvider]()
 )
 
 var (
@@ -27,7 +28,7 @@ var (
 	ErrFillParameters           = errors.New("invalid fill parameters")
 )
 
-var defaultProvider = NewDependencyProvider()
+// var defaultProvider = NewDependencyProvider()
 
 func NewDependencyProvider() *DependencyProvider {
 	return &DependencyProvider{
@@ -35,21 +36,21 @@ func NewDependencyProvider() *DependencyProvider {
 	}
 }
 
-func Register[T any](factory DependencyFactory[T]) {
-	defaultProvider.Register(factory)
+func Register[T any](dp *DependencyProvider, factory DependencyFactory[T]) {
+	dp.Register(factory)
 }
 
-func RegisterSingleton[T any](factory func() T) {
+func RegisterSingleton[T any](dp *DependencyProvider, factory func() T) {
 	v := factory()
-	defaultProvider.Register(func(ctx context.Context, tag string) (T, error) {
+	dp.Register(func(ctx context.Context, tag string) (T, error) {
 		return v, nil
 	})
 }
 
-func RegisterLazySingleton[T any](factory func() T) {
+func RegisterLazySingleton[T any](dp *DependencyProvider, factory func() T) {
 	var v T
 	initialized := false
-	defaultProvider.Register(func(ctx context.Context, tag string) (T, error) {
+	dp.Register(func(ctx context.Context, tag string) (T, error) {
 		if !initialized {
 			initialized = true
 			v = factory()
@@ -83,10 +84,6 @@ func (d *DependencyProvider) Register(factory any) {
 		return out[0].Interface(), err
 	}
 }
-
-func Fill(ctx context.Context, v any) error {
-	return defaultProvider.Fill(ctx, v)
-}
 func (dp *DependencyProvider) Fill(ctx context.Context, v any) error {
 	return dp.fill(ctx, reflect.ValueOf(v))
 }
@@ -104,7 +101,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value) error {
 			return nil
 		}
 
-		v, err := dp.resolve(sf.Type, ctx, tag)
+		v, err := dp.resolve(ctx, sf.Type, tag)
 		if err == nil {
 			fv.Set(reflect.ValueOf(v))
 			return nil
@@ -116,21 +113,21 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value) error {
 	})
 }
 
-func Resolve[T any](ctx context.Context) (T, error) {
-	return ResolveProvider[T](defaultProvider, ctx)
-}
-
-func ResolveProvider[T any](dp *DependencyProvider, ctx context.Context) (T, error) {
+func Resolve[T any](ctx context.Context, dp *DependencyProvider) (T, error) {
 	var result T
-	v, err := dp.resolve(getType[T](), ctx, "")
+	v, err := dp.resolve(ctx, getType[T](), "")
 	if v != nil {
 		result = v.(T)
 	}
 	return result, err
 }
-func (dp *DependencyProvider) resolve(t reflect.Type, ctx context.Context, tag string) (any, error) {
+func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string) (any, error) {
 	if t == contextType {
 		return ctx, nil
+	}
+
+	if t == dependencyProviderType {
+		return dp, nil
 	}
 
 	f, ok := dp.factories[t]
@@ -151,6 +148,6 @@ func (dp *DependencyProvider) resolve(t reflect.Type, ctx context.Context, tag s
 }
 
 func getType[T any]() reflect.Type {
-	var v T
-	return reflect.TypeOf(&v).Elem()
+	var v *T
+	return reflect.TypeOf(v).Elem()
 }

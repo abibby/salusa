@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/kernel"
 	"github.com/abibby/salusa/request"
+	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/app/events"
 	"github.com/abibby/salusa/static/template/app/models"
 	"github.com/jmoiron/sqlx"
@@ -36,7 +36,7 @@ type CreateUaerResponse struct {
 }
 
 var CreateUser = request.Handler(func(r *CreateUserRequest) (*CreateUaerResponse, error) {
-	err := kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
+	err := app.Kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
 	if err != nil {
 		return nil, err
 	}

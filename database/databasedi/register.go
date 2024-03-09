@@ -10,18 +10,18 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func Register(db *sqlx.DB) {
-	di.RegisterSingleton(func() *sqlx.DB {
+func Register(dp *di.DependencyProvider, db *sqlx.DB) {
+	di.RegisterSingleton(dp, func() *sqlx.DB {
 		return db
 	})
-	di.Register(func(ctx context.Context, tag string) (*sqlx.Tx, error) {
+	di.Register(dp, func(ctx context.Context, tag string) (*sqlx.Tx, error) {
 		tx := ctx.Value(txKey)
 		if tx == nil {
 			tx = &txWrapper{}
 		}
 		wrapper := tx.(*txWrapper)
 		if wrapper.tx == nil {
-			db, err := di.Resolve[*sqlx.DB](ctx)
+			db, err := di.Resolve[*sqlx.DB](ctx, dp)
 			if errors.Is(err, di.ErrNotRegistered) {
 				return nil, fmt.Errorf("the database is not registered in di")
 			} else if err != nil {

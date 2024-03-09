@@ -15,15 +15,15 @@ const (
 	responseKey
 )
 
-func InitDI(context.Context) error {
-	di.Register(func(ctx context.Context, tag string) (*http.Request, error) {
+func InitDI(dp *di.DependencyProvider) error {
+	di.Register(dp, func(ctx context.Context, tag string) (*http.Request, error) {
 		req, ok := ctx.Value(requestKey).(*http.Request)
 		if !ok {
 			return nil, fmt.Errorf("request not in context")
 		}
 		return req, nil
 	})
-	di.Register(func(ctx context.Context, tag string) (http.ResponseWriter, error) {
+	di.Register(dp, func(ctx context.Context, tag string) (http.ResponseWriter, error) {
 		resp, ok := ctx.Value(responseKey).(http.ResponseWriter)
 		if !ok {
 			return nil, fmt.Errorf("response not in context")

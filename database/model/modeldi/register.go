@@ -13,17 +13,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func Register[T model.Model]() {
-	di.Register(func(ctx context.Context, tag string) (T, error) {
+func Register[T model.Model](dp *di.DependencyProvider) {
+	di.Register(dp, func(ctx context.Context, tag string) (T, error) {
 		var zero T
 		if tag == "" {
 			return zero, fmt.Errorf("no tag")
 		}
-		req, err := di.Resolve[*http.Request](ctx)
+		req, err := di.Resolve[*http.Request](ctx, dp)
 		if err != nil {
 			return zero, fmt.Errorf("count not find request: %w", err)
 		}
-		db, err := di.Resolve[*sqlx.DB](ctx)
+		db, err := di.Resolve[*sqlx.DB](ctx, dp)
 		if err != nil {
 			return zero, fmt.Errorf("count not find db: %w", err)
 		}

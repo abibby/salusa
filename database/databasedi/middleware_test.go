@@ -13,14 +13,15 @@ import (
 )
 
 func TestMiddleware(t *testing.T) {
+	dp := di.NewDependencyProvider()
 	db := sqlx.MustOpen("sqlite3", ":memory:")
-	databasedi.Register(db)
+	databasedi.Register(dp, db)
 	m := databasedi.Middleware()
 
 	runs := 0
 
 	handler := m(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tx, err := di.Resolve[*sqlx.Tx](r.Context())
+		tx, err := di.Resolve[*sqlx.Tx](r.Context(), dp)
 		assert.NoError(t, err)
 		assert.NotNil(t, tx)
 		runs++

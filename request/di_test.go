@@ -1,11 +1,11 @@
 package request_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/request"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,8 +14,8 @@ func TestInjectRequest(t *testing.T) {
 	type Request struct {
 		Request *http.Request `inject:""`
 	}
-
-	request.InitDI(context.Background())
+	dp := di.NewDependencyProvider()
+	request.InitDI(dp)
 
 	httpRequest := httptest.NewRequest("GET", "http://0.0.0.0/", http.NoBody)
 
@@ -35,7 +35,8 @@ func TestInjectResponseWriter(t *testing.T) {
 		ResponseWriter http.ResponseWriter `inject:""`
 	}
 
-	request.InitDI(context.Background())
+	dp := di.NewDependencyProvider()
+	request.InitDI(dp)
 
 	rw := httptest.NewRecorder()
 
