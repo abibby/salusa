@@ -6,5 +6,5 @@ import (
 )
 
 func Register(dp *di.DependencyProvider) {
-	request.InitDI(dp)
+	request.RegisterDI(dp)
 }

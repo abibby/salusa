@@ -40,11 +40,15 @@ func RootHandler(rootHandler func() http.Handler) KernelOption {
 }
 
 func InitRoutes(cb func(r *router.Router)) KernelOption {
-	return RootHandler(func() http.Handler {
-		r := router.New()
-		cb(r)
-		return r
-	})
+	return func(k *Kernel) *Kernel {
+		k.rootHandler = func() http.Handler {
+			r := router.New()
+			r.WithDependencyProvider(k.dp)
+			cb(r)
+			return r
+		}
+		return k
+	}
 }
 
 func Services(services ...Service) KernelOption {

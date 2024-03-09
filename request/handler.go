@@ -5,11 +5,21 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/clog"
+	"github.com/abibby/salusa/di"
 )
 
-type RequestHandler[TRequest, TResponse any] func(r *TRequest) (TResponse, error)
+var defaultDP = di.NewDependencyProvider()
 
-func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func init() {
+	RegisterDI(defaultDP)
+}
+
+type RequestHandler[TRequest, TResponse any] struct {
+	handler func(r *TRequest) (TResponse, error)
+	dp      *di.DependencyProvider
+}
+
+func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req TRequest
 	err := Run(r, &req)
 	if validationErr, ok := err.(ValidationError); ok {
@@ -24,7 +34,7 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 	ctx = context.WithValue(ctx, requestKey, r)
 	ctx = context.WithValue(ctx, responseKey, w)
 
-	err = dp.Fill(ctx, &req)
+	err = h.dp.Fill(ctx, &req)
 	if err != nil {
 		if responder, ok := getResponder(err); ok {
 			respond(w, r, responder)
@@ -34,7 +44,7 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
-	resp, err := h(&req)
+	resp, err := h.handler(&req)
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
 			respond(w, r, responder)
@@ -51,11 +61,20 @@ func (h RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r 
 	}
 	respond(w, r, NewJSONResponse(resp))
 }
+func (h *RequestHandler[TRequest, TResponse]) WithDependencyProvider(dp *di.DependencyProvider) {
+	h.dp = dp
+}
+func (h *RequestHandler[TRequest, TResponse]) Test(r *TRequest) (TResponse, error) {
+	return h.handler(r)
+}
 
 // Handler is a helper to create http handlers with built in input validation
 // and error handling.
-func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) RequestHandler[TRequest, TResponse] {
-	return RequestHandler[TRequest, TResponse](callback)
+func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) *RequestHandler[TRequest, TResponse] {
+	return &RequestHandler[TRequest, TResponse]{
+		handler: callback,
+		dp:      defaultDP,
+	}
 }
 
 func respond(w http.ResponseWriter, req *http.Request, r Responder) {

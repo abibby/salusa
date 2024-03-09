@@ -15,7 +15,7 @@ const (
 	responseKey
 )
 
-func InitDI(dp *di.DependencyProvider) error {
+func RegisterDI(dp *di.DependencyProvider) error {
 	di.Register(dp, func(ctx context.Context, tag string) (*http.Request, error) {
 		req, ok := ctx.Value(requestKey).(*http.Request)
 		if !ok {

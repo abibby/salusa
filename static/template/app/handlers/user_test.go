@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/app/handlers"
 	"github.com/abibby/salusa/static/template/app/models/factories"
 	"github.com/abibby/salusa/static/template/test"
@@ -12,8 +14,9 @@ import (
 )
 
 func TestUser(t *testing.T) {
+	app.Kernel = kernel.New()
 	test.Run(t, "create user", func(t *testing.T, tx *sqlx.Tx) {
-		resp, err := handlers.CreateUser(&handlers.CreateUserRequest{
+		resp, err := handlers.CreateUser.Test(&handlers.CreateUserRequest{
 			Username: "name",
 			Password: []byte("word"),
 			Tx:       tx,
@@ -29,7 +32,7 @@ func TestUser(t *testing.T) {
 	test.Run(t, "get user", func(t *testing.T, tx *sqlx.Tx) {
 		u := factories.UserFactory.Create(tx)
 
-		resp, err := handlers.GetUser(&handlers.GetUserRequest{
+		resp, err := handlers.GetUser.Test(&handlers.GetUserRequest{
 			User: u,
 		})
 
