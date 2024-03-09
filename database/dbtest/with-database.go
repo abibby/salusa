@@ -1,9 +1,6 @@
 package dbtest
 
 import (
-	"context"
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
@@ -35,14 +32,14 @@ func run[T testing.TB](r *Runner, t T, name string, cb func(t T, tx *sqlx.Tx)) b
 	if r.db == nil {
 		r.db, err = r.open()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to open database: %v", err)
-			t.FailNow()
+			t.Errorf("failed to open database: %v", err)
+			return false
 		}
 	}
-	tx, err := r.db.BeginTxx(context.Background(), nil)
+	tx, err := r.db.Beginx()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to begin transaction: %v", err)
-		t.FailNow()
+		t.Errorf("failed to begin transaction: %v", err)
+		return false
 	}
 
 	var tAny any = t
@@ -52,8 +49,8 @@ func run[T testing.TB](r *Runner, t T, name string, cb func(t T, tx *sqlx.Tx)) b
 
 	err = tx.Rollback()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to rollback transaction: %v", err)
-		t.FailNow()
+		t.Errorf("failed to rollback transaction: %v", err)
+		return false
 	}
 	return result
 }

@@ -35,7 +35,7 @@ type CreateUaerResponse struct {
 	User *models.User `json:"user"`
 }
 
-var CreateUser = request.Handler(func(r *CreateUserRequest) (*GetUaerResponse, error) {
+var CreateUser = request.Handler(func(r *CreateUserRequest) (*CreateUaerResponse, error) {
 	err := kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ var CreateUser = request.Handler(func(r *CreateUserRequest) (*GetUaerResponse, e
 		return nil, err
 	}
 
-	return &GetUaerResponse{
+	return &CreateUaerResponse{
 		User: u,
 	}, nil
 })
