@@ -2,9 +2,9 @@ package request
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
-	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
 )
 
@@ -23,10 +23,10 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	var req TRequest
 	err := Run(r, &req)
 	if validationErr, ok := err.(ValidationError); ok {
-		respond(w, r, errorResponse(validationErr, http.StatusUnprocessableEntity, r))
+		h.respond(w, r, errorResponse(validationErr, http.StatusUnprocessableEntity, r))
 		return
 	} else if err != nil {
-		respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
+		h.respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
 		return
 	}
 
@@ -37,9 +37,9 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	err = h.dp.Fill(ctx, &req)
 	if err != nil {
 		if responder, ok := getResponder(err); ok {
-			respond(w, r, responder)
+			h.respond(w, r, responder)
 		} else {
-			respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
+			h.respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
 		}
 		return
 	}
@@ -47,19 +47,19 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	resp, err := h.handler(&req)
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
-			respond(w, r, responder)
+			h.respond(w, r, responder)
 		} else {
-			respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
+			h.respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
 		}
 		return
 	}
 
 	var anyResp any = resp
 	if responder, ok := anyResp.(Responder); ok {
-		respond(w, r, responder)
+		h.respond(w, r, responder)
 		return
 	}
-	respond(w, r, NewJSONResponse(resp))
+	h.respond(w, r, NewJSONResponse(resp))
 }
 func (h *RequestHandler[TRequest, TResponse]) WithDependencyProvider(dp *di.DependencyProvider) {
 	h.dp = dp
@@ -77,9 +77,13 @@ func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, err
 	}
 }
 
-func respond(w http.ResponseWriter, req *http.Request, r Responder) {
+func (h *RequestHandler[TRequest, TResponse]) respond(w http.ResponseWriter, req *http.Request, r Responder) {
 	err := r.Respond(w, req)
 	if err != nil {
-		clog.Use(req.Context()).Error("request failed", "error", err)
+		logger, err := di.Resolve[*slog.Logger](req.Context(), h.dp)
+		if err != nil {
+			logger = slog.Default()
+		}
+		logger.Error("request failed", "error", err)
 	}
 }

@@ -35,9 +35,7 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 
 func (k *Kernel) RunServices(ctx context.Context) error {
 	for _, s := range k.services {
-		ctx := clog.Update(ctx, func(l *slog.Logger) *slog.Logger {
-			return l.With("service", s.Name())
-		})
+		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
 			for {
 				err := s.Run(ctx, k)

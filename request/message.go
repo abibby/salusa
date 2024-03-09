@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
-
-	"github.com/abibby/salusa/clog"
 )
 
 type MessageOptions struct {
@@ -53,7 +51,7 @@ func init() {
 	}
 }
 
-func getMessage(ctx context.Context, ruleName string, options *MessageOptions) string {
+func getMessage(ctx context.Context, ruleName string, options *MessageOptions) (string, error) {
 	defaultMessage := func() string {
 		if len(options.Arguments) == 0 {
 			return ruleName
@@ -62,7 +60,7 @@ func getMessage(ctx context.Context, ruleName string, options *MessageOptions) s
 	}
 	message, ok := messages[ruleName]
 	if !ok {
-		return defaultMessage()
+		return defaultMessage(), nil
 	}
 
 	messageTemplate := ""
@@ -78,14 +76,12 @@ func getMessage(ctx context.Context, ruleName string, options *MessageOptions) s
 
 	t, err := template.New(ruleName).Parse(messageTemplate)
 	if err != nil {
-		clog.Use(ctx).Error("failed to parse template", "error", err)
-		return defaultMessage()
+		return defaultMessage(), fmt.Errorf("failed to parse template: %w", err)
 	}
 	buff := &bytes.Buffer{}
 	err = t.Execute(buff, options)
 	if err != nil {
-		clog.Use(ctx).Error("failed to execute template", "error", err)
-		return defaultMessage()
+		return defaultMessage(), fmt.Errorf("failed to execute template: %w", err)
 	}
-	return buff.String()
+	return buff.String(), nil
 }

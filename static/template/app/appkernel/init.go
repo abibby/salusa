@@ -29,7 +29,7 @@ func Init() {
 				Schedule("* * * * *", &events.LogEvent{Message: "cron event"}),
 		),
 		kernel.Listeners(
-			kernel.NewListener(jobs.LogJob),
+			kernel.NewListener[*jobs.LogJob](),
 		),
 		kernel.InitRoutes(routes.InitRoutes),
 	)
