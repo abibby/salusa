@@ -32,4 +32,12 @@ func TestMiddleware(t *testing.T) {
 	)
 
 	assert.Equal(t, 1, runs)
+
+	t.Run("tx commits", func(t *testing.T) {
+		t.Fail()
+	})
+
+	t.Run("tx rolls back", func(t *testing.T) {
+		t.Fail()
+	})
 }

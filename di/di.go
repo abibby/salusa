@@ -24,13 +24,10 @@ var (
 var (
 	ErrInvalidDependencyFactory = errors.New("dependency factories must match the type di.DependencyFactory")
 	ErrNotRegistered            = errors.New("dependency not registered")
+	ErrFillParameters           = errors.New("invalid fill parameters")
 )
 
 var defaultProvider = NewDependencyProvider()
-
-func SetDefaultProvider(dp *DependencyProvider) {
-	defaultProvider = dp
-}
 
 func NewDependencyProvider() *DependencyProvider {
 	return &DependencyProvider{
@@ -54,6 +51,7 @@ func RegisterLazySingleton[T any](factory func() T) {
 	initialized := false
 	defaultProvider.Register(func(ctx context.Context, tag string) (T, error) {
 		if !initialized {
+			initialized = true
 			v = factory()
 		}
 		return v, nil
@@ -86,13 +84,20 @@ func (d *DependencyProvider) Register(factory any) {
 	}
 }
 
-func Fill(ctx context.Context, v any, options ...any) error {
-	return defaultProvider.Fill(ctx, v, options...)
+func Fill(ctx context.Context, v any) error {
+	return defaultProvider.Fill(ctx, v)
 }
-func (dp *DependencyProvider) Fill(ctx context.Context, v any, options ...any) error {
-	return dp.fill(ctx, reflect.ValueOf(v), options...)
+func (dp *DependencyProvider) Fill(ctx context.Context, v any) error {
+	return dp.fill(ctx, reflect.ValueOf(v))
 }
-func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, options ...any) error {
+func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value) error {
+	if v.Kind() != reflect.Pointer {
+		return fmt.Errorf("di: Fill(non-pointer "+v.Type().Name()+"): %w", ErrFillParameters)
+	}
+	if v.Elem().Kind() != reflect.Struct {
+		return fmt.Errorf("di: Fill(non-struct "+v.Type().Name()+"): %w", ErrFillParameters)
+	}
+
 	return helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
 		tag, ok := sf.Tag.Lookup("inject")
 		if !ok {
@@ -107,15 +112,6 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, options
 			return fmt.Errorf("failed to fill: %w", err)
 		}
 
-		if sf.Type.Kind() == reflect.Ptr && sf.Type.Elem().Kind() == reflect.Struct {
-			v := reflect.New(sf.Type.Elem())
-			err := dp.fill(ctx, v, options...)
-			if err != nil {
-				return err
-			}
-			fv.Set(v)
-			return nil
-		}
 		return fmt.Errorf("unable to fill field %s: %w", sf.Name, ErrNotRegistered)
 	})
 }
@@ -125,12 +121,12 @@ func Resolve[T any](ctx context.Context) (T, error) {
 }
 
 func ResolveProvider[T any](dp *DependencyProvider, ctx context.Context) (T, error) {
-	v, ok := dp.resolve(getType[T](), ctx, "")
-	if v == nil {
-		var zero T
-		return zero, ok
+	var result T
+	v, err := dp.resolve(getType[T](), ctx, "")
+	if v != nil {
+		result = v.(T)
 	}
-	return v.(T), ok
+	return result, err
 }
 func (dp *DependencyProvider) resolve(t reflect.Type, ctx context.Context, tag string) (any, error) {
 	if t == contextType {
@@ -138,10 +134,20 @@ func (dp *DependencyProvider) resolve(t reflect.Type, ctx context.Context, tag s
 	}
 
 	f, ok := dp.factories[t]
-	if !ok {
+	if ok {
+		return f(ctx, tag)
+	}
+
+	if t.Kind() != reflect.Pointer || t.Elem().Kind() != reflect.Struct {
 		return nil, ErrNotRegistered
 	}
-	return f(ctx, tag)
+	v := reflect.New(t.Elem())
+	err := dp.fill(ctx, v)
+	if err != nil {
+		return nil, err
+	}
+
+	return v.Interface(), nil
 }
 
 func getType[T any]() reflect.Type {

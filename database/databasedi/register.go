@@ -17,7 +17,7 @@ func Register(db *sqlx.DB) {
 	di.Register(func(ctx context.Context, tag string) (*sqlx.Tx, error) {
 		tx := ctx.Value(txKey)
 		if tx == nil {
-			return nil, fmt.Errorf("transaction not in context")
+			tx = &txWrapper{}
 		}
 		wrapper := tx.(*txWrapper)
 		if wrapper.tx == nil {
