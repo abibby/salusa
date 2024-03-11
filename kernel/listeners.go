@@ -72,6 +72,8 @@ func NewListener[H JobHandler[E], E event.Event]() *Listener {
 }
 
 func (k *Kernel) RunListeners(ctx context.Context) {
+	logger := k.Logger(ctx)
+
 	events := map[event.EventType]reflect.Type{}
 	for eventType, runners := range k.listeners {
 		events[eventType] = runners[0].EventType()
@@ -80,12 +82,12 @@ func (k *Kernel) RunListeners(ctx context.Context) {
 	for {
 		e, err := k.queue.Pop(events)
 		if err != nil {
-			slog.Warn("could not pop event off queue", slog.Any("error", err))
+			logger.Warn("could not pop event off queue", slog.Any("error", err))
 			continue
 		}
 		runners, ok := k.listeners[e.Type()]
 		if !ok {
-			slog.Warn("no listeners for event with matching type", slog.Any("type", e.Type()))
+			logger.Warn("no listeners for event with matching type", slog.Any("type", e.Type()))
 			continue
 		}
 
@@ -94,11 +96,11 @@ func (k *Kernel) RunListeners(ctx context.Context) {
 				go func(job runner) {
 					err := job.Run(e.Context(ctx), k.DependencyProvider())
 					if err != nil {
-						slog.Warn("job failed", slog.Any("error", err))
+						logger.Warn("job failed", slog.Any("error", err))
 					}
 				}(r)
 			} else {
-				slog.Warn("mismatched event and type, there may be a conflict")
+				logger.Warn("mismatched event and type, there may be a conflict")
 			}
 		}
 

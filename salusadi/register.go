@@ -7,6 +7,6 @@ import (
 )
 
 func Register(dp *di.DependencyProvider) {
-	clog.Register(dp)
+	clog.Register(dp, nil)
 	request.RegisterDI(dp)
 }

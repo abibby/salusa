@@ -14,12 +14,13 @@ const (
 	withKey key = iota
 )
 
-func Register(dp *di.DependencyProvider) {
+func Register(dp *di.DependencyProvider, h slog.Handler) {
 	di.Register(dp, func(ctx context.Context, tag string) (*slog.Logger, error) {
+		if h == nil {
+			h = slog.NewTextHandler(os.Stderr, nil)
+		}
 		logger := slog.New(
-			slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-				AddSource: true,
-			}),
+			h,
 		)
 
 		with := ctx.Value(withKey)
@@ -51,18 +52,3 @@ func get(ctx context.Context) []any {
 	}
 	return with
 }
-
-// func Init(ctx context.Context, logger *slog.Logger) context.Context {
-// 	return context.WithValue(ctx, loggerKey, logger)
-// }
-// func Update(ctx context.Context, cb func(l *slog.Logger) *slog.Logger) context.Context {
-// 	return context.WithValue(ctx, loggerKey, cb(Use(ctx)))
-// }
-
-// func Use(ctx context.Context) *slog.Logger {
-// 	logger, ok := ctx.Value(loggerKey).(*slog.Logger)
-// 	if !ok {
-// 		logger = slog.Default()
-// 	}
-// 	return logger
-// }

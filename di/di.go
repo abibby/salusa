@@ -91,6 +91,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value) error {
 	if v.Kind() != reflect.Pointer {
 		return fmt.Errorf("di: Fill(non-pointer "+v.Type().Name()+"): %w", ErrFillParameters)
 	}
+
 	if v.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("di: Fill(non-struct "+v.Type().Name()+"): %w", ErrFillParameters)
 	}
