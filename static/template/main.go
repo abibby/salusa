@@ -10,17 +10,17 @@ import (
 
 func main() {
 	ctx := context.Background()
-	logger := app.Kernel.Logger(ctx)
 	appkernel.Init()
+
 	err := app.Kernel.Bootstrap(ctx)
 	if err != nil {
-		logger.Error("error bootstrapping", "error", err)
+		app.Kernel.Logger(ctx).Error("error bootstrapping", "error", err)
 		os.Exit(1)
 	}
 
 	err = app.Kernel.Run(ctx)
 	if err != nil {
-		logger.Error("error running", "error", err)
+		app.Kernel.Logger(ctx).Error("error running", "error", err)
 		os.Exit(1)
 	}
 }
