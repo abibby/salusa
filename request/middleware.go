@@ -36,17 +36,3 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 		})
 	}
 }
-
-type ResponseWriter struct {
-	http.ResponseWriter
-	Status int
-}
-
-func (w *ResponseWriter) WriteHeader(statusCode int) {
-	w.Status = statusCode
-	w.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (w *ResponseWriter) OK() bool {
-	return w.Status >= 200 && w.Status < 400
-}

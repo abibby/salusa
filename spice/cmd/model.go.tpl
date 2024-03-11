@@ -5,7 +5,6 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/database/model/modeldi"
 )
 
 //go:generate spice generate:migration

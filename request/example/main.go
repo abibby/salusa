@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
@@ -76,9 +77,7 @@ func main() {
 		panic(err)
 	}
 
-	di.RegisterSingleton(DP, func() *sqlx.DB {
-		return db
-	})
+	databasedi.Register(DP, db)
 
 	r.Get("/foo", list)
 	r.Get("/foo/create", add)
