@@ -12,15 +12,33 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type GetUserRequest struct {
-	User *models.User `inject:"user_id"`
+type ListUserRequest struct {
+	Tx  *sqlx.Tx        `inject:""`
+	Ctx context.Context `inject:""`
 }
-type GetUaerResponse struct {
+type ListUserResponse struct {
+	Users []*models.User `json:"users"`
+}
+
+var UserList = request.Handler(func(r *ListUserRequest) (*ListUserResponse, error) {
+	users, err := models.UserQuery(r.Ctx).Get(r.Tx)
+	if err != nil {
+		return nil, err
+	}
+	return &ListUserResponse{
+		Users: users,
+	}, nil
+})
+
+type GetUserRequest struct {
+	User *models.User `inject:"id"`
+}
+type GetUserResponse struct {
 	User *models.User `json:"user"`
 }
 
-var GetUser = request.Handler(func(r *GetUserRequest) (*GetUaerResponse, error) {
-	return &GetUaerResponse{
+var UserGet = request.Handler(func(r *GetUserRequest) (*GetUserResponse, error) {
+	return &GetUserResponse{
 		User: r.User,
 	}, nil
 })
@@ -31,27 +49,27 @@ type CreateUserRequest struct {
 	Tx       *sqlx.Tx        `inject:""`
 	Ctx      context.Context `inject:""`
 }
-type CreateUaerResponse struct {
+type CreateUserResponse struct {
 	User *models.User `json:"user"`
 }
 
-var CreateUser = request.Handler(func(r *CreateUserRequest) (*CreateUaerResponse, error) {
-	err := app.Kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
-	if err != nil {
-		return nil, err
-	}
-
+var UserCreate = request.Handler(func(r *CreateUserRequest) (*CreateUserResponse, error) {
 	u := &models.User{
 		Username: r.Username,
 		Password: r.Password,
 	}
 
-	err = model.SaveContext(r.Ctx, r.Tx, u)
+	err := model.SaveContext(r.Ctx, r.Tx, u)
 	if err != nil {
 		return nil, err
 	}
 
-	return &CreateUaerResponse{
+	err = app.Kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreateUserResponse{
 		User: u,
 	}, nil
 })

@@ -10,6 +10,7 @@ import (
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/request"
+	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -28,7 +29,10 @@ func Register[T model.Model](dp *di.DependencyProvider) {
 			return zero, fmt.Errorf("count not find db: %w", err)
 		}
 
-		v := req.URL.Query().Get(tag)
+		v, ok := getValue(req, tag)
+		if !ok {
+			return zero, fmt.Errorf("could not fetch model %s not in request", tag)
+		}
 
 		u, err := builder.From[T]().WithContext(ctx).Find(db, v)
 		if err != nil {
@@ -39,4 +43,17 @@ func Register[T model.Model](dp *di.DependencyProvider) {
 		}
 		return u, nil
 	})
+}
+
+func getValue(r *http.Request, tag string) (string, bool) {
+	if r.URL.Query().Has(tag) {
+		return r.URL.Query().Get(tag), true
+	}
+
+	vars := mux.Vars(r)
+	v, ok := vars[tag]
+	if ok {
+		return v, true
+	}
+	return "", false
 }

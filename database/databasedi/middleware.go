@@ -6,18 +6,6 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/router"
-	"github.com/jmoiron/sqlx"
-)
-
-type txWrapper struct {
-	tx *sqlx.Tx
-}
-
-type contextKey uint8
-
-const (
-	txKey contextKey = iota
-	dbKey
 )
 
 type ResponseWriter struct {
@@ -35,42 +23,29 @@ func (w *ResponseWriter) OK() bool {
 }
 
 var (
-	ErrNoTx                = fmt.Errorf("no transaction set")
-	ErrNotModel            = fmt.Errorf("propery must be of type models.Model")
-	ErrCompositePrimaryKey = fmt.Errorf("can't use models with composite primary keys")
+	ErrRequestFailed = fmt.Errorf("request failed")
 )
 
 func Middleware() router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			wrapper := &txWrapper{}
+			ctx := r.Context()
+			ctx, cancel := context.WithCancelCause(ctx)
 
 			defer func() {
 				if r := recover(); r != nil {
-					if wrapper.tx != nil {
-						wrapper.tx.Rollback()
-					}
+					cancel(ErrRequestFailed)
 					panic(r)
 				}
 			}()
+
 			rw := &ResponseWriter{ResponseWriter: w, Status: 200}
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, txKey, wrapper)
 			next.ServeHTTP(rw, r.WithContext(ctx))
 
-			if wrapper.tx != nil {
-				tx := wrapper.tx
-				if rw.OK() {
-					err := tx.Commit()
-					if err != nil {
-						panic(err)
-					}
-				} else {
-					err := tx.Rollback()
-					if err != nil {
-						panic(err)
-					}
-				}
+			if !rw.OK() {
+				cancel(ErrRequestFailed)
+			} else {
+				cancel(nil)
 			}
 		})
 	}

@@ -13,8 +13,9 @@ func InitRoutes(r *router.Router) {
 	r.Use(request.HandleErrors())
 	r.Use(databasedi.Middleware())
 
-	r.Get("/user", handlers.GetUser)
-	r.Post("/user", handlers.CreateUser)
+	r.Get("/user", handlers.UserList)
+	r.Get("/user/{id}", handlers.UserGet)
+	r.Post("/user", handlers.UserCreate)
 
 	r.Handle("/", fileserver.WithFallback(resources.Content, "dist", "index.html", nil))
 }

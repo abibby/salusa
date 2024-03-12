@@ -38,6 +38,7 @@ func (r *JSONResponse) Respond(w http.ResponseWriter, _ *http.Request) error {
 	for k, v := range r.headers {
 		w.Header().Set(k, v)
 	}
-
-	return json.NewEncoder(w).Encode(r.data)
+	e := json.NewEncoder(w)
+	e.SetIndent("", "    ")
+	return e.Encode(r.data)
 }
