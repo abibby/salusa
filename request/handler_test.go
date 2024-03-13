@@ -30,7 +30,10 @@ func ExampleHandler_Input() {
 	)
 
 	fmt.Println(rw.Body)
-	// Output: {"sum":15}
+	// Output:
+	// {
+	//     "sum": 15
+	// }
 }
 
 func ExampleHandler_Error() {
