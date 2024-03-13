@@ -3,10 +3,7 @@ package di
 import (
 	"context"
 	"errors"
-	"fmt"
 	"reflect"
-
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 type DependencyProvider struct {
@@ -84,35 +81,6 @@ func (d *DependencyProvider) Register(factory any) {
 		return out[0].Interface(), err
 	}
 }
-func (dp *DependencyProvider) Fill(ctx context.Context, v any) error {
-	return dp.fill(ctx, reflect.ValueOf(v))
-}
-func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value) error {
-	if v.Kind() != reflect.Pointer {
-		return fmt.Errorf("di: Fill(non-pointer "+v.Type().Name()+"): %w", ErrFillParameters)
-	}
-
-	if v.Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("di: Fill(non-struct "+v.Type().Name()+"): %w", ErrFillParameters)
-	}
-
-	return helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
-		tag, ok := sf.Tag.Lookup("inject")
-		if !ok {
-			return nil
-		}
-
-		v, err := dp.resolve(ctx, sf.Type, tag)
-		if err == nil {
-			fv.Set(reflect.ValueOf(v))
-			return nil
-		} else if !errors.Is(err, ErrNotRegistered) {
-			return fmt.Errorf("failed to fill: %w", err)
-		}
-
-		return fmt.Errorf("unable to fill field %s: %w", sf.Name, ErrNotRegistered)
-	})
-}
 
 func Resolve[T any](ctx context.Context, dp *DependencyProvider) (T, error) {
 	var result T
@@ -140,7 +108,7 @@ func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag s
 		return nil, ErrNotRegistered
 	}
 	v := reflect.New(t.Elem())
-	err := dp.fill(ctx, v)
+	err := dp.fill(ctx, v, nil)
 	if err != nil {
 		return nil, err
 	}

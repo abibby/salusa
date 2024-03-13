@@ -12,7 +12,7 @@ import (
 
 func TestInjectRequest(t *testing.T) {
 	type Request struct {
-		Request *http.Request `inject:""`
+		Request *http.Request
 	}
 	dp := di.NewDependencyProvider()
 	request.RegisterDI(dp)
@@ -32,7 +32,7 @@ func TestInjectRequest(t *testing.T) {
 
 func TestInjectResponseWriter(t *testing.T) {
 	type Request struct {
-		ResponseWriter http.ResponseWriter `inject:""`
+		ResponseWriter http.ResponseWriter
 	}
 
 	dp := di.NewDependencyProvider()

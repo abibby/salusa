@@ -34,7 +34,11 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	ctx = context.WithValue(ctx, requestKey, r)
 	ctx = context.WithValue(ctx, responseKey, w)
 
-	err = h.dp.Fill(ctx, &req)
+	err = h.dp.Fill(ctx, &req,
+		di.AutoResolve[context.Context](),
+		di.AutoResolve[*http.Request](),
+		di.AutoResolve[http.ResponseWriter](),
+	)
 	if err != nil {
 		if responder, ok := getResponder(err); ok {
 			h.respond(w, r, responder)
