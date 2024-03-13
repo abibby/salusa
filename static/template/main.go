@@ -2,26 +2,25 @@ package main
 
 import (
 	"context"
-	"log/slog"
 	"os"
 
-	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/static/template/app"
+	"github.com/abibby/salusa/static/template/app/appkernel"
 )
 
 func main() {
-	ctx := clog.Init(context.Background(), slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		AddSource: true,
-	})))
+	ctx := context.Background()
+	appkernel.Init()
+
 	err := app.Kernel.Bootstrap(ctx)
 	if err != nil {
-		clog.Use(ctx).Error("error bootstrapping", "error", err)
+		app.Kernel.Logger(ctx).Error("error bootstrapping", "error", err)
 		os.Exit(1)
 	}
 
 	err = app.Kernel.Run(ctx)
 	if err != nil {
-		clog.Use(ctx).Error("error running", "error", err)
+		app.Kernel.Logger(ctx).Error("error running", "error", err)
 		os.Exit(1)
 	}
 }

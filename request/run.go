@@ -15,16 +15,11 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	decoder.IgnoreUnknownKeys(true)
 	decoder.SetAliasTag("query")
 
-	keys := []string{}
-
 	err := decoder.Decode(requestStruct, requestHttp.URL.Query())
 	if multiErr, ok := err.(schema.MultiError); ok {
 		return fromSchemaMultiError(multiErr)
 	} else if err != nil {
 		return fmt.Errorf("could decode query string: %w", err)
-	}
-	for k := range requestHttp.URL.Query() {
-		keys = append(keys, k)
 	}
 
 	if requestHttp.Body != http.NoBody {
@@ -45,13 +40,9 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 		if err != nil {
 			return fmt.Errorf("could decode body: %w", err)
 		}
-
-		for k := range m {
-			keys = append(keys, k)
-		}
 	}
 
-	err = Validate(requestHttp, keys, requestStruct)
+	err = Validate(requestHttp, requestStruct)
 	if err != nil {
 		return err
 	}

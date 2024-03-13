@@ -13,7 +13,8 @@ type ValidationError map[string][]string
 var _ error = ValidationError{}
 
 func (e ValidationError) Error() string {
-	return "validation error"
+	// return "validation error"
+	return fmt.Sprintf("validation error (%d)", len(e))
 }
 
 func (e ValidationError) HasErrors() bool {

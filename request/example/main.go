@@ -5,15 +5,19 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+var DP = di.NewDependencyProvider()
 
 type Foo struct {
 	model.BaseModel
@@ -22,13 +26,11 @@ type Foo struct {
 }
 
 type ListRequest struct {
-	Request *http.Request
+	Tx *sqlx.Tx `inject:"r"`
 }
 
 var list = request.Handler(func(r *ListRequest) ([]*Foo, error) {
-	tx := request.UseTx(r.Request)
-
-	foos, err := builder.From[*Foo]().Get(tx)
+	foos, err := builder.From[*Foo]().Get(r.Tx)
 	if err != nil {
 		return nil, err
 	}
@@ -36,14 +38,13 @@ var list = request.Handler(func(r *ListRequest) ([]*Foo, error) {
 })
 
 type AddRequest struct {
-	Request *http.Request
-	Name    string `query:"name"`
+	Name string   `query:"name"`
+	Tx   *sqlx.Tx `inject:""`
 }
 
 var add = request.Handler(func(r *AddRequest) (*Foo, error) {
-	tx := request.UseTx(r.Request)
 	foo := &Foo{Name: r.Name}
-	err := model.Save(tx, foo)
+	err := model.Save(r.Tx, foo)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func main() {
 		panic(err)
 	}
 
-	r.Use(request.WithDB(db))
+	databasedi.Register(DP, db)
 
 	r.Get("/foo", list)
 	r.Get("/foo/create", add)

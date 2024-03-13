@@ -1,6 +1,7 @@
 package request
 
 import (
+	"errors"
 	"io"
 	"net/http"
 )
@@ -44,4 +45,17 @@ func (r *Response) Respond(w http.ResponseWriter, _ *http.Request) error {
 
 	_, err := io.Copy(w, r.body)
 	return err
+}
+
+func getResponder(err error) (Responder, bool) {
+	var responder Responder
+	var ok bool
+	for err != nil {
+		responder, ok = err.(Responder)
+		if ok {
+			return responder, true
+		}
+		err = errors.Unwrap(err)
+	}
+	return nil, false
 }

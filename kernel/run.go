@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 
 	"github.com/abibby/salusa/clog"
@@ -21,14 +22,20 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 	slog.Info(fmt.Sprintf("http://localhost:%d", k.port))
 
 	handler := k.rootHandler()
-	return http.ListenAndServe(fmt.Sprintf(":%d", k.port), handler)
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", k.port),
+		Handler: handler,
+		BaseContext: func(l net.Listener) context.Context {
+			return ctx
+		},
+	}
+	return server.ListenAndServe()
 }
 
 func (k *Kernel) RunServices(ctx context.Context) error {
 	for _, s := range k.services {
-		ctx := clog.Update(ctx, func(l *slog.Logger) *slog.Logger {
-			return l.With("service", s.Name())
-		})
+		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
 			for {
 				err := s.Run(ctx, k)

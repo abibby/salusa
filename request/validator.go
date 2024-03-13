@@ -14,7 +14,7 @@ type Validator interface {
 	Valid() error
 }
 
-func Validate(request *http.Request, keys []string, v any) error {
+func Validate(request *http.Request, v any) error {
 	ctx := context.Background()
 	if request != nil {
 		ctx = request.Context()
@@ -31,9 +31,12 @@ func Validate(request *http.Request, keys []string, v any) error {
 		ft := t.Field(i)
 		fv := s.Field(i)
 		name := getName(ft)
-		err := validateField(ctx, name, request, keys, ft, fv)
+		newVErr, err := validateField(ctx, name, request, ft, fv)
 		if err != nil {
-			vErr.Merge(err)
+			return err
+		}
+		if newVErr != nil {
+			vErr.Merge(newVErr)
 		}
 	}
 
@@ -44,10 +47,10 @@ func Validate(request *http.Request, keys []string, v any) error {
 	return nil
 }
 
-func validateField(ctx context.Context, attribute string, request *http.Request, keys []string, ft reflect.StructField, fv reflect.Value) ValidationError {
+func validateField(ctx context.Context, attribute string, request *http.Request, ft reflect.StructField, fv reflect.Value) (ValidationError, error) {
 	validate, ok := ft.Tag.Lookup("validate")
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	vErr := ValidationError{}
@@ -61,42 +64,58 @@ func validateField(ctx context.Context, attribute string, request *http.Request,
 
 	rulesStr := strings.Split(validate, "|")
 	for _, ruleStr := range rulesStr {
-		ruleName, argsStr := split(ruleStr, ":")
-		args := filterZeros(strings.Split(argsStr, ","))
-		hasKey := includes(keys, attribute)
-		if !hasKey {
-			if ruleName == "required" {
-				vErr.AddError(attribute, getMessage(ctx, ruleName, &MessageOptions{
-					Attribute: attribute,
-					Value:     fv.Interface(),
-					Arguments: args,
-				}))
-			} else {
-				return nil
-			}
-		} else {
-			rule, ok := rules.GetRule(ruleName)
-			if !ok {
-				continue
-			}
-
-			valid := rule(&rules.ValidationOptions{
-				Value:     fv.Interface(),
-				Arguments: args,
-				Request:   request,
-				Name:      attribute,
-			})
-			if !valid {
-				vErr.AddError(attribute, getMessage(ctx, ruleName, &MessageOptions{
-					Attribute: attribute,
-					Value:     fv.Interface(),
-					Arguments: args,
-				}))
-			}
-
+		err := validateRule(ctx, attribute, request, ft, fv, ruleStr, vErr)
+		if err != nil {
+			return nil, err
 		}
 	}
-	return vErr
+	return vErr, nil
+}
+
+func validateRule(ctx context.Context, attribute string, request *http.Request, ft reflect.StructField, fv reflect.Value, ruleStr string, vErr ValidationError) error {
+	ruleName, argsStr := split(ruleStr, ":")
+	args := filterZeros(strings.Split(argsStr, ","))
+
+	if ruleName == "required" {
+		if !fv.IsZero() {
+			return nil
+		}
+		msg, err := getMessage(ctx, ruleName, &MessageOptions{
+			Attribute: attribute,
+			Value:     fv.Interface(),
+			Arguments: args,
+		})
+		if err != nil {
+			return err
+		}
+		vErr.AddError(attribute, msg)
+		return nil
+	}
+
+	rule, ok := rules.GetRule(ruleName)
+	if !ok {
+		return nil
+	}
+
+	valid := rule(&rules.ValidationOptions{
+		Value:     fv.Interface(),
+		Arguments: args,
+		Request:   request,
+		Name:      attribute,
+	})
+	if !valid {
+		msg, err := getMessage(ctx, ruleName, &MessageOptions{
+			Attribute: attribute,
+			Value:     fv.Interface(),
+			Arguments: args,
+		})
+		if err != nil {
+			return err
+		}
+		vErr.AddError(attribute, msg)
+	}
+
+	return nil
 }
 
 func getName(f reflect.StructField) string {

@@ -1,30 +1,34 @@
-package database
+package test
 
 import (
 	"context"
+	"log"
 
-	"github.com/abibby/salusa/database/databasedi"
+	"github.com/abibby/salusa/database/dbtest"
 	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/abibby/salusa/static/template/migrations"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )
 
-func Init(ctx context.Context) error {
+var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 	sqlite.UseSQLite()
+
 	db, err := sqlx.Open("sqlite", config.DBPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = migrations.Use().Up(ctx, db)
+	err = migrations.Use().Up(context.Background(), db)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	databasedi.Register(app.Kernel.DependencyProvider(), db)
+	log.Print("db loaded")
 
-	return nil
-}
+	return db, nil
+})
+
+var Run = runner.Run
+var RunBenchmark = runner.RunBenchmark

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/router"
 )
@@ -39,11 +40,15 @@ func RootHandler(rootHandler func() http.Handler) KernelOption {
 }
 
 func InitRoutes(cb func(r *router.Router)) KernelOption {
-	return RootHandler(func() http.Handler {
-		r := router.New()
-		cb(r)
-		return r
-	})
+	return func(k *Kernel) *Kernel {
+		k.rootHandler = func() http.Handler {
+			r := router.New()
+			r.WithDependencyProvider(k.dp)
+			cb(r)
+			return r
+		}
+		return k
+	}
 }
 
 func Services(services ...Service) KernelOption {
@@ -63,6 +68,13 @@ func Listeners(listeners ...*Listener) KernelOption {
 			}
 			k.listeners[l.eventType] = append(jobs, l.runner)
 		}
+		return k
+	}
+}
+
+func Providers(providers ...func(*di.DependencyProvider)) KernelOption {
+	return func(k *Kernel) *Kernel {
+		k.providers = providers
 		return k
 	}
 }
