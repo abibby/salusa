@@ -93,9 +93,10 @@ func TestRegister(t *testing.T) {
 		})
 	})
 
-	t.Run("struct", func(t *testing.T) {
+	t.Run("resolve fillable struct", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
+			di.Fillable
 			WithTag *Struct `inject:""`
 			NoTag   *Struct
 		}
@@ -186,6 +187,7 @@ func TestResolve(t *testing.T) {
 	t.Run("error in fill", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
+			di.Fillable
 			S *Struct `inject:""`
 		}
 		dp := di.NewDependencyProvider()

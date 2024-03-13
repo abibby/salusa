@@ -13,6 +13,7 @@ func TestFill(t *testing.T) {
 	t.Run("fill", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
+			di.Fillable
 			WithTag *Struct `inject:""`
 			NoTag   *Struct
 		}
@@ -32,9 +33,11 @@ func TestFill(t *testing.T) {
 	t.Run("deep", func(t *testing.T) {
 		type Struct struct{ V int }
 		type FillableB struct {
+			di.Fillable
 			Struct *Struct `inject:""`
 		}
 		type FillableA struct {
+			di.Fillable
 			B *FillableB `inject:""`
 		}
 		dp := di.NewDependencyProvider()
@@ -54,6 +57,7 @@ func TestFill(t *testing.T) {
 			Value string
 		}
 		type Fillable struct {
+			di.Fillable
 			WithTag *Struct `inject:"with tag"`
 			Empty   *Struct `inject:""`
 		}
@@ -73,6 +77,7 @@ func TestFill(t *testing.T) {
 
 	t.Run("not registered", func(t *testing.T) {
 		type Fillable struct {
+			di.Fillable
 			Miss *int `inject:""`
 		}
 
@@ -83,7 +88,9 @@ func TestFill(t *testing.T) {
 	})
 
 	t.Run("non pointer", func(t *testing.T) {
-		type Fillable struct{}
+		type Fillable struct {
+			di.Fillable
+		}
 
 		dp := di.NewDependencyProvider()
 		f := Fillable{}
@@ -103,6 +110,7 @@ func TestFill(t *testing.T) {
 	t.Run("resolve error", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
+			di.Fillable
 			S *Struct `inject:""`
 		}
 
@@ -123,6 +131,7 @@ func TestFill(t *testing.T) {
 		type StructA struct{ V int }
 		type StructB struct{ V int }
 		type Fillable struct {
+			di.Fillable
 			WithAutoResolve *StructA
 			NoTag           *StructB
 		}
