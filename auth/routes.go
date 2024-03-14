@@ -20,10 +20,10 @@ type LoginRequest struct {
 	Tx  *sqlx.Tx
 }
 type LoginResponse struct {
-	Token     string `json:"token"`
-	TokenType string `json:"token_type"`
-	Refresh   string `json:"token"`
-	ExpiresIn int    `json:"expires_in"`
+	AccessToken string `json:"token"`
+	TokenType   string `json:"token_type"`
+	Refresh     string `json:"refresh"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 var (
@@ -51,10 +51,11 @@ var Login = request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
 
 	expires := time.Hour
 
-	token, err := GenerateToken(
+	access, err := GenerateToken(
 		WithSubject(u.ID),
 		WithLifetime(expires),
 		WithIssuedAtTime(time.Now()),
+		WithClaim("type", "access"),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate token: %w", err)
@@ -63,15 +64,16 @@ var Login = request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
 		WithSubject(u.ID),
 		WithLifetime(time.Hour*24*30),
 		WithIssuedAtTime(time.Now()),
+		WithClaim("type", "refresh"),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate refresh: %w", err)
 	}
 
 	return &LoginResponse{
-		Token:     token,
-		TokenType: "Bearer",
-		Refresh:   refresh,
-		ExpiresIn: int(expires.Seconds()),
+		AccessToken: access,
+		TokenType:   "Bearer",
+		Refresh:     refresh,
+		ExpiresIn:   int(expires.Seconds()),
 	}, nil
 })

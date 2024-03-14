@@ -6,6 +6,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics#refresh_token_protection
+
 type TokenOptions func(claims jwt.MapClaims) jwt.MapClaims
 
 func GenerateToken(modifyClaims ...TokenOptions) (string, error) {
@@ -23,6 +25,8 @@ func GenerateToken(modifyClaims ...TokenOptions) (string, error) {
 func WithLifetime(duration time.Duration) TokenOptions {
 	return WithExpirationTime(time.Now().Add(duration))
 }
+
+// https://www.iana.org/assignments/jwt/jwt.xhtml
 
 // The "iss" (issuer) claim identifies the principal that issued the
 // JWT.  The processing of this claim is generally application specific.
