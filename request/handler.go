@@ -68,7 +68,7 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 func (h *RequestHandler[TRequest, TResponse]) WithDependencyProvider(dp *di.DependencyProvider) {
 	h.dp = dp
 }
-func (h *RequestHandler[TRequest, TResponse]) Test(r *TRequest) (TResponse, error) {
+func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {
 	return h.handler(r)
 }
 

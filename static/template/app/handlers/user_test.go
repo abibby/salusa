@@ -16,7 +16,7 @@ import (
 func TestUser(t *testing.T) {
 	app.Kernel = kernel.New()
 	test.Run(t, "create user", func(t *testing.T, tx *sqlx.Tx) {
-		resp, err := handlers.UserCreate.Test(&handlers.CreateUserRequest{
+		resp, err := handlers.UserCreate.Run(&handlers.CreateUserRequest{
 			Username: "name",
 			Password: []byte("word"),
 			Tx:       tx,
@@ -32,7 +32,7 @@ func TestUser(t *testing.T) {
 	test.Run(t, "get user", func(t *testing.T, tx *sqlx.Tx) {
 		u := factories.UserFactory.Create(tx)
 
-		resp, err := handlers.UserGet.Test(&handlers.GetUserRequest{
+		resp, err := handlers.UserGet.Run(&handlers.GetUserRequest{
 			User: u,
 		})
 

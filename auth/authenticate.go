@@ -15,10 +15,11 @@ var (
 )
 
 func authenticate(r *http.Request) (jwt.MapClaims, error) {
+	prefix := "Bearer "
 	authHeader := r.Header.Get("Authorization")
-	if !strings.HasPrefix(authHeader, "Bearer ") {
+	if !strings.HasPrefix(authHeader, prefix) {
 		return nil, ErrInvalidAuthorizationHeader
 	}
-	tokenStr := authHeader[7:]
+	tokenStr := authHeader[len(prefix):]
 	return Parse(tokenStr)
 }
