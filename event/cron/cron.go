@@ -2,6 +2,7 @@ package cron
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/abibby/salusa/event"
@@ -36,10 +37,16 @@ func (c *CronService) Run(ctx context.Context, k *kernel.Kernel) error {
 	runner := cron.New()
 	for spec, events := range c.events {
 		for _, e := range events {
-			runner.AddFunc(spec, func() {
+			_, err := runner.AddFunc(spec, func() {
 				e.SetTime(time.Now())
-				k.Dispatch(ctx, e)
+				err := k.Dispatch(ctx, e)
+				if err != nil {
+					k.Logger(ctx).Error("failed to dispatch event", slog.Any("error", err))
+				}
 			})
+			if err != nil {
+				k.Logger(ctx).Error("failed to start cron listener", slog.Any("error", err))
+			}
 		}
 	}
 	runner.Start()

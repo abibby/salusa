@@ -160,14 +160,14 @@ func split(s, sep string) (string, string) {
 	}
 }
 
-func includes[T comparable](haystack []T, needle T) bool {
-	for _, v := range haystack {
-		if v == needle {
-			return true
-		}
-	}
-	return false
-}
+//	func includes[T comparable](haystack []T, needle T) bool {
+//		for _, v := range haystack {
+//			if v == needle {
+//				return true
+//			}
+//		}
+//		return false
+//	}
 func filterZeros[T comparable](array []T) []T {
 	newArray := []T{}
 	var zero T

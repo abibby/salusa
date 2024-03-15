@@ -72,18 +72,22 @@ func TestHasMany_Load(t *testing.T) {
 
 func BenchmarkHasManyLoad(b *testing.B) {
 	test.RunBenchmark(b, "", func(t *testing.B, tx *sqlx.Tx) {
-		foos := make([]*test.Foo, 100)
-		for i := 0; i < 100; i++ {
-			f := &test.Foo{ID: i}
+		fooCount := 100
+		barPerFoo := 100
+		foos := make([]*test.Foo, fooCount)
+		for i := 0; i < fooCount; i++ {
+			f := &test.Foo{}
 			foos[i] = f
 			MustSave(tx, f)
-			for j := 0; j < 10; j++ {
-				MustSave(tx, &test.Bar{ID: i*100 + j, FooID: i})
+			for j := 0; j < barPerFoo; j++ {
+				MustSave(tx, &test.Bar{FooID: f.ID})
 			}
 		}
 
+		var err error
 		for i := 0; i < b.N; i++ {
-			builder.Load(tx, foos, "Bars")
+			err = builder.Load(tx, foos, "Bars")
+			assert.NoError(t, err)
 		}
 
 	})

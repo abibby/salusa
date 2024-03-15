@@ -83,5 +83,8 @@ func main() {
 	r.Get("/foo/create", add)
 	r.Get("/foo/{foo}", get)
 
-	http.ListenAndServe(":8087", r)
+	err = http.ListenAndServe(":8087", r)
+	if err != nil {
+		panic(err)
+	}
 }

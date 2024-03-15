@@ -33,17 +33,24 @@ func ExampleBelongsTo() {
 
 	db, _ := sqlx.Open("sqlite3", ":memory:")
 
-	createFoo, _ := migrate.CreateFromModel(&Foo{})
-	createFoo.Run(context.Background(), db)
-	createBar, _ := migrate.CreateFromModel(&Bar{})
-	createBar.Run(context.Background(), db)
+	createFoo, err := migrate.CreateFromModel(&Foo{})
+	check(err)
+	err = createFoo.Run(context.Background(), db)
+	check(err)
+	createBar, err := migrate.CreateFromModel(&Bar{})
+	check(err)
+	err = createBar.Run(context.Background(), db)
+	check(err)
 
 	foo := &Foo{BarID: 1}
-	model.Save(db, foo)
+	err = model.Save(db, foo)
+	check(err)
 	bar := &Bar{ID: 1, Name: "bar name"}
-	model.Save(db, bar)
+	err = model.Save(db, bar)
+	check(err)
 
-	builder.Load(db, foo, "Bar")
+	err = builder.Load(db, foo, "Bar")
+	check(err)
 	relatedBar, _ := foo.Bar.Value()
 
 	fmt.Println(relatedBar.Name)
@@ -106,7 +113,8 @@ func TestBelongsToLoad(t *testing.T) {
 				MustSave(tx, &Foo{Name: *b.FooName})
 			}
 		}
-		builder.Load(tx, bars, "Foo")
+		err := builder.Load(tx, bars, "Foo")
+		assert.NoError(t, err)
 
 		for i, b := range bars {
 			f, ok := b.Foo.Value()

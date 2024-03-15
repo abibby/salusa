@@ -3,11 +3,18 @@ package auth
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/golang-jwt/jwt/v4"
+)
+
+type contextKey uint8
+
+const (
+	jwtClaims contextKey = iota
 )
 
 var appKey []byte
@@ -17,7 +24,7 @@ func SetAppKey(key []byte) {
 }
 
 func Claims(ctx context.Context) (jwt.MapClaims, bool) {
-	iClaims := ctx.Value("jwt-claims")
+	iClaims := ctx.Value(jwtClaims)
 	claims, ok := iClaims.(jwt.MapClaims)
 	return claims, ok
 }
@@ -35,7 +42,7 @@ func UserIDFactory[T any](cb func(claims jwt.MapClaims) (T, bool)) func(ctx cont
 }
 
 func setClaims(r *http.Request, claims jwt.MapClaims) *http.Request {
-	return r.WithContext(context.WithValue(r.Context(), "jwt-claims", claims))
+	return r.WithContext(context.WithValue(r.Context(), jwtClaims, claims))
 }
 
 func AttachUser(next http.Handler) http.Handler {
@@ -54,7 +61,7 @@ func LoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, ok := Claims(r.Context())
 		if !ok {
-			request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
+			respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
 			return
 		}
 
@@ -67,19 +74,26 @@ func HasClaim(key string, value any) router.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := Claims(r.Context())
 			if !ok {
-				request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
+				respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
 				return
 			}
 			claim, ok := claims[key]
 			if !ok {
-				request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
+				respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
 				return
 			}
 			if claim != value {
-				request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized).Respond(w, r)
+				respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
 				return
 			}
 			next.ServeHTTP(w, r)
 		})
+	}
+}
+
+func respond(resp request.Responder, w http.ResponseWriter, r *http.Request) {
+	err := resp.Respond(w, r)
+	if err != nil {
+		log.Print(err)
 	}
 }

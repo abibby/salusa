@@ -33,7 +33,7 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 	return server.ListenAndServe()
 }
 
-func (k *Kernel) RunServices(ctx context.Context) error {
+func (k *Kernel) RunServices(ctx context.Context) {
 	for _, s := range k.services {
 		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
@@ -48,5 +48,4 @@ func (k *Kernel) RunServices(ctx context.Context) error {
 			}
 		}(ctx, s)
 	}
-	return nil
 }

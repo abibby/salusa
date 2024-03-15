@@ -15,7 +15,7 @@ const (
 	responseKey
 )
 
-func RegisterDI(dp *di.DependencyProvider) error {
+func RegisterDI(dp *di.DependencyProvider) {
 	di.Register(dp, func(ctx context.Context, tag string) (*http.Request, error) {
 		req, ok := ctx.Value(requestKey).(*http.Request)
 		if !ok {
@@ -30,5 +30,4 @@ func RegisterDI(dp *di.DependencyProvider) error {
 		}
 		return resp, nil
 	})
-	return nil
 }
