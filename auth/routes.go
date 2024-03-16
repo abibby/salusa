@@ -161,8 +161,8 @@ func sendEmails(v EmailVerified, mailer email.Mailer) error {
 	}
 
 	b := &bytes.Buffer{}
-	err = t.ExecuteTemplate(b, "verify_email", &verifyEmail{
-		VerifyLink: token,
+	err = t.ExecuteTemplate(b, "verify_email.html", &verifyEmail{
+		VerifyLink: fmt.Sprintf(`https://example.com/verify-email?token=%s`, token),
 	})
 	if err != nil {
 		return err

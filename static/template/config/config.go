@@ -13,7 +13,7 @@ import (
 var Port int
 var DBPath string
 
-func Load(ctx context.Context) error {
+func Load(ctx context.Context, k *kernel.Kernel) error {
 	err := godotenv.Load("./.env")
 	if errors.Is(err, os.ErrNotExist) {
 	} else if err != nil {

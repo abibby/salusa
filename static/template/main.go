@@ -5,12 +5,10 @@ import (
 	"os"
 
 	"github.com/abibby/salusa/static/template/app"
-	"github.com/abibby/salusa/static/template/app/appkernel"
 )
 
 func main() {
 	ctx := context.Background()
-	appkernel.Init()
 
 	err := app.Kernel.Bootstrap(ctx)
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/router"
 )
 
@@ -15,7 +14,7 @@ type KernelConfig struct {
 	Port int
 }
 
-func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
+func Bootstrap(bootstrap ...func(context.Context, *Kernel) error) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.bootstrap = bootstrap
 		return k
@@ -58,19 +57,19 @@ func Services(services ...Service) KernelOption {
 	}
 }
 
-func Listeners(listeners ...*Listener) KernelOption {
-	return func(k *Kernel) *Kernel {
-		k.listeners = map[event.EventType][]runner{}
-		for _, l := range listeners {
-			jobs, ok := k.listeners[l.eventType]
-			if !ok {
-				jobs = []runner{}
-			}
-			k.listeners[l.eventType] = append(jobs, l.runner)
-		}
-		return k
-	}
-}
+// func Listeners(listeners ...*Listener) KernelOption {
+// 	return func(k *Kernel) *Kernel {
+// 		k.listeners = map[event.EventType][]runner{}
+// 		for _, l := range listeners {
+// 			jobs, ok := k.listeners[l.eventType]
+// 			if !ok {
+// 				jobs = []runner{}
+// 			}
+// 			k.listeners[l.eventType] = append(jobs, l.runner)
+// 		}
+// 		return k
+// 	}
+// }
 
 func Providers(providers ...func(*di.DependencyProvider)) KernelOption {
 	return func(k *Kernel) *Kernel {

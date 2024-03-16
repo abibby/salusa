@@ -24,6 +24,9 @@ func (b *CronEvent) SetTime(t time.Time) {
 }
 
 type CronService struct {
+	Queue  event.Queue  `inject:""`
+	Logger *slog.Logger `inject:""`
+
 	events map[string][]Event
 }
 
@@ -33,28 +36,29 @@ func Service() *CronService {
 	}
 }
 
+func (c *CronService) Name() string {
+	return "cron-service"
+}
+
 func (c *CronService) Run(ctx context.Context, k *kernel.Kernel) error {
 	runner := cron.New()
 	for spec, events := range c.events {
 		for _, e := range events {
 			_, err := runner.AddFunc(spec, func() {
 				e.SetTime(time.Now())
-				err := k.Dispatch(ctx, e)
+				err := c.Queue.Push(e)
 				if err != nil {
-					k.Logger(ctx).Error("failed to dispatch event", slog.Any("error", err))
+					c.Logger.Error("failed to dispatch event", slog.Any("error", err))
 				}
 			})
 			if err != nil {
-				k.Logger(ctx).Error("failed to start cron listener", slog.Any("error", err))
+				c.Logger.Error("failed to start cron listener", slog.Any("error", err))
 			}
 		}
 	}
 	runner.Start()
 
 	return nil
-}
-func (c *CronService) Name() string {
-	return "cron-service"
 }
 
 func (c *CronService) Schedule(cron string, e Event) *CronService {

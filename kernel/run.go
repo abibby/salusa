@@ -12,7 +12,7 @@ import (
 
 func (k *Kernel) Run(ctx context.Context) error {
 
-	go k.RunListeners(ctx)
+	// go k.RunListeners(ctx)
 	go k.RunServices(ctx)
 
 	return k.RunHttpServer(ctx)
@@ -38,9 +38,13 @@ func (k *Kernel) RunServices(ctx context.Context) {
 		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
 			for {
-				err := s.Run(ctx, k)
+				err := k.dp.Fill(ctx, s)
 				if err != nil {
-					slog.Error("service failed", slog.Any("error", err), slog.String("service", s.Name()))
+					k.Logger(ctx).Error("service dependency injection failed", slog.Any("error", err))
+				}
+				err = s.Run(ctx, k)
+				if err != nil {
+					k.Logger(ctx).Error("service failed", slog.Any("error", err))
 				}
 				if _, ok := s.(Restarter); !ok {
 					return

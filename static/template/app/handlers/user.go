@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/abibby/salusa/database/model"
+	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/request"
-	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/app/events"
 	"github.com/abibby/salusa/static/template/app/models"
 	"github.com/jmoiron/sqlx"
@@ -48,6 +48,7 @@ type CreateUserRequest struct {
 	Password []byte          `json:"password" validate:"required"`
 	Tx       *sqlx.Tx        `inject:""`
 	Ctx      context.Context `inject:""`
+	Queue    event.Queue     `inject:""`
 }
 type CreateUserResponse struct {
 	User *models.User `json:"user"`
@@ -64,7 +65,7 @@ var UserCreate = request.Handler(func(r *CreateUserRequest) (*CreateUserResponse
 		return nil, err
 	}
 
-	err = app.Kernel.Dispatch(r.Ctx, &events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
+	err = r.Queue.Push(&events.LogEvent{Message: fmt.Sprintf("create user with username %s", r.Username)})
 	if err != nil {
 		return nil, err
 	}

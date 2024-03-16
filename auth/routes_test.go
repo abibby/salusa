@@ -178,7 +178,7 @@ func TestEmailVerification(t *testing.T) {
 
 		sent := m.EmailsSent()
 		assert.Len(t, sent, 1)
-		assert.Equal(t, "", sent[0].To)
-		assert.Equal(t, "", sent[0].Body)
+		assert.Equal(t, []string{""}, sent[0].To)
+		assert.Contains(t, string(sent[0].Body), resp.User.ValidationToken)
 	})
 }

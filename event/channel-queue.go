@@ -1,6 +1,10 @@
 package event
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/abibby/salusa/di"
+)
 
 type ChannelQueue struct {
 	channel chan []byte
@@ -22,4 +26,10 @@ func (q ChannelQueue) Push(e Event) error {
 }
 func (q ChannelQueue) Pop(events map[EventType]reflect.Type) (Event, error) {
 	return decodeEvent(<-q.channel, events)
+}
+
+func RegisterChannelQueue(dp *di.DependencyProvider) {
+	di.RegisterSingleton(dp, func() Queue {
+		return NewChannelQueue()
+	})
 }

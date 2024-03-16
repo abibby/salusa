@@ -20,7 +20,7 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 		p(k.dp)
 	}
 	for _, b := range k.bootstrap {
-		err = b(ctx)
+		err = b(ctx, k)
 		if err != nil {
 			return err
 		}
