@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/abibby/salusa/env"
@@ -12,6 +13,7 @@ import (
 
 var Port int
 var DBPath string
+var BaseURL string
 
 func Load(ctx context.Context, k *kernel.Kernel) error {
 	err := godotenv.Load("./.env")
@@ -22,6 +24,7 @@ func Load(ctx context.Context, k *kernel.Kernel) error {
 
 	Port = env.Int("PORT", 2303)
 	DBPath = env.String("DATABASE_PATH", "./db.sqlite")
+	BaseURL = env.String("BASE_URL", fmt.Sprintf("http://localhost:%d", Port))
 
 	return nil
 }

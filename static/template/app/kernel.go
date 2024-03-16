@@ -21,14 +21,15 @@ var Kernel = kernel.New(
 	),
 	kernel.Providers(
 		salusadi.Register,
-		providers.Register,
 		event.RegisterChannelQueue,
+		providers.Register,
 	),
 	kernel.Services(
 		cron.Service().
 			Schedule("* * * * *", &events.LogEvent{Message: "cron event"}),
-		event.Service().
-			Add(event.NewListener[*jobs.LogJob]()),
+		event.Service(
+			event.NewListener[*jobs.LogJob](),
+		),
 	),
 	kernel.InitRoutes(routes.InitRoutes),
 )

@@ -42,7 +42,7 @@ func (k *Kernel) RunServices(ctx context.Context) {
 				if err != nil {
 					k.Logger(ctx).Error("service dependency injection failed", slog.Any("error", err))
 				}
-				err = s.Run(ctx, k)
+				err = s.Run(ctx)
 				if err != nil {
 					k.Logger(ctx).Error("service failed", slog.Any("error", err))
 				}

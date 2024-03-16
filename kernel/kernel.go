@@ -14,9 +14,7 @@ type Kernel struct {
 	port          int
 	rootHandler   func() http.Handler
 	services      []Service
-	// listeners     map[event.EventType][]runner
 
-	// queue event.Queue
 	dp *di.DependencyProvider
 
 	bootstrapped bool
@@ -31,8 +29,7 @@ func New(options ...KernelOption) *Kernel {
 		rootHandler: func() http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 		},
-		services: []Service{},
-		// queue:        event.NewChannelQueue(),
+		services:     []Service{},
 		dp:           di.NewDependencyProvider(),
 		bootstrapped: false,
 	}

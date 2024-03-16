@@ -11,16 +11,12 @@ import (
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/email/emailtest"
+	"github.com/abibby/salusa/router/routertest"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
-
-type EmailVerifiedUser struct {
-	auth.BaseUser
-	auth.MustVerifyEmail
-}
 
 var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 	sqlite.UseSQLite()
@@ -29,7 +25,7 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 		return nil, err
 	}
 	ctx := context.Background()
-	err = migrate.RunModelCreate(ctx, db, &auth.BaseUser{}, &EmailVerifiedUser{})
+	err = migrate.RunModelCreate(ctx, db, &auth.BaseUser{}, &auth.EmailVerifiedUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -39,9 +35,7 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 var Run = runner.Run
 
 func TestUserCreate(t *testing.T) {
-	routes := auth.Routes(func(base *auth.BaseUser) *auth.BaseUser {
-		return base
-	})
+	routes := auth.Routes(auth.NewBaseUser)
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
@@ -63,9 +57,7 @@ func TestUserCreate(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	routes := auth.Routes(func(base *auth.BaseUser) *auth.BaseUser {
-		return base
-	})
+	routes := auth.Routes(auth.NewBaseUser)
 
 	// Hashed password salted with the id
 	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
@@ -159,26 +151,33 @@ func TestLogin(t *testing.T) {
 }
 
 func TestEmailVerification(t *testing.T) {
-	routes := auth.Routes(func(base *auth.BaseUser) *EmailVerifiedUser {
-		return &EmailVerifiedUser{BaseUser: *base}
-	})
+	routes := auth.Routes(auth.NewEmailVerifiedUser)
 
 	Run(t, "email sent", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
 		m := emailtest.NewTestMailer()
+		urlResolver := routertest.NewTestResolver()
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
-			Username: "user",
+			Username: "user@example.com",
 			Password: "pass",
 			Tx:       tx,
 			Ctx:      ctx,
 			Mailer:   m,
+			URL:      urlResolver,
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, "user", resp.User.Username)
+		assert.Equal(t, "user@example.com", resp.User.Email)
 
 		sent := m.EmailsSent()
 		assert.Len(t, sent, 1)
-		assert.Equal(t, []string{""}, sent[0].To)
-		assert.Contains(t, string(sent[0].Body), resp.User.ValidationToken)
+		assert.Equal(t, []string{"user@example.com"}, sent[0].To)
+		assert.Contains(t, string(sent[0].Body), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.ValidationToken))
+
+		u, err := builder.From[*auth.EmailVerifiedUser]().WithContext(ctx).Find(tx, resp.User.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, u, resp.User)
+
+		assert.False(t, u.Validated)
+		assert.NotZero(t, u.ValidationToken)
 	})
 }

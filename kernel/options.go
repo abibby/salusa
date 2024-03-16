@@ -44,6 +44,7 @@ func InitRoutes(cb func(r *router.Router)) KernelOption {
 			r := router.New()
 			r.WithDependencyProvider(k.dp)
 			cb(r)
+			k.Register(r.Register)
 			return r
 		}
 		return k

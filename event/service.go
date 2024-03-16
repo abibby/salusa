@@ -9,7 +9,7 @@ import (
 	"github.com/abibby/salusa/kernel"
 )
 
-type JobHandler[E Event] interface {
+type Handler[E Event] interface {
 	Handle(ctx context.Context, event E) error
 }
 
@@ -30,11 +30,11 @@ type job[E Event] struct {
 
 func (j *job[E]) Run(ctx context.Context, dp *di.DependencyProvider) error {
 	t := j.handlerType
-	var h JobHandler[E]
+	var h Handler[E]
 	if t.Kind() == reflect.Pointer {
-		h = reflect.New(t.Elem()).Interface().(JobHandler[E])
+		h = reflect.New(t.Elem()).Interface().(Handler[E])
 	} else {
-		h = reflect.New(t).Elem().Interface().(JobHandler[E])
+		h = reflect.New(t).Elem().Interface().(Handler[E])
 	}
 
 	err := dp.Fill(ctx, h)
@@ -57,7 +57,7 @@ func (j *job[E]) EventType() reflect.Type {
 	return reflect.TypeOf(e)
 }
 
-func NewListener[H JobHandler[E], E Event]() *Listener {
+func NewListener[H Handler[E], E Event]() *Listener {
 	var e E
 	var h H
 
@@ -80,17 +80,25 @@ type EventService struct {
 
 var _ kernel.Service = (*EventService)(nil)
 
-func Service() *EventService {
-	return &EventService{
+func Service(listeners ...*Listener) *EventService {
+	s := &EventService{
 		listeners: map[EventType][]runner{},
 	}
+	for _, l := range listeners {
+		jobs, ok := s.listeners[l.eventType]
+		if !ok {
+			jobs = []runner{}
+		}
+		s.listeners[l.eventType] = append(jobs, l.runner)
+	}
+	return s
 }
 
 func (s *EventService) Name() string {
 	return "event-service"
 }
 
-func (s *EventService) Run(ctx context.Context, k *kernel.Kernel) error {
+func (s *EventService) Run(ctx context.Context) error {
 
 	events := map[EventType]reflect.Type{}
 	for eventType, runners := range s.listeners {
@@ -123,13 +131,4 @@ func (s *EventService) Run(ctx context.Context, k *kernel.Kernel) error {
 		}
 
 	}
-}
-
-func (s *EventService) Add(l *Listener) *EventService {
-	jobs, ok := s.listeners[l.eventType]
-	if !ok {
-		jobs = []runner{}
-	}
-	s.listeners[l.eventType] = append(jobs, l.runner)
-	return s
 }

@@ -9,9 +9,15 @@ type User interface {
 	model.Model
 	GetID() string
 	GetUsername() string
+	SetUsername(string)
 	GetPasswordHash() []byte
 	SetPasswordHash([]byte)
 	SaltedPassword(password string) []byte
+}
+
+type EmailVerified interface {
+	GetEmail() string
+	SetValidationToken(string)
 }
 
 type BaseUser struct {
@@ -24,11 +30,20 @@ type BaseUser struct {
 
 var _ User = (*BaseUser)(nil)
 
+func NewBaseUser() *BaseUser {
+	return &BaseUser{
+		ID: uuid.New(),
+	}
+}
+
 func (u *BaseUser) GetID() string {
 	return u.ID.String()
 }
 func (u *BaseUser) GetUsername() string {
 	return u.Username
+}
+func (u *BaseUser) SetUsername(username string) {
+	u.Username = username
 }
 func (u *BaseUser) GetPasswordHash() []byte {
 	return u.PasswordHash
@@ -40,22 +55,47 @@ func (u *BaseUser) SaltedPassword(password string) []byte {
 	return []byte(u.ID.String() + password)
 }
 
-type EmailVerified interface {
-	GetEmail() string
-	SetValidationToken(string)
+type EmailVerifiedUser struct {
+	model.BaseModel
+
+	ID              uuid.UUID `json:"id"    db:"id,primary"`
+	Email           string    `json:"email" db:"email"`
+	PasswordHash    []byte    `json:"-"     db:"password"`
+	Validated       bool      `json:"-"     db:"validated"`
+	ValidationToken string    `json:"-"     db:"validation_code"`
 }
 
-type MustVerifyEmail struct {
-	Email           string `json:"email" db:"email"`
-	Validated       bool   `json:"-"     db:"validated"`
-	ValidationToken string `json:"-"     db:"validation_code"`
+var _ EmailVerified = (*EmailVerifiedUser)(nil)
+var _ User = (*EmailVerifiedUser)(nil)
+
+func NewEmailVerifiedUser() *EmailVerifiedUser {
+	return &EmailVerifiedUser{
+		ID: uuid.New(),
+	}
 }
 
-var _ EmailVerified = (*MustVerifyEmail)(nil)
+func (u *EmailVerifiedUser) GetID() string {
+	return u.ID.String()
+}
+func (u *EmailVerifiedUser) GetUsername() string {
+	return u.Email
+}
+func (u *EmailVerifiedUser) SetUsername(username string) {
+	u.Email = username
+}
+func (u *EmailVerifiedUser) GetPasswordHash() []byte {
+	return u.PasswordHash
+}
+func (u *EmailVerifiedUser) SetPasswordHash(b []byte) {
+	u.PasswordHash = b
+}
+func (u *EmailVerifiedUser) SaltedPassword(password string) []byte {
+	return []byte(u.ID.String() + password)
+}
 
-func (v *MustVerifyEmail) GetEmail() string {
+func (v *EmailVerifiedUser) GetEmail() string {
 	return v.Email
 }
-func (v *MustVerifyEmail) SetValidationToken(t string) {
+func (v *EmailVerifiedUser) SetValidationToken(t string) {
 	v.ValidationToken = t
 }

@@ -30,6 +30,8 @@ type CronService struct {
 	events map[string][]Event
 }
 
+var _ kernel.Service = (*CronService)(nil)
+
 func Service() *CronService {
 	return &CronService{
 		events: map[string][]Event{},
@@ -40,7 +42,7 @@ func (c *CronService) Name() string {
 	return "cron-service"
 }
 
-func (c *CronService) Run(ctx context.Context, k *kernel.Kernel) error {
+func (c *CronService) Run(ctx context.Context) error {
 	runner := cron.New()
 	for spec, events := range c.events {
 		for _, e := range events {

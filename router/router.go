@@ -15,15 +15,17 @@ type WithDependencyProvider interface {
 }
 
 type Router struct {
-	prefix string
-	router *mux.Router
-	dp     *di.DependencyProvider
+	prefix   string
+	router   *mux.Router
+	dp       *di.DependencyProvider
+	handlers map[http.Handler]string
 }
 
 func New() *Router {
 	return &Router{
-		prefix: "",
-		router: mux.NewRouter(),
+		prefix:   "",
+		router:   mux.NewRouter(),
+		handlers: map[http.Handler]string{},
 	}
 }
 
@@ -49,10 +51,12 @@ func (r *Router) Delete(path string, handler http.Handler) {
 
 func (r *Router) handleMethod(method, path string, handler http.Handler) {
 	r.addDP(handler)
+	r.addHandler(handler, path)
 	r.router.Handle(path, handler).Methods(method)
 }
 func (r *Router) Handle(path string, handler http.Handler) {
 	r.addDP(handler)
+	r.addHandler(handler, path)
 	r.router.PathPrefix(path).Handler(handler)
 }
 
@@ -68,11 +72,17 @@ func (r *Router) Group(prefix string, cb func(r *Router)) {
 }
 
 func (r *Router) addDP(handler http.Handler) {
-	if r.dp != nil {
-		if w, ok := handler.(WithDependencyProvider); ok {
-			w.WithDependencyProvider(r.dp)
-		}
+	if r.dp == nil {
+		return
 	}
+	w, ok := handler.(WithDependencyProvider)
+	if !ok {
+		return
+	}
+	w.WithDependencyProvider(r.dp)
+}
+func (r *Router) addHandler(handler http.Handler, path string) {
+	r.handlers[handler] = path
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {

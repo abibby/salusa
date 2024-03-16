@@ -56,8 +56,8 @@ type CreateUserResponse struct {
 
 var UserCreate = request.Handler(func(r *CreateUserRequest) (*CreateUserResponse, error) {
 	u := &models.User{
-		Username: r.Username,
-		Password: r.Password,
+		// Username: r.Username,
+		// Password: r.Password,
 	}
 
 	err := model.SaveContext(r.Ctx, r.Tx, u)
