@@ -1,6 +1,7 @@
 package request
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -19,7 +20,7 @@ func NewHTTPError(err error, status int) *HTTPError {
 	}
 }
 func (e *HTTPError) Error() string {
-	return e.err.Error()
+	return fmt.Sprintf("http %d: %v", e.status, e.err)
 }
 func (e *HTTPError) Unwrap() error {
 	return e.err

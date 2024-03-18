@@ -25,11 +25,17 @@ func NewResponse(body io.Reader) *Response {
 	}
 }
 
+func (r *Response) Status() int {
+	return r.status
+}
 func (r *Response) SetStatus(status int) *Response {
 	r.status = status
 	return r
 }
 
+func (r *Response) Headers() map[string]string {
+	return r.headers
+}
 func (r *Response) AddHeader(key, value string) *Response {
 	r.headers[key] = value
 	return r

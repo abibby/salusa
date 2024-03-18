@@ -23,7 +23,9 @@ import (
 )
 
 var (
-	ErrInvalidUserPass = errors.New("invalid username or password")
+	ErrInvalidUserPass      = errors.New("invalid username or password")
+	ErrTokenNotFound        = errors.New("token not found")
+	ErrNonEmailVerifiedUser = errors.New("non email verified user")
 )
 
 type UserCreateRequest struct {
@@ -53,18 +55,49 @@ type LoginResponse struct {
 	ExpiresIn    int    `json:"expires_in"`
 }
 
-type VerifyEmailRequest struct{}
-type VerifyEmailResponse struct{}
+type VerifyEmailRequest struct {
+	Token string             `query:"token"`
+	Tx    *sqlx.Tx           `inject:""`
+	Ctx   context.Context    `inject:""`
+	URL   router.URLResolver `inject:""`
+}
 
 type AuthRoutes[T User] struct {
 	UserCreate  *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]]
 	Login       *request.RequestHandler[LoginRequest, *LoginResponse]
-	VerifyEmail *request.RequestHandler[VerifyEmailRequest, *VerifyEmailResponse]
+	VerifyEmail *request.RequestHandler[VerifyEmailRequest, *request.Response]
 }
 
 func Routes[T User](newUser func() T) *AuthRoutes[T] {
-	VerifyEmail := request.Handler(func(r *VerifyEmailRequest) (*VerifyEmailResponse, error) {
-		return nil, nil
+	VerifyEmail := request.Handler(func(r *VerifyEmailRequest) (*request.Response, error) {
+		var zeroUser T
+		var u model.Model = zeroUser
+		_, ok := u.(EmailVerified)
+		if !ok {
+			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
+		}
+		u, err := builder.From[T]().
+			WithContext(r.Ctx).
+			Select("id", zeroUser.UsernameColumn(), zeroUser.PasswordColumn()).
+			Where("verification_token", "=", r.Token).
+			First(r.Tx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to verify: %w", err)
+		}
+		if reflect.ValueOf(u).IsNil() {
+			return nil, request.NewHTTPError(ErrTokenNotFound, http.StatusUnauthorized)
+		}
+
+		v := u.(EmailVerified)
+		v.SetVerified(true)
+		v.SetVerificationToken("")
+
+		err = model.SaveContext(r.Ctx, r.Tx, u)
+		if err != nil {
+			return nil, err
+		}
+
+		return request.Redirect(r.URL.Resolve("/")), nil
 	})
 
 	UserCreate := request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
@@ -77,8 +110,8 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 		}
 		u.SetPasswordHash(hash)
 
-		var anyU any = u
-		if v, ok := anyU.(EmailVerified); ok {
+		var anyUser any = u
+		if v, ok := anyUser.(EmailVerified); ok {
 			err = sendEmails(v, r.Mailer, r.URL, VerifyEmail)
 			if err != nil {
 				return nil, fmt.Errorf("could not send emails: %w", err)
@@ -106,6 +139,13 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 		}
 		if reflect.ValueOf(u).IsNil() {
 			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
+		}
+
+		var anyUser any = u
+		if v, ok := anyUser.(EmailVerified); ok {
+			if !v.IsVerified() {
+				return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
+			}
 		}
 
 		err = bcrypt.CompareHashAndPassword(u.GetPasswordHash(), u.SaltedPassword(r.Password))
@@ -162,7 +202,7 @@ type verifyEmail struct {
 func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, verifyHandler http.Handler) error {
 	token := uuid.New().String()
 
-	v.SetValidationToken(token)
+	v.SetVerificationToken(token)
 
 	t, err := template.ParseFS(emails, "emails/*")
 	if err != nil {

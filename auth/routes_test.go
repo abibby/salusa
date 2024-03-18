@@ -34,9 +34,9 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 
 var Run = runner.Run
 
-func TestUserCreate(t *testing.T) {
-	routes := auth.Routes(auth.NewBaseUser)
+func TestAuthRoutes_UserCreate(t *testing.T) {
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
+		routes := auth.Routes(auth.NewBaseUser)
 		ctx := context.Background()
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
 			Username: "user",
@@ -54,9 +54,38 @@ func TestUserCreate(t *testing.T) {
 		// assert.False(t, u.Validated)
 		// assert.NotZero(t, u.ValidationCode)
 	})
+
+	Run(t, "email verification", func(t *testing.T, tx *sqlx.Tx) {
+		routes := auth.Routes(auth.NewEmailVerifiedUser)
+		ctx := context.Background()
+		m := emailtest.NewTestMailer()
+		urlResolver := routertest.NewTestResolver()
+		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
+			Username: "user@example.com",
+			Password: "pass",
+			Tx:       tx,
+			Ctx:      ctx,
+			Mailer:   m,
+			URL:      urlResolver,
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, "user@example.com", resp.User.Email)
+
+		sent := m.EmailsSent()
+		assert.Len(t, sent, 1)
+		assert.Equal(t, []string{"user@example.com"}, sent[0].To)
+		assert.Contains(t, string(sent[0].Body), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.VerificationToken))
+
+		u, err := builder.From[*auth.EmailVerifiedUser]().WithContext(ctx).Find(tx, resp.User.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, u, resp.User)
+
+		assert.False(t, u.Verified)
+		assert.NotZero(t, u.VerificationToken)
+	})
 }
 
-func TestLogin(t *testing.T) {
+func TestAuthRoutes_Login(t *testing.T) {
 	routes := auth.Routes(auth.NewBaseUser)
 
 	// Hashed password salted with the id
@@ -150,34 +179,36 @@ func TestLogin(t *testing.T) {
 	})
 }
 
-func TestEmailVerification(t *testing.T) {
+func TestAuthRoutes_VerifyEmail(t *testing.T) {
 	routes := auth.Routes(auth.NewEmailVerifiedUser)
 
-	Run(t, "email sent", func(t *testing.T, tx *sqlx.Tx) {
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		m := emailtest.NewTestMailer()
 		urlResolver := routertest.NewTestResolver()
-		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
-			Username: "user@example.com",
-			Password: "pass",
-			Tx:       tx,
-			Ctx:      ctx,
-			Mailer:   m,
-			URL:      urlResolver,
+		token := "test"
+		id := uuid.New()
+		err := model.Save(tx, &auth.EmailVerifiedUser{
+			ID:                id,
+			Email:             "",
+			PasswordHash:      []byte{},
+			VerificationToken: token,
+			Verified:          false,
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, "user@example.com", resp.User.Email)
 
-		sent := m.EmailsSent()
-		assert.Len(t, sent, 1)
-		assert.Equal(t, []string{"user@example.com"}, sent[0].To)
-		assert.Contains(t, string(sent[0].Body), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.ValidationToken))
-
-		u, err := builder.From[*auth.EmailVerifiedUser]().WithContext(ctx).Find(tx, resp.User.ID)
+		resp, err := routes.VerifyEmail.Run(&auth.VerifyEmailRequest{
+			Token: token,
+			Ctx:   ctx,
+			Tx:    tx,
+			URL:   urlResolver,
+		})
 		assert.NoError(t, err)
-		assert.Equal(t, u, resp.User)
 
-		assert.False(t, u.Validated)
-		assert.NotZero(t, u.ValidationToken)
+		u, err := builder.From[*auth.EmailVerifiedUser]().Find(tx, id)
+		assert.NoError(t, err)
+		assert.True(t, u.Verified)
+
+		assert.Equal(t, 301, resp.Status())
+		assert.Equal(t, map[string]string{"Location": urlResolver.Resolve("/")}, resp.Headers())
 	})
 }

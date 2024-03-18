@@ -109,7 +109,7 @@ func (r *SalusaResolver) Resolve(name string, params ...any) string {
 		}
 	}
 
-	u := strings.TrimSuffix(r.origin, "/") + "/" + path
+	u := strings.TrimSuffix(r.origin, "/") + "/" + strings.TrimPrefix(path, "/")
 	if len(v) > 0 {
 		u += "?" + v.Encode()
 	}
