@@ -6,7 +6,6 @@ import (
 
 	"github.com/abibby/salusa/database/dbtest"
 	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/static/template/config"
 	"github.com/abibby/salusa/static/template/migrations"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
@@ -15,7 +14,7 @@ import (
 var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 	sqlite.UseSQLite()
 
-	db, err := sqlx.Open("sqlite", config.DBPath)
+	db, err := sqlx.Open("sqlite", ":memory:")
 	if err != nil {
 		return nil, err
 	}

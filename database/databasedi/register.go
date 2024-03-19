@@ -5,9 +5,27 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/di"
 	"github.com/jmoiron/sqlx"
 )
+
+func RegisterFromConfig(ctx context.Context, dp *di.DependencyProvider, cfg dialects.Config, migrations *migrate.Migrations) error {
+	cfg.SetDialect()
+	db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
+	if err != nil {
+		return err
+	}
+
+	err = migrations.Up(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	Register(dp, db)
+	return nil
+}
 
 func Register(dp *di.DependencyProvider, db *sqlx.DB) {
 	di.RegisterSingleton(dp, func() *sqlx.DB {

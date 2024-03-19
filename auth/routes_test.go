@@ -25,7 +25,7 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 		return nil, err
 	}
 	ctx := context.Background()
-	err = migrate.RunModelCreate(ctx, db, &auth.BaseUser{}, &auth.EmailVerifiedUser{})
+	err = migrate.RunModelCreate(ctx, db, &auth.UsernameUser{}, &auth.EmailVerifiedUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
 
-		u, err := builder.From[*auth.BaseUser]().WithContext(ctx).Find(tx, resp.User.ID)
+		u, err := builder.From[*auth.UsernameUser]().WithContext(ctx).Find(tx, resp.User.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, u, resp.User)
 		assert.NotNil(t, u.PasswordHash)
@@ -74,14 +74,14 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		sent := m.EmailsSent()
 		assert.Len(t, sent, 1)
 		assert.Equal(t, []string{"user@example.com"}, sent[0].To)
-		assert.Contains(t, string(sent[0].Body), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.VerificationToken))
+		assert.Contains(t, string(sent[0].Body), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.LookupToken))
 
 		u, err := builder.From[*auth.EmailVerifiedUser]().WithContext(ctx).Find(tx, resp.User.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, u, resp.User)
 
 		assert.False(t, u.Verified)
-		assert.NotZero(t, u.VerificationToken)
+		assert.NotZero(t, u.LookupToken)
 	})
 }
 
@@ -102,7 +102,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 
 	Run(t, "can login", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		u := &auth.BaseUser{
+		u := &auth.UsernameUser{
 			ID:           id,
 			Username:     "user",
 			PasswordHash: passwordHash,
@@ -125,7 +125,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 
 	Run(t, "password is salted", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		u := &auth.BaseUser{
+		u := &auth.UsernameUser{
 			ID:           uuid.New(),
 			Username:     "user",
 			PasswordHash: passwordHash,
@@ -143,7 +143,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 	})
 	Run(t, "wrong user", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		u := &auth.BaseUser{
+		u := &auth.UsernameUser{
 			ID:           id,
 			Username:     "user",
 			PasswordHash: passwordHash,
@@ -161,7 +161,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 	})
 	Run(t, "wrong pass", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		u := &auth.BaseUser{
+		u := &auth.UsernameUser{
 			ID:           id,
 			Username:     "user",
 			PasswordHash: passwordHash,
@@ -188,11 +188,11 @@ func TestAuthRoutes_VerifyEmail(t *testing.T) {
 		token := "test"
 		id := uuid.New()
 		err := model.Save(tx, &auth.EmailVerifiedUser{
-			ID:                id,
-			Email:             "",
-			PasswordHash:      []byte{},
-			VerificationToken: token,
-			Verified:          false,
+			ID:           id,
+			Email:        "",
+			PasswordHash: []byte{},
+			LookupToken:  token,
+			Verified:     false,
 		})
 		assert.NoError(t, err)
 
@@ -209,6 +209,120 @@ func TestAuthRoutes_VerifyEmail(t *testing.T) {
 		assert.True(t, u.Verified)
 
 		assert.Equal(t, 301, resp.Status())
-		assert.Equal(t, map[string]string{"Location": urlResolver.Resolve("/")}, resp.Headers())
+		assert.Equal(t, map[string]string{"Location": urlResolver.ResolveHandler(routes.Login)}, resp.Headers())
+	})
+}
+
+func TestAuthRoutes_ResetPassword(t *testing.T) {
+	routes := auth.Routes(auth.NewEmailVerifiedUser)
+
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		urlResolver := routertest.NewTestResolver()
+		token := "lookup token"
+		id := uuid.New()
+		oldPasswordHash := []byte("old hash")
+		err := model.Save(tx, &auth.EmailVerifiedUser{
+			ID:           id,
+			Email:        "",
+			PasswordHash: oldPasswordHash,
+			LookupToken:  token,
+			Verified:     true,
+		})
+		assert.NoError(t, err)
+
+		resp, err := routes.ResetPassword.Run(&auth.ResetPasswordRequest{
+			Token:    token,
+			Password: "new password",
+			Ctx:      ctx,
+			Tx:       tx,
+			URL:      urlResolver,
+		})
+		assert.NoError(t, err)
+
+		u, err := builder.From[*auth.EmailVerifiedUser]().Find(tx, id)
+		assert.NoError(t, err)
+		assert.NotEqual(t, oldPasswordHash, u.PasswordHash)
+		assert.Equal(t, u, resp.User)
+	})
+}
+
+func TestAuthRoutes_ChangePassword(t *testing.T) {
+	routes := auth.Routes(auth.NewBaseUser)
+
+	// Hashed password salted with the id
+	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
+	oldPassword := "pass"
+	oldPasswordHash := []byte{
+		0x24, 0x32, 0x61, 0x24, 0x30, 0x34, 0x24, 0x78, 0x4d, 0x65,
+		0x30, 0x54, 0x66, 0x77, 0x4c, 0x75, 0x48, 0x79, 0x35, 0x78,
+		0x64, 0x51, 0x76, 0x58, 0x6b, 0x59, 0x73, 0x4b, 0x2e, 0x36,
+		0x34, 0x31, 0x70, 0x6c, 0x63, 0x6c, 0x69, 0x54, 0x43, 0x5a,
+		0x51, 0x51, 0x55, 0x49, 0x71, 0x41, 0x72, 0x65, 0x77, 0x51,
+		0x45, 0x4c, 0x6b, 0x43, 0x76, 0x6d, 0x6a, 0x62, 0x4d, 0x75,
+	}
+
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		createdUser := &auth.UsernameUser{
+			ID:           id,
+			PasswordHash: oldPasswordHash,
+		}
+		err := model.Save(tx, createdUser)
+		assert.NoError(t, err)
+
+		resp, err := routes.ChangePassword.Run(&auth.ChangePasswordRequest[*auth.UsernameUser]{
+			OldPassword: oldPassword,
+			NewPassword: "new password",
+			User:        createdUser,
+			Ctx:         ctx,
+			Tx:          tx,
+		})
+		assert.NoError(t, err)
+
+		u, err := builder.From[*auth.UsernameUser]().Find(tx, id)
+		assert.NoError(t, err)
+		assert.NotEqual(t, oldPasswordHash, u.PasswordHash)
+		assert.Equal(t, u, resp.User)
+	})
+}
+
+func TestAuthRoutes_Refresh(t *testing.T) {
+	routes := auth.Routes(auth.NewBaseUser)
+
+	// Hashed password salted with the id
+	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
+	oldPassword := "pass"
+	oldPasswordHash := []byte{
+		0x24, 0x32, 0x61, 0x24, 0x30, 0x34, 0x24, 0x78, 0x4d, 0x65,
+		0x30, 0x54, 0x66, 0x77, 0x4c, 0x75, 0x48, 0x79, 0x35, 0x78,
+		0x64, 0x51, 0x76, 0x58, 0x6b, 0x59, 0x73, 0x4b, 0x2e, 0x36,
+		0x34, 0x31, 0x70, 0x6c, 0x63, 0x6c, 0x69, 0x54, 0x43, 0x5a,
+		0x51, 0x51, 0x55, 0x49, 0x71, 0x41, 0x72, 0x65, 0x77, 0x51,
+		0x45, 0x4c, 0x6b, 0x43, 0x76, 0x6d, 0x6a, 0x62, 0x4d, 0x75,
+	}
+
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		createdUser := &auth.UsernameUser{
+			ID:           id,
+			PasswordHash: oldPasswordHash,
+		}
+		err := model.Save(tx, createdUser)
+		assert.NoError(t, err)
+
+		resp, err := routes.ChangePassword.Run(&auth.ChangePasswordRequest[*auth.UsernameUser]{
+			OldPassword: oldPassword,
+			NewPassword: "new password",
+			User:        createdUser,
+			Ctx:         ctx,
+			Tx:          tx,
+		})
+		assert.NoError(t, err)
+
+		u, err := builder.From[*auth.UsernameUser]().Find(tx, id)
+		assert.NoError(t, err)
+		assert.NotEqual(t, oldPasswordHash, u.PasswordHash)
+		assert.Equal(t, u, resp.User)
 	})
 }

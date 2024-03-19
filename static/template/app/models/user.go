@@ -9,7 +9,7 @@ import (
 
 //go:generate spice generate:migration
 type User struct {
-	auth.BaseUser
+	auth.UsernameUser
 
 	// ID           int    `json:"id"       db:"id,primary,autoincrement"`
 	// Username     string `json:"username" db:"username"`

@@ -12,19 +12,18 @@ import (
 
 func (k *Kernel) Run(ctx context.Context) error {
 
-	// go k.RunListeners(ctx)
 	go k.RunServices(ctx)
 
 	return k.RunHttpServer(ctx)
 }
 
 func (k *Kernel) RunHttpServer(ctx context.Context) error {
-	slog.Info(fmt.Sprintf("http://localhost:%d", k.port))
+	slog.Info(fmt.Sprintf("http://localhost:%d", k.cfg.GetHTTPPort()))
 
 	handler := k.rootHandler()
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", k.port),
+		Addr:    fmt.Sprintf(":%d", k.cfg.GetHTTPPort()),
 		Handler: handler,
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx
