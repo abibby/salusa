@@ -18,7 +18,7 @@ var (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	Type ClaimType `json:"jti,omitempty"`
+	Type ClaimType `json:"type,omitempty"`
 }
 
 func ParseOf[T jwt.Claims](token string) (T, error) {
@@ -43,20 +43,4 @@ func ParseOf[T jwt.Claims](token string) (T, error) {
 }
 func Parse(token string) (*Claims, error) {
 	return ParseOf[*Claims](token)
-	// claims := &Claims{}
-	// t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-	// 	// Don't forget to validate the alg is what you expect:
-	// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-	// 		return nil, fmt.Errorf("expected HMAC received %v: %w", token.Header["alg"], ErrUnexpectedAlgorithm)
-	// 	}
-
-	// 	return appKey, nil
-	// })
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to parse JWT: %w", err)
-	// }
-	// if !t.Valid {
-	// 	return nil, ErrInvalidToken
-	// }
-	// return claims, nil
 }

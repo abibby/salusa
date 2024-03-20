@@ -12,6 +12,7 @@ import (
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/email/emailtest"
 	"github.com/abibby/salusa/router/routertest"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -290,39 +291,38 @@ func TestAuthRoutes_ChangePassword(t *testing.T) {
 func TestAuthRoutes_Refresh(t *testing.T) {
 	routes := auth.Routes(auth.NewBaseUser)
 
-	// Hashed password salted with the id
-	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
-	oldPassword := "pass"
-	oldPasswordHash := []byte{
-		0x24, 0x32, 0x61, 0x24, 0x30, 0x34, 0x24, 0x78, 0x4d, 0x65,
-		0x30, 0x54, 0x66, 0x77, 0x4c, 0x75, 0x48, 0x79, 0x35, 0x78,
-		0x64, 0x51, 0x76, 0x58, 0x6b, 0x59, 0x73, 0x4b, 0x2e, 0x36,
-		0x34, 0x31, 0x70, 0x6c, 0x63, 0x6c, 0x69, 0x54, 0x43, 0x5a,
-		0x51, 0x51, 0x55, 0x49, 0x71, 0x41, 0x72, 0x65, 0x77, 0x51,
-		0x45, 0x4c, 0x6b, 0x43, 0x76, 0x6d, 0x6a, 0x62, 0x4d, 0x75,
-	}
-
 	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
 		createdUser := &auth.UsernameUser{
-			ID:           id,
-			PasswordHash: oldPasswordHash,
+			ID:           uuid.New(),
+			PasswordHash: []byte(""),
 		}
 		err := model.Save(tx, createdUser)
 		assert.NoError(t, err)
 
-		resp, err := routes.ChangePassword.Run(&auth.ChangePasswordRequest[*auth.UsernameUser]{
-			OldPassword: oldPassword,
-			NewPassword: "new password",
-			User:        createdUser,
-			Ctx:         ctx,
-			Tx:          tx,
+		token, err := auth.GenerateTokenFrom(&auth.Claims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				Subject: createdUser.GetID(),
+			},
+			Type: auth.TypeRefresh,
 		})
 		assert.NoError(t, err)
 
-		u, err := builder.From[*auth.UsernameUser]().Find(tx, id)
+		resp, err := routes.Refresh.Run(&auth.RefreshRequest[*auth.UsernameUser]{
+			RefreshToken: token,
+			User:         createdUser,
+			Ctx:          ctx,
+			Tx:           tx,
+		})
 		assert.NoError(t, err)
-		assert.NotEqual(t, oldPasswordHash, u.PasswordHash)
-		assert.Equal(t, u, resp.User)
+		assert.Equal(t, token, resp.RefreshToken)
+		assert.Equal(t, "Bearer", resp.TokenType)
+		assert.Equal(t, token, resp.RefreshToken)
+		assert.Equal(t, 3600, resp.ExpiresIn)
+
+		claims, err := auth.Parse(resp.AccessToken)
+		assert.NoError(t, err)
+		assert.Equal(t, createdUser.GetID(), claims.Subject)
+		assert.Equal(t, auth.TypeAccess, claims.Type)
 	})
 }
