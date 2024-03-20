@@ -13,10 +13,9 @@ import (
 	"github.com/abibby/salusa/static/template/routes"
 )
 
-var Kernel = kernel.New(
-	kernel.Config(config.Kernel),
+var Kernel = kernel.New[*config.Config](
+	kernel.Config(config.Load),
 	kernel.Bootstrap(
-		config.Load,
 		database.Init,
 	),
 	kernel.Providers(

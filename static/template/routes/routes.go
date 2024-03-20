@@ -15,7 +15,7 @@ func InitRoutes(r *router.Router) {
 
 	authRoutes := auth.Routes(func() *models.User {
 		return &models.User{
-			BaseUser: *auth.NewBaseUser(),
+			UsernameUser: *auth.NewBaseUser(),
 		}
 	})
 

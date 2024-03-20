@@ -8,23 +8,22 @@ import (
 type User interface {
 	model.Model
 	GetID() string
-	UsernameColumn() string
-	GetUsername() string
 	SetUsername(string)
 	GetPasswordHash() []byte
 	SetPasswordHash([]byte)
 	SaltedPassword(password string) []byte
-	PasswordColumn() string
+	UsernameColumn() string
 }
 
 type EmailVerified interface {
 	GetEmail() string
-	SetVerificationToken(string)
+	SetLookupToken(string)
 	IsVerified() bool
 	SetVerified(bool)
+	LookupTokenColumn() string
 }
 
-type BaseUser struct {
+type UsernameUser struct {
 	model.BaseModel
 
 	ID           uuid.UUID `json:"id"       db:"id,primary"`
@@ -32,47 +31,47 @@ type BaseUser struct {
 	PasswordHash []byte    `json:"-"        db:"password"`
 }
 
-var _ User = (*BaseUser)(nil)
+var _ User = (*UsernameUser)(nil)
 
-func NewBaseUser() *BaseUser {
-	return &BaseUser{
+func NewBaseUser() *UsernameUser {
+	return &UsernameUser{
 		ID: uuid.New(),
 	}
 }
 
-func (u *BaseUser) GetID() string {
+func (u *UsernameUser) GetID() string {
 	return u.ID.String()
 }
-func (u *BaseUser) GetUsername() string {
+func (u *UsernameUser) GetUsername() string {
 	return u.Username
 }
-func (u *BaseUser) SetUsername(username string) {
+func (u *UsernameUser) SetUsername(username string) {
 	u.Username = username
 }
-func (u *BaseUser) UsernameColumn() string {
+func (u *UsernameUser) UsernameColumn() string {
 	return "username"
 }
-func (u *BaseUser) GetPasswordHash() []byte {
+func (u *UsernameUser) GetPasswordHash() []byte {
 	return u.PasswordHash
 }
-func (u *BaseUser) SetPasswordHash(b []byte) {
+func (u *UsernameUser) SetPasswordHash(b []byte) {
 	u.PasswordHash = b
 }
-func (u *BaseUser) SaltedPassword(password string) []byte {
+func (u *UsernameUser) SaltedPassword(password string) []byte {
 	return []byte(u.ID.String() + password)
 }
-func (u *BaseUser) PasswordColumn() string {
+func (u *UsernameUser) PasswordColumn() string {
 	return "password"
 }
 
 type EmailVerifiedUser struct {
 	model.BaseModel
 
-	ID                uuid.UUID `json:"id"    db:"id,primary"`
-	Email             string    `json:"email" db:"email"`
-	PasswordHash      []byte    `json:"-"     db:"password"`
-	Verified          bool      `json:"-"     db:"validated"`
-	VerificationToken string    `json:"-"     db:"verification_token"`
+	ID           uuid.UUID `json:"id"    db:"id,primary"`
+	Email        string    `json:"email" db:"email"`
+	PasswordHash []byte    `json:"-"     db:"password"`
+	Verified     bool      `json:"-"     db:"validated"`
+	LookupToken  string    `json:"-"     db:"lookup_token"`
 }
 
 var _ EmailVerified = (*EmailVerifiedUser)(nil)
@@ -108,12 +107,15 @@ func (u *EmailVerifiedUser) SaltedPassword(password string) []byte {
 func (u *EmailVerifiedUser) PasswordColumn() string {
 	return "password"
 }
+func (u *EmailVerifiedUser) LookupTokenColumn() string {
+	return "lookup_token"
+}
 
 func (v *EmailVerifiedUser) GetEmail() string {
 	return v.Email
 }
-func (v *EmailVerifiedUser) SetVerificationToken(t string) {
-	v.VerificationToken = t
+func (v *EmailVerifiedUser) SetLookupToken(t string) {
+	v.LookupToken = t
 }
 func (v *EmailVerifiedUser) IsVerified() bool {
 	return v.Verified

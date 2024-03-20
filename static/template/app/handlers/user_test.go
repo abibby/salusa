@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/abibby/salusa/kernel"
-	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/app/handlers"
 	"github.com/abibby/salusa/static/template/app/models/factories"
 	"github.com/abibby/salusa/static/template/test"
@@ -14,7 +12,6 @@ import (
 )
 
 func TestUser(t *testing.T) {
-	app.Kernel = kernel.New()
 	test.Run(t, "create user", func(t *testing.T, tx *sqlx.Tx) {
 		resp, err := handlers.UserCreate.Run(&handlers.CreateUserRequest{
 			Username: "name",

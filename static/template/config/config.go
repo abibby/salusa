@@ -1,35 +1,43 @@
 package config
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"os"
 
+	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/env"
-	"github.com/abibby/salusa/kernel"
 	"github.com/joho/godotenv"
 )
 
-var Port int
-var DBPath string
-var BaseURL string
+type Config struct {
+	Port     int
+	DBPath   string
+	Database dialects.Config
+}
 
-func Load(ctx context.Context, k *kernel.Kernel) error {
+func Load() *Config {
 	err := godotenv.Load("./.env")
 	if errors.Is(err, os.ErrNotExist) {
+		// fall through
 	} else if err != nil {
-		return err
+		panic(err)
 	}
 
-	Port = env.Int("PORT", 2303)
-	DBPath = env.String("DATABASE_PATH", "./db.sqlite")
-	BaseURL = env.String("BASE_URL", fmt.Sprintf("http://localhost:%d", Port))
+	Port := env.Int("PORT", 2303)
 
-	return nil
+	return &Config{
+		Port:     Port,
+		Database: sqlite.NewConfig(env.String("DATABASE_PATH", "./db.sqlite")),
+		// Database: &databasedi.SimpleMySQLConfig{
+		// 	Username: "",
+		// 	Password: "",
+		// 	Address:  "",
+		// 	Database: "",
+		// },
+	}
 }
-func Kernel() *kernel.KernelConfig {
-	return &kernel.KernelConfig{
-		Port: Port,
-	}
+
+func (c *Config) GetHTTPPort() int {
+	return c.Port
 }

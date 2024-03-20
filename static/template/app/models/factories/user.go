@@ -9,7 +9,7 @@ import (
 
 var UserFactory = dbtest.NewFactory(func() *models.User {
 	return &models.User{
-		BaseUser: auth.BaseUser{
+		UsernameUser: auth.UsernameUser{
 			Username:     faker.Username(),
 			PasswordHash: []byte(faker.Password()),
 		},

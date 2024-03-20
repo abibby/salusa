@@ -6,8 +6,8 @@ require (
 	github.com/abibby/nulls v1.1.0
 	github.com/bradleyjkemp/cupaloy v2.3.0+incompatible
 	github.com/davecgh/go-spew v1.1.1
-	github.com/emersion/go-smtp v0.20.2
 	github.com/go-faker/faker/v4 v4.3.0
+	github.com/go-sql-driver/mysql v1.8.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/mux v1.8.0
@@ -27,8 +27,8 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kr/pretty v0.3.1 // indirect

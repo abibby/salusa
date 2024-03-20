@@ -7,25 +7,28 @@ import (
 	"github.com/abibby/salusa/di"
 )
 
+type KernelConfig interface {
+	GetHTTPPort() int
+}
+
 type Kernel struct {
 	bootstrap     []func(context.Context, *Kernel) error
 	providers     []func(*di.DependencyProvider)
 	postBootstrap []func()
-	port          int
 	rootHandler   func() http.Handler
 	services      []Service
 
-	dp *di.DependencyProvider
+	cfg KernelConfig
+	dp  *di.DependencyProvider
 
 	bootstrapped bool
 }
 
-func New(options ...KernelOption) *Kernel {
+func New[T KernelConfig](options ...KernelOption) *Kernel {
 	k := &Kernel{
 		bootstrap:     []func(context.Context, *Kernel) error{},
 		providers:     []func(*di.DependencyProvider){},
 		postBootstrap: []func(){},
-		port:          8080,
 		rootHandler: func() http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 		},
