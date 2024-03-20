@@ -42,7 +42,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
 			Username: "user",
 			Password: "pass",
-			Tx:       tx,
+			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
 		})
 		assert.NoError(t, err)
@@ -64,7 +64,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
 			Username: "user@example.com",
 			Password: "pass",
-			Tx:       tx,
+			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
 			Mailer:   m,
 			URL:      urlResolver,
@@ -114,7 +114,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 		resp, err := routes.Login.Run(&auth.LoginRequest{
 			Username: "user",
 			Password: password,
-			Tx:       tx,
+			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
 		})
 		assert.NoError(t, err)
@@ -137,7 +137,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 		_, err = routes.Login.Run(&auth.LoginRequest{
 			Username: "user",
 			Password: password,
-			Tx:       tx,
+			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
 		})
 		assert.ErrorIs(t, err, auth.ErrInvalidUserPass)
@@ -155,7 +155,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 		_, err = routes.Login.Run(&auth.LoginRequest{
 			Username: "not user",
 			Password: password,
-			Tx:       tx,
+			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
 		})
 		assert.ErrorIs(t, err, auth.ErrInvalidUserPass)
@@ -173,7 +173,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 		_, err = routes.Login.Run(&auth.LoginRequest{
 			Username: "user",
 			Password: "not pass",
-			Tx:       tx,
+			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
 		})
 		assert.ErrorIs(t, err, auth.ErrInvalidUserPass)
@@ -198,10 +198,10 @@ func TestAuthRoutes_VerifyEmail(t *testing.T) {
 		assert.NoError(t, err)
 
 		resp, err := routes.VerifyEmail.Run(&auth.VerifyEmailRequest{
-			Token: token,
-			Ctx:   ctx,
-			Tx:    tx,
-			URL:   urlResolver,
+			Token:  token,
+			Ctx:    ctx,
+			Update: dbtest.Update(tx),
+			URL:    urlResolver,
 		})
 		assert.NoError(t, err)
 
@@ -236,7 +236,7 @@ func TestAuthRoutes_ResetPassword(t *testing.T) {
 			Token:    token,
 			Password: "new password",
 			Ctx:      ctx,
-			Tx:       tx,
+			Update:   dbtest.Update(tx),
 			URL:      urlResolver,
 		})
 		assert.NoError(t, err)
@@ -277,7 +277,7 @@ func TestAuthRoutes_ChangePassword(t *testing.T) {
 			NewPassword: "new password",
 			User:        createdUser,
 			Ctx:         ctx,
-			Tx:          tx,
+			Update:      dbtest.Update(tx),
 		})
 		assert.NoError(t, err)
 
@@ -312,7 +312,7 @@ func TestAuthRoutes_Refresh(t *testing.T) {
 			RefreshToken: token,
 			User:         createdUser,
 			Ctx:          ctx,
-			Tx:           tx,
+			Read:         dbtest.Read(tx),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, token, resp.RefreshToken)

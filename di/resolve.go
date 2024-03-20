@@ -7,19 +7,19 @@ import (
 
 func Resolve[T any](ctx context.Context, dp *DependencyProvider) (T, error) {
 	var result T
-	v, _, err := dp.resolve(ctx, getType[T](), "", false, nil)
+	v, err := dp.resolve(ctx, getType[T](), "", false, nil)
 	if v != nil {
 		result = v.(T)
 	}
 	return result, err
 }
-func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string, forceFill bool, opt *FillOptions) (any, Closer, error) {
+func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string, forceFill bool, opt *FillOptions) (any, error) {
 	if t == contextType {
-		return ctx, nil, nil
+		return ctx, nil
 	}
 
 	if t == dependencyProviderType {
-		return dp, nil, nil
+		return dp, nil
 	}
 
 	f, ok := dp.factories[t]
@@ -28,13 +28,13 @@ func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag s
 	}
 
 	if !forceFill && !isFillable(t) {
-		return nil, nil, ErrNotRegistered
+		return nil, ErrNotRegistered
 	}
 	v := reflectNew(t)
-	closer, err := dp.fill(ctx, v, opt)
+	err := dp.fill(ctx, v, opt)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return v.Interface(), closer, nil
+	return v.Interface(), nil
 }

@@ -3,6 +3,7 @@ package databasedi
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/abibby/salusa/database/dialects"
@@ -10,6 +11,9 @@ import (
 	"github.com/abibby/salusa/di"
 	"github.com/jmoiron/sqlx"
 )
+
+type Update func(func(tx *sqlx.Tx) error) error
+type Read func(func(tx *sqlx.Tx) error) error
 
 func RegisterFromConfig(ctx context.Context, dp *di.DependencyProvider, cfg dialects.Config, migrations *migrate.Migrations) error {
 	cfg.SetDialect()
@@ -31,31 +35,36 @@ func Register(dp *di.DependencyProvider, db *sqlx.DB) {
 	di.RegisterSingleton(dp, func() *sqlx.DB {
 		return db
 	})
-	di.RegisterCloser(dp, func(ctx context.Context, tag string) (*sqlx.Tx, di.Closer, error) {
-		db, err := di.Resolve[*sqlx.DB](ctx, dp)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to resolve database: %w", err)
-		}
-
-		tx, err := db.BeginTxx(ctx, &sql.TxOptions{})
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to start transaction: %w", err)
-		}
-
-		return tx, func(err error) error {
-			if err == nil || err == context.Canceled {
-				txErr := tx.Commit()
-				if txErr != nil {
-					return txErr
-				}
-			} else {
-				txErr := tx.Rollback()
-				if txErr != nil {
-					return txErr
-				}
-			}
-			return nil
+	di.Register(dp, func(ctx context.Context, tag string) (Read, error) {
+		return func(f func(tx *sqlx.Tx) error) error {
+			return runTx(ctx, db, f, true)
 		}, nil
-
 	})
+	di.Register(dp, func(ctx context.Context, tag string) (Update, error) {
+		return func(f func(tx *sqlx.Tx) error) error {
+			return runTx(ctx, db, f, false)
+		}, nil
+	})
+}
+
+func runTx(ctx context.Context, db *sqlx.DB, f func(*sqlx.Tx) error, readOnly bool) error {
+	tx, err := db.BeginTxx(ctx, &sql.TxOptions{
+		ReadOnly: readOnly,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	err = f(tx)
+	if err == nil {
+		txErr := tx.Commit()
+		if txErr != nil {
+			return txErr
+		}
+	} else {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return errors.Join(err, txErr)
+		}
+	}
+	return err
 }

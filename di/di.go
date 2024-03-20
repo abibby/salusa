@@ -6,10 +6,8 @@ import (
 	"reflect"
 )
 
-type Closer func(error) error
-
 type DependencyProvider struct {
-	factories map[reflect.Type]func(ctx context.Context, tag string) (any, Closer, error)
+	factories map[reflect.Type]func(ctx context.Context, tag string) (any, error)
 }
 
 var (
@@ -22,7 +20,7 @@ var (
 
 func NewDependencyProvider() *DependencyProvider {
 	return &DependencyProvider{
-		factories: map[reflect.Type]func(ctx context.Context, tag string) (any, Closer, error){},
+		factories: map[reflect.Type]func(ctx context.Context, tag string) (any, error){},
 	}
 }
 

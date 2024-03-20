@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/abibby/salusa/router"
 )
@@ -26,9 +27,10 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 					handler(err)
 				}
 
+				err = fmt.Errorf("%w\n%s", err, debug.Stack())
 				responder, ok := getResponder(err)
 				if !ok {
-					responder = errorResponse(err, http.StatusInternalServerError, r)
+					responder = NewHTTPError(err, http.StatusInternalServerError)
 				}
 				err = responder.Respond(w, r)
 				if err != nil {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/set"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type IsFillabler interface {
@@ -42,26 +41,23 @@ func (dp *DependencyProvider) Fill(ctx context.Context, v any, opts ...FillOptio
 	for _, o := range opts {
 		opt = o(opt)
 	}
-	_, err := dp.fill(ctx, reflect.ValueOf(v), opt)
-	return err
+	return dp.fill(ctx, reflect.ValueOf(v), opt)
 }
-func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *FillOptions) (Closer, error) {
+func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *FillOptions) error {
 	if opt == nil {
 		opt = newFillOptions()
 	}
 	if v.Kind() != reflect.Pointer {
-		return nil, fmt.Errorf("di: Fill(non-pointer "+v.Type().String()+"): %w", ErrFillParameters)
+		return fmt.Errorf("di: Fill(non-pointer "+v.Type().String()+"): %w", ErrFillParameters)
 	}
 
 	if v.IsNil() {
-		return nil, fmt.Errorf("di: Fill(nil)")
+		return fmt.Errorf("di: Fill(nil)")
 	}
 
 	if v.Elem().Kind() != reflect.Struct {
-		return nil, fmt.Errorf("di: Fill(non-struct "+v.Type().String()+"): %w", ErrFillParameters)
+		return fmt.Errorf("di: Fill(non-struct "+v.Type().String()+"): %w", ErrFillParameters)
 	}
-
-	closers := []Closer{}
 
 	err := helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
 		if !sf.IsExported() {
@@ -73,9 +69,8 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 			return nil
 		}
 
-		v, closer, err := dp.resolve(ctx, sf.Type, tag, false, opt)
+		v, err := dp.resolve(ctx, sf.Type, tag, false, opt)
 		if err == nil {
-			closers = append(closers, closer)
 			fv.Set(reflect.ValueOf(v))
 			return nil
 		} else if !errors.Is(err, ErrNotRegistered) {
@@ -85,24 +80,10 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		return fmt.Errorf("unable to fill field %s: %w", sf.Name, ErrNotRegistered)
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	spew.Dump(closers)
-
-	return func(err error) error {
-		closeErrors := []error{}
-		for _, c := range closers {
-			closeErr := c(err)
-			if closeErr != nil {
-				closeErrors = append(closeErrors, closeErr)
-			}
-		}
-		if len(closeErrors) > 0 {
-			return errors.Join(closeErrors...)
-		}
-		return nil
-	}, nil
+	return nil
 }
 
 func AutoResolve[T any]() FillOption {
