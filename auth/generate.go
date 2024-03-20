@@ -19,6 +19,9 @@ func GenerateToken(modifyClaims ...TokenOptions) (string, error) {
 	for _, m := range modifyClaims {
 		claims = m(claims)
 	}
+	return GenerateTokenFrom(claims)
+}
+func GenerateTokenFrom(claims jwt.Claims) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(appKey)
 }
 

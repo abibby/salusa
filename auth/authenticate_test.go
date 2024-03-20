@@ -25,5 +25,5 @@ func TestAuthenticate(t *testing.T) {
 	c, err := authenticate(r)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "test", c["sub"])
+	assert.Equal(t, "test", c.Subject)
 }

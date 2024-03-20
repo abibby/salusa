@@ -23,7 +23,7 @@ func SetAppKey(key []byte) {
 	appKey = key
 }
 
-func Claims(ctx context.Context) (jwt.MapClaims, bool) {
+func GetClaims(ctx context.Context) (jwt.MapClaims, bool) {
 	iClaims := ctx.Value(jwtClaims)
 	claims, ok := iClaims.(jwt.MapClaims)
 	return claims, ok
@@ -32,7 +32,7 @@ func Claims(ctx context.Context) (jwt.MapClaims, bool) {
 func UserIDFactory[T any](cb func(claims jwt.MapClaims) (T, bool)) func(ctx context.Context) (T, bool) {
 	return func(ctx context.Context) (T, bool) {
 		var zero T
-		claims, ok := Claims(ctx)
+		claims, ok := GetClaims(ctx)
 		if !ok {
 			return zero, false
 		}
@@ -41,7 +41,7 @@ func UserIDFactory[T any](cb func(claims jwt.MapClaims) (T, bool)) func(ctx cont
 	}
 }
 
-func setClaims(r *http.Request, claims jwt.MapClaims) *http.Request {
+func setClaims(r *http.Request, claims *Claims) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), jwtClaims, claims))
 }
 
@@ -59,7 +59,7 @@ func AttachUser(next http.Handler) http.Handler {
 
 func LoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, ok := Claims(r.Context())
+		_, ok := GetClaims(r.Context())
 		if !ok {
 			respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
 			return
@@ -72,7 +72,7 @@ func LoggedIn(next http.Handler) http.Handler {
 func HasClaim(key string, value any) router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			claims, ok := Claims(r.Context())
+			claims, ok := GetClaims(r.Context())
 			if !ok {
 				respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
 				return

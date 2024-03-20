@@ -132,7 +132,6 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 		access, err := GenerateToken(
 			WithSubject(u.GetID()),
 			WithLifetime(expires),
-			WithIssuedAtTime(time.Now()),
 			WithClaim("type", "access"),
 		)
 		if err != nil {
@@ -141,7 +140,6 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 		refresh, err := GenerateToken(
 			WithSubject(u.GetID()),
 			WithLifetime(time.Hour*24*30),
-			WithIssuedAtTime(time.Now()),
 			WithClaim("type", "refresh"),
 		)
 		if err != nil {
@@ -278,7 +276,40 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 	})
 
 	Refresh := request.Handler(func(r *RefreshRequest[T]) (*LoginResponse, error) {
-		return nil, nil
+		claims, err := Parse(r.RefreshToken)
+		if err != nil {
+			return nil, err
+		}
+
+		if claims.Type != TypeRefresh {
+			return nil, request.NewHTTPError(fmt.Errorf("invalid token"), http.StatusUnauthorized)
+		}
+
+		u, err := builder.From[T]().
+			WithContext(r.Ctx).
+			Find(r.Tx, claims.Subject)
+		if err != nil {
+			return nil, request.NewHTTPError(fmt.Errorf("failed to verify: %w", err), http.StatusUnauthorized)
+		}
+
+		expires := time.Hour
+
+		access, err := GenerateToken(
+			WithSubject(u.GetID()),
+			WithLifetime(expires),
+			WithIssuedAtTime(time.Now()),
+			WithClaim("type", "access"),
+		)
+		if err != nil {
+			return nil, request.NewHTTPError(fmt.Errorf("could not generate token: %w", err), http.StatusUnauthorized)
+		}
+
+		return &LoginResponse{
+			AccessToken:  access,
+			TokenType:    "Bearer",
+			RefreshToken: r.RefreshToken,
+			ExpiresIn:    int(expires.Seconds()),
+		}, nil
 	})
 
 	return &AuthRoutes[T]{
