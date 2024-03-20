@@ -6,18 +6,11 @@ import (
 	"reflect"
 )
 
+type Closer func(error) error
+
 type DependencyProvider struct {
-	factories map[reflect.Type]func(ctx context.Context, tag string) (any, error)
+	factories map[reflect.Type]func(ctx context.Context, tag string) (any, Closer, error)
 }
-
-type DependencyFactory[T any] func(ctx context.Context, tag string) (T, error)
-
-var (
-	contextType            = getType[context.Context]()
-	stringType             = getType[string]()
-	errorType              = getType[error]()
-	dependencyProviderType = getType[*DependencyProvider]()
-)
 
 var (
 	ErrInvalidDependencyFactory = errors.New("dependency factories must match the type di.DependencyFactory")
@@ -29,7 +22,7 @@ var (
 
 func NewDependencyProvider() *DependencyProvider {
 	return &DependencyProvider{
-		factories: map[reflect.Type]func(ctx context.Context, tag string) (any, error){},
+		factories: map[reflect.Type]func(ctx context.Context, tag string) (any, Closer, error){},
 	}
 }
 

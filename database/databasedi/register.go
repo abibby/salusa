@@ -13,34 +13,31 @@ func Register(dp *di.DependencyProvider, db *sqlx.DB) {
 	di.RegisterSingleton(dp, func() *sqlx.DB {
 		return db
 	})
-	di.Register(dp, func(ctx context.Context, tag string) (*sqlx.Tx, error) {
+	di.RegisterCloser(dp, func(ctx context.Context, tag string) (*sqlx.Tx, di.Closer, error) {
 		db, err := di.Resolve[*sqlx.DB](ctx, dp)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve database: %w", err)
+			return nil, nil, fmt.Errorf("failed to resolve database: %w", err)
 		}
 
-		tx, err := db.BeginTxx(context.WithoutCancel(ctx), &sql.TxOptions{})
+		tx, err := db.BeginTxx(ctx, &sql.TxOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("failed to start transaction: %w", err)
+			return nil, nil, fmt.Errorf("failed to start transaction: %w", err)
 		}
 
-		go func() {
-			<-ctx.Done()
-
-			err := context.Cause(ctx)
+		return tx, func(err error) error {
 			if err == nil || err == context.Canceled {
 				txErr := tx.Commit()
 				if txErr != nil {
-					panic(txErr)
+					return txErr
 				}
 			} else {
 				txErr := tx.Rollback()
 				if txErr != nil {
-					panic(txErr)
+					return txErr
 				}
 			}
-		}()
-		return tx, nil
+			return nil
+		}, nil
 
 	})
 }

@@ -29,19 +29,9 @@ type job[E Event] struct {
 }
 
 func (j *job[E]) Run(ctx context.Context, dp *di.DependencyProvider) error {
-	t := j.handlerType
-	var h Handler[E]
-	if t.Kind() == reflect.Pointer {
-		h = reflect.New(t.Elem()).Interface().(Handler[E])
-	} else {
-		h = reflect.New(t).Elem().Interface().(Handler[E])
-	}
-
-	err := dp.Fill(ctx, h)
-	if err != nil {
-		return err
-	}
-	return h.Handle(ctx, j.value)
+	return di.Use(ctx, dp, func(h Handler[E]) error {
+		return h.Handle(ctx, j.value)
+	})
 }
 
 func (j *job[E]) UpdateValue(v Event) bool {

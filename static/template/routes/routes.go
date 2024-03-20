@@ -2,7 +2,6 @@ package routes
 
 import (
 	"github.com/abibby/salusa/auth"
-	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/fileserver"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
@@ -12,7 +11,7 @@ import (
 
 func InitRoutes(r *router.Router) {
 	r.Use(request.HandleErrors())
-	r.Use(databasedi.Middleware())
+	// r.Use(databasedi.Middleware())
 
 	authRoutes := auth.Routes(func() *models.User {
 		return &models.User{
