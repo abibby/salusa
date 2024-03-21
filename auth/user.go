@@ -33,7 +33,7 @@ type UsernameUser struct {
 
 var _ User = (*UsernameUser)(nil)
 
-func NewBaseUser() *UsernameUser {
+func NewUsernameUser() *UsernameUser {
 	return &UsernameUser{
 		ID: uuid.New(),
 	}

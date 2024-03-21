@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"time"
@@ -37,6 +38,7 @@ type UserCreateRequest struct {
 	Update databasedi.Update  `inject:""`
 	Ctx    context.Context    `inject:""`
 	URL    router.URLResolver `inject:""`
+	Logger *slog.Logger       `inject:""`
 }
 type UserCreateResponse[T User] struct {
 	User T `json:"user"`
@@ -160,7 +162,7 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 	})
 
 	VerifyEmail := request.Handler(func(r *VerifyEmailRequest) (*request.Response, error) {
-		zeroValidated, ok := cast[EmailVerified](newUser)
+		zeroValidated, ok := cast[EmailVerified](newUser())
 		if !ok {
 			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
 		}
@@ -208,6 +210,7 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 			if err != nil {
 				return nil, fmt.Errorf("could not send emails: %w", err)
 			}
+			r.Logger.Info("email verification sent", "email", v.GetEmail())
 		}
 
 		err = r.Update(func(tx *sqlx.Tx) error {
@@ -374,8 +377,10 @@ func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, veri
 	}
 
 	err = mailer.Mail(&email.Message{
-		To:   []string{v.GetEmail()},
-		Body: b.Bytes(),
+		From:     "salusa@example.com",
+		To:       []string{v.GetEmail()},
+		Subject:  "Verify your account",
+		HTMLBody: b.String(),
 	})
 	if err != nil {
 		return fmt.Errorf("error sending mail: %w", err)
@@ -399,5 +404,5 @@ func RegisterRoutes[T User](r *router.Router, newUser func() T) {
 	r.Post("/user/password/reset", authRoutes.ResetPassword)
 	r.Post("/user/password/change", authRoutes.ChangePassword)
 	r.Post("/user", authRoutes.UserCreate)
-	r.Post("/user/verify", authRoutes.VerifyEmail)
+	r.Get("/user/verify", authRoutes.VerifyEmail)
 }

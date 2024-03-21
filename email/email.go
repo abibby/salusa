@@ -1,8 +1,7 @@
 package email
 
 import (
-	"net/smtp"
-	"strings"
+	"github.com/go-mail/mail"
 )
 
 type Mailer interface {
@@ -10,36 +9,30 @@ type Mailer interface {
 }
 
 type Message struct {
-	// From string
-	To   []string
-	Body []byte
+	From     string
+	To       []string
+	Subject  string
+	HTMLBody string
 }
 
 type SMTPMailer struct {
-	from    string
-	address string
-	auth    smtp.Auth
+	d *mail.Dialer
 }
 
 var _ Mailer = (*SMTPMailer)(nil)
 
-func NewSMTPMailer(from, address string, auth smtp.Auth) *SMTPMailer {
+func NewSMTPMailer(host string, port int, username, password string) *SMTPMailer {
 	return &SMTPMailer{
-		from:    from,
-		address: address,
-		auth:    auth,
-	}
-}
-
-func NewSMTPMailerPlainAuth(from, address, username, password string) *SMTPMailer {
-	host := strings.SplitN(address, ":", 2)[0]
-	return &SMTPMailer{
-		from:    from,
-		address: address,
-		auth:    smtp.PlainAuth("", username, password, host),
+		d: mail.NewDialer(host, port, username, password),
 	}
 }
 
 func (s *SMTPMailer) Mail(m *Message) error {
-	return smtp.SendMail(s.address, s.auth, s.from, m.To, m.Body)
+	msg := mail.NewMessage()
+	msg.SetHeader("From", m.From)
+	msg.SetHeader("To", m.To...)
+	msg.SetHeader("Subject", m.Subject)
+	msg.SetBody("text/html", m.HTMLBody)
+
+	return s.d.DialAndSend(msg)
 }

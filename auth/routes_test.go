@@ -37,7 +37,7 @@ var Run = runner.Run
 
 func TestAuthRoutes_UserCreate(t *testing.T) {
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
-		routes := auth.Routes(auth.NewBaseUser)
+		routes := auth.Routes(auth.NewUsernameUser)
 		ctx := context.Background()
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
 			Username: "user",
@@ -87,7 +87,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 }
 
 func TestAuthRoutes_Login(t *testing.T) {
-	routes := auth.Routes(auth.NewBaseUser)
+	routes := auth.Routes(auth.NewUsernameUser)
 
 	// Hashed password salted with the id
 	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
@@ -249,7 +249,7 @@ func TestAuthRoutes_ResetPassword(t *testing.T) {
 }
 
 func TestAuthRoutes_ChangePassword(t *testing.T) {
-	routes := auth.Routes(auth.NewBaseUser)
+	routes := auth.Routes(auth.NewUsernameUser)
 
 	// Hashed password salted with the id
 	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
@@ -289,7 +289,7 @@ func TestAuthRoutes_ChangePassword(t *testing.T) {
 }
 
 func TestAuthRoutes_Refresh(t *testing.T) {
-	routes := auth.Routes(auth.NewBaseUser)
+	routes := auth.Routes(auth.NewUsernameUser)
 
 	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()

@@ -25,8 +25,9 @@ func (r *Router) Register(dp *di.DependencyProvider) {
 		if err != nil {
 			origin = "/"
 		} else {
-			origin = req.URL.Scheme + "://" + req.URL.Host + "/"
+			origin = req.Header.Get("Origin")
 		}
+
 		return &SalusaResolver{
 			origin: origin,
 			r:      r,
