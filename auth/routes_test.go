@@ -38,6 +38,14 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 
 var Run = runner.Run
 
+type DevNull struct{}
+
+func (d *DevNull) Write(p []byte) (n int, err error) {
+	return len(p), nil
+}
+
+var nullLogger = slog.New(slog.NewTextHandler(&DevNull{}, nil))
+
 func TestAuthRoutes_UserCreate(t *testing.T) {
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
 		routes := auth.Routes(auth.NewUsernameUser)
@@ -47,7 +55,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 			Password: "pass",
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
-			Logger:   slog.Default(),
+			Logger:   nullLogger,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
@@ -72,7 +80,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 			Ctx:      ctx,
 			Mailer:   m,
 			URL:      urlResolver,
-			Logger:   slog.Default(),
+			Logger:   nullLogger,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user@example.com", resp.User.Email)

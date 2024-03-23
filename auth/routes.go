@@ -173,7 +173,7 @@ func Login[T User](newUser func() T) *request.RequestHandler[LoginRequest, *Logi
 			return nil, fmt.Errorf("failed to log in: %w", err)
 		}
 		if reflect.ValueOf(u).IsNil() {
-			return nil, Err401Unauthorized
+			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
 		}
 
 		if v, ok := cast[EmailVerified](u); ok {
@@ -184,7 +184,7 @@ func Login[T User](newUser func() T) *request.RequestHandler[LoginRequest, *Logi
 
 		err = bcrypt.CompareHashAndPassword(u.GetPasswordHash(), u.SaltedPassword(r.Password))
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return nil, Err401Unauthorized
+			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
 		} else if err != nil {
 			return nil, fmt.Errorf("could not check password hash: %w", err)
 		}
