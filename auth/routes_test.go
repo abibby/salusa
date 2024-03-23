@@ -2,6 +2,9 @@ package auth_test
 
 import (
 	"context"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/abibby/salusa/auth"
@@ -44,6 +47,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 			Password: "pass",
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
+			Logger:   slog.Default(),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
@@ -68,6 +72,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 			Ctx:      ctx,
 			Mailer:   m,
 			URL:      urlResolver,
+			Logger:   slog.Default(),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user@example.com", resp.User.Email)
@@ -75,7 +80,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		sent := m.EmailsSent()
 		assert.Len(t, sent, 1)
 		assert.Equal(t, []string{"user@example.com"}, sent[0].To)
-		assert.Contains(t, string(sent[0].Body), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.LookupToken))
+		assert.Contains(t, string(sent[0].HTMLBody), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.LookupToken))
 
 		u, err := builder.From[*auth.EmailVerifiedUser]().WithContext(ctx).Find(tx, resp.User.ID)
 		assert.NoError(t, err)
@@ -209,8 +214,10 @@ func TestAuthRoutes_VerifyEmail(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, u.Verified)
 
-		assert.Equal(t, 301, resp.Status())
-		assert.Equal(t, map[string]string{"Location": urlResolver.ResolveHandler(routes.Login)}, resp.Headers())
+		w := httptest.NewRecorder()
+		resp.ServeHTTP(w, httptest.NewRequest("GET", "/", http.NoBody))
+		assert.Equal(t, http.StatusFound, w.Result().StatusCode)
+		assert.Equal(t, urlResolver.Resolve("login"), w.Result().Header.Get("Location"))
 	})
 }
 

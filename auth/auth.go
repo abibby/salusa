@@ -2,19 +2,22 @@ package auth
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type contextKey uint8
 
 const (
-	jwtClaims contextKey = iota
+	claimKey contextKey = iota
+)
+
+var (
+	Err401Unauthorized = request.NewHTTPError(errors.New("unauthorized"), http.StatusUnauthorized)
 )
 
 var appKey []byte
@@ -23,67 +26,61 @@ func SetAppKey(key []byte) {
 	appKey = key
 }
 
-func GetClaims(ctx context.Context) (jwt.MapClaims, bool) {
-	iClaims := ctx.Value(jwtClaims)
-	claims, ok := iClaims.(jwt.MapClaims)
+func GetClaims(r *http.Request) (*Claims, bool) {
+	return GetClaimsCtx(r.Context())
+}
+func GetClaimsCtx(ctx context.Context) (*Claims, bool) {
+	iClaims := ctx.Value(claimKey)
+	if iClaims == nil {
+		return nil, false
+	}
+	claims, ok := iClaims.(*Claims)
 	return claims, ok
 }
 
-func UserIDFactory[T any](cb func(claims jwt.MapClaims) (T, bool)) func(ctx context.Context) (T, bool) {
-	return func(ctx context.Context) (T, bool) {
-		var zero T
-		claims, ok := GetClaims(ctx)
-		if !ok {
-			return zero, false
-		}
+func setClaims(r *http.Request, claims *Claims) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), claimKey, claims))
+}
 
-		return cb(claims)
+func AttachUser() router.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, err := authenticate(r)
+			if err == nil {
+				next.ServeHTTP(w, setClaims(r, claims))
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
 	}
 }
 
-func setClaims(r *http.Request, claims *Claims) *http.Request {
-	return r.WithContext(context.WithValue(r.Context(), jwtClaims, claims))
-}
-
-func AttachUser(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims, err := authenticate(r)
-		if err == nil {
-			next.ServeHTTP(w, setClaims(r, claims))
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func LoggedIn(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, ok := GetClaims(r.Context())
-		if !ok {
-			respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func HasClaim(key string, value any) router.MiddlewareFunc {
+func LoggedIn() router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			claims, ok := GetClaims(r.Context())
+			_, ok := GetClaims(r)
 			if !ok {
-				respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
+				respond(Err401Unauthorized, w, r)
 				return
 			}
-			claim, ok := claims[key]
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func HasClaim(validate func(c *Claims) bool) router.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := GetClaims(r)
 			if !ok {
-				respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
+				respond(Err401Unauthorized, w, r)
 				return
 			}
-			if claim != value {
-				respond(request.NewHTTPError(fmt.Errorf("unauthorized"), http.StatusUnauthorized), w, r)
+
+			if !validate(claims) {
+				respond(Err401Unauthorized, w, r)
 				return
 			}
 			next.ServeHTTP(w, r)

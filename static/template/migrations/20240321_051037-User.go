@@ -7,10 +7,10 @@ import (
 
 func init() {
 	migrations.Add(&migrate.Migration{
-		Name: "20240320_212829-User",
+		Name: "20240321_051037-User",
 		Up: schema.Create("users", func(table *schema.Blueprint) {
 			table.Blob("id").Primary()
-			table.String("email")
+			table.String("email").Unique()
 			table.Blob("password")
 			table.Bool("validated")
 			table.String("lookup_token")

@@ -1,12 +1,14 @@
 package salusadi
 
 import (
+	"github.com/abibby/salusa/auth"
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/request"
 )
 
-func Register(dp *di.DependencyProvider) {
+func Register[T auth.User](dp *di.DependencyProvider) {
 	clog.Register(dp, nil)
-	request.RegisterDI(dp)
+	request.Register(dp)
+	auth.Register[T](dp)
 }

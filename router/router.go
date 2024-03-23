@@ -1,11 +1,9 @@
 package router
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"path"
-	"reflect"
 
 	"github.com/abibby/salusa/di"
 	"github.com/gorilla/mux"
@@ -17,27 +15,33 @@ type WithDependencyProvider interface {
 	WithDependencyProvider(dp *di.DependencyProvider)
 }
 type Route struct {
-	Path   string
-	Method string
+	Path    string
+	Method  string
+	name    string
+	handler http.Handler
 }
+
+func (r *Route) Name(name string) *Route {
+	r.name = name
+	return r
+}
+
 type routeList struct {
 	Routes []*Route
 }
 
 type Router struct {
-	prefix   string
-	router   *mux.Router
-	dp       *di.DependencyProvider
-	handlers map[http.Handler]string
-	routes   *routeList
+	prefix string
+	router *mux.Router
+	dp     *di.DependencyProvider
+	routes *routeList
 }
 
 func New() *Router {
 	return &Router{
-		prefix:   "",
-		router:   mux.NewRouter(),
-		handlers: map[http.Handler]string{},
-		routes:   &routeList{Routes: []*Route{}},
+		prefix: "",
+		router: mux.NewRouter(),
+		routes: &routeList{Routes: []*Route{}},
 	}
 }
 
@@ -45,31 +49,31 @@ func (r *Router) WithDependencyProvider(dp *di.DependencyProvider) {
 	r.dp = dp
 }
 
-func (r *Router) Get(path string, handler http.Handler) {
-	r.handleMethod(http.MethodGet, path, handler)
+func (r *Router) Get(path string, handler http.Handler) *Route {
+	return r.handleMethod(http.MethodGet, path, handler)
 }
-func (r *Router) Post(path string, handler http.Handler) {
-	r.handleMethod(http.MethodPost, path, handler)
+func (r *Router) Post(path string, handler http.Handler) *Route {
+	return r.handleMethod(http.MethodPost, path, handler)
 }
-func (r *Router) Put(path string, handler http.Handler) {
-	r.handleMethod(http.MethodPut, path, handler)
+func (r *Router) Put(path string, handler http.Handler) *Route {
+	return r.handleMethod(http.MethodPut, path, handler)
 }
-func (r *Router) Patch(path string, handler http.Handler) {
-	r.handleMethod(http.MethodPatch, path, handler)
+func (r *Router) Patch(path string, handler http.Handler) *Route {
+	return r.handleMethod(http.MethodPatch, path, handler)
 }
-func (r *Router) Delete(path string, handler http.Handler) {
-	r.handleMethod(http.MethodDelete, path, handler)
+func (r *Router) Delete(path string, handler http.Handler) *Route {
+	return r.handleMethod(http.MethodDelete, path, handler)
 }
 
-func (r *Router) handleMethod(method, path string, handler http.Handler) {
+func (r *Router) handleMethod(method, path string, handler http.Handler) *Route {
 	r.addDP(handler)
-	r.addHandler(handler, path, method)
 	r.router.Handle(path, handler).Methods(method)
+	return r.addRoute(handler, path, method)
 }
-func (r *Router) Handle(p string, handler http.Handler) {
+func (r *Router) Handle(p string, handler http.Handler) *Route {
 	r.addDP(handler)
-	r.addHandler(handler, path.Join(p, "*"), "ALL")
 	r.router.PathPrefix(p).Handler(handler)
+	return r.addRoute(handler, path.Join(p, "*"), "ALL")
 }
 
 func (r *Router) Use(middleware MiddlewareFunc) {
@@ -78,9 +82,8 @@ func (r *Router) Use(middleware MiddlewareFunc) {
 
 func (r *Router) Group(prefix string, cb func(r *Router)) {
 	cb(&Router{
-		prefix:   path.Join(r.prefix, prefix),
-		router:   r.router.PathPrefix(prefix).Subrouter(),
-		handlers: r.handlers,
+		prefix: path.Join(r.prefix, prefix),
+		router: r.router.PathPrefix(prefix).Subrouter(),
 	})
 }
 
@@ -94,22 +97,23 @@ func (r *Router) addDP(handler http.Handler) {
 	}
 	w.WithDependencyProvider(r.dp)
 }
-func (r *Router) addHandler(handler http.Handler, p, m string) {
-	if reflect.ValueOf(handler).Comparable() {
-		r.handlers[handler] = path.Join(r.prefix, p)
+func (r *Router) addRoute(handler http.Handler, pathName, method string) *Route {
+	route := &Route{
+		Path:    path.Join(r.prefix, pathName),
+		Method:  method,
+		handler: handler,
 	}
-	r.routes.Routes = append(r.routes.Routes, &Route{
-		Path:   p,
-		Method: m,
-	})
+	r.routes.Routes = append(r.routes.Routes, route)
+	return route
 }
 
-func (r *Router) Routes() string {
-	b := &bytes.Buffer{}
+func (r *Router) Routes() []*Route {
+	return r.routes.Routes
+}
+func (r *Router) PrintRoutes() {
 	for _, route := range r.routes.Routes {
-		fmt.Fprintf(b, "%-40s %s\n", route.Path, route.Method)
+		fmt.Printf("%-40s %s\n", route.Path, route.Method)
 	}
-	return b.String()
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {

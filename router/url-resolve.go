@@ -30,7 +30,7 @@ func (r *Router) Register(dp *di.DependencyProvider) {
 
 		return &SalusaResolver{
 			origin: origin,
-			r:      r,
+			router: r,
 		}, nil
 	})
 }
@@ -83,17 +83,49 @@ func ToAttrs(params []any) ([]*Attr, error) {
 
 type SalusaResolver struct {
 	origin string
-	r      *Router
+	router *Router
 }
 
 func NewResolver(origin string, r *Router) *SalusaResolver {
 	return &SalusaResolver{
 		origin: origin,
-		r:      r,
+		router: r,
 	}
 }
 
 func (r *SalusaResolver) Resolve(name string, params ...any) string {
+	s, ok := r.namePath(name)
+	if !ok {
+		s = name
+	}
+	return r.resolve(s, params...)
+}
+func (r *SalusaResolver) ResolveHandler(h http.Handler, params ...any) string {
+	s, ok := r.handlerPath(h)
+	if !ok {
+		s = "/"
+	}
+	return r.resolve(s, params...)
+}
+
+func (r *SalusaResolver) namePath(name string) (string, bool) {
+	for _, route := range r.router.Routes() {
+		if route.name == name {
+			return route.Path, true
+		}
+	}
+	return "", false
+}
+func (r *SalusaResolver) handlerPath(h http.Handler) (string, bool) {
+	for _, route := range r.router.Routes() {
+		if route.handler == h {
+			return route.Path, true
+		}
+	}
+	return "", false
+}
+
+func (r *SalusaResolver) resolve(name string, params ...any) string {
 	attrs, err := ToAttrs(params)
 	if err != nil {
 		panic(err)
@@ -115,16 +147,4 @@ func (r *SalusaResolver) Resolve(name string, params ...any) string {
 		u += "?" + v.Encode()
 	}
 	return u
-}
-func (r *SalusaResolver) ResolveHandler(h http.Handler, params ...any) string {
-	s, ok := r.HandlerPath(h)
-	if !ok {
-		s = "/"
-	}
-	return r.Resolve(s, params...)
-}
-
-func (r *SalusaResolver) HandlerPath(h http.Handler) (string, bool) {
-	p, ok := r.r.handlers[h]
-	return p, ok
 }

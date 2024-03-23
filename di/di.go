@@ -23,8 +23,3 @@ func NewDependencyProvider() *DependencyProvider {
 		factories: map[reflect.Type]func(ctx context.Context, tag string) (any, error){},
 	}
 }
-
-func getType[T any]() reflect.Type {
-	var v *T
-	return reflect.TypeOf(v).Elem()
-}

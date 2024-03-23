@@ -18,6 +18,7 @@ import (
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/request"
+	"github.com/abibby/salusa/request/rules"
 	"github.com/abibby/salusa/router"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -96,15 +97,69 @@ type RefreshRequest[T User] struct {
 type AuthRoutes[T User] struct {
 	UserCreate     *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]]
 	Login          *request.RequestHandler[LoginRequest, *LoginResponse]
-	VerifyEmail    *request.RequestHandler[VerifyEmailRequest, *request.Response]
+	VerifyEmail    *request.RequestHandler[VerifyEmailRequest, http.Handler]
 	ResetPassword  *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]]
 	ChangePassword *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]]
 	Refresh        *request.RequestHandler[RefreshRequest[T], *LoginResponse]
 }
 
 func Routes[T User](newUser func() T) *AuthRoutes[T] {
+	verify := VerifyEmail(newUser)
 
-	Login := request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
+	return &AuthRoutes[T]{
+		UserCreate:     UserCreate(newUser, verify),
+		Login:          Login(newUser),
+		VerifyEmail:    verify,
+		ResetPassword:  ResetPassword(newUser),
+		ChangePassword: ChangePassword(newUser),
+		Refresh:        Refresh(newUser),
+	}
+
+}
+
+func UserCreate[T User](newUser func() T, verifyEmail http.Handler) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
+	return request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
+		u := newUser()
+		u.SetUsername(r.Username)
+
+		err := updatePassword(u, r.Password)
+		if err != nil {
+			return nil, err
+		}
+
+		if v, ok := cast[EmailVerified](u); ok {
+			r.Logger.Info("email verification sent", "email", v.GetEmail())
+
+			if rule, ok := rules.GetRule("email"); ok {
+				valid := rule(&rules.ValidationOptions{
+					Value: r.Username,
+				})
+				if !valid {
+					return nil, request.ValidationError{}.AddError("username", "username must be an email")
+				}
+			}
+			err = sendEmails(v, r.Mailer, r.URL, verifyEmail)
+			if err != nil {
+				return nil, fmt.Errorf("could not send emails: %w", err)
+			}
+			r.Logger.Info("email verification sent", "email", v.GetEmail())
+		}
+
+		err = r.Update(func(tx *sqlx.Tx) error {
+			return model.SaveContext(r.Ctx, tx, u)
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return &UserCreateResponse[T]{
+			User: u,
+		}, nil
+	})
+}
+
+func Login[T User](newUser func() T) *request.RequestHandler[LoginRequest, *LoginResponse] {
+	return request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
 		u := newUser()
 		var err error
 		r.Read(func(tx *sqlx.Tx) error {
@@ -118,18 +173,18 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 			return nil, fmt.Errorf("failed to log in: %w", err)
 		}
 		if reflect.ValueOf(u).IsNil() {
-			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
+			return nil, Err401Unauthorized
 		}
 
 		if v, ok := cast[EmailVerified](u); ok {
 			if !v.IsVerified() {
-				return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
+				return nil, Err401Unauthorized
 			}
 		}
 
 		err = bcrypt.CompareHashAndPassword(u.GetPasswordHash(), u.SaltedPassword(r.Password))
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
+			return nil, Err401Unauthorized
 		} else if err != nil {
 			return nil, fmt.Errorf("could not check password hash: %w", err)
 		}
@@ -160,9 +215,11 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 			ExpiresIn:    int(expires.Seconds()),
 		}, nil
 	})
+}
 
-	VerifyEmail := request.Handler(func(r *VerifyEmailRequest) (*request.Response, error) {
-		zeroValidated, ok := cast[EmailVerified](newUser())
+func VerifyEmail[T User](newUser func() T) *request.RequestHandler[VerifyEmailRequest, http.Handler] {
+	return request.Handler(func(r *VerifyEmailRequest) (http.Handler, error) {
+		emptyValidated, ok := cast[EmailVerified](newUser())
 		if !ok {
 			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
 		}
@@ -170,7 +227,7 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 		err := r.Update(func(tx *sqlx.Tx) error {
 			u, err := builder.From[T]().
 				WithContext(r.Ctx).
-				Where(zeroValidated.LookupTokenColumn(), "=", r.Token).
+				Where(emptyValidated.LookupTokenColumn(), "=", r.Token).
 				First(tx)
 			if err != nil {
 				return fmt.Errorf("failed to verify: %w", err)
@@ -193,39 +250,12 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 			return nil, err
 		}
 
-		return request.Redirect(r.URL.ResolveHandler(Login)), nil
+		return http.RedirectHandler(r.URL.Resolve("login"), http.StatusFound), nil
 	})
+}
 
-	UserCreate := request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
-		u := newUser()
-		u.SetUsername(r.Username)
-
-		err := updatePassword(u, r.Password)
-		if err != nil {
-			return nil, err
-		}
-
-		if v, ok := cast[EmailVerified](u); ok {
-			err = sendEmails(v, r.Mailer, r.URL, VerifyEmail)
-			if err != nil {
-				return nil, fmt.Errorf("could not send emails: %w", err)
-			}
-			r.Logger.Info("email verification sent", "email", v.GetEmail())
-		}
-
-		err = r.Update(func(tx *sqlx.Tx) error {
-			return model.SaveContext(r.Ctx, tx, u)
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return &UserCreateResponse[T]{
-			User: u,
-		}, nil
-	})
-
-	ResetPassword := request.Handler(func(r *ResetPasswordRequest) (*ResetPasswordResponse[T], error) {
+func ResetPassword[T User](newUser func() T) *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
+	return request.Handler(func(r *ResetPasswordRequest) (*ResetPasswordResponse[T], error) {
 		u := newUser()
 		var err error
 		zeroValidated, ok := cast[EmailVerified](u)
@@ -246,7 +276,7 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 
 			v := mustCast[EmailVerified](u)
 			if !v.IsVerified() {
-				return request.NewHTTPError(fmt.Errorf("user not verified verified"), http.StatusUnauthorized)
+				return Err401Unauthorized
 			}
 
 			v.SetLookupToken("")
@@ -263,11 +293,13 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 			User: u,
 		}, nil
 	})
+}
 
-	ChangePassword := request.Handler(func(r *ChangePasswordRequest[T]) (*ChangePasswordResponse[T], error) {
+func ChangePassword[T User](newUser func() T) *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]] {
+	return request.Handler(func(r *ChangePasswordRequest[T]) (*ChangePasswordResponse[T], error) {
 		err := bcrypt.CompareHashAndPassword(r.User.GetPasswordHash(), r.User.SaltedPassword(r.OldPassword))
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
+			return nil, Err401Unauthorized
 		} else if err != nil {
 			return nil, fmt.Errorf("could not check password hash: %w", err)
 		}
@@ -288,8 +320,10 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 			User: r.User,
 		}, nil
 	})
+}
 
-	Refresh := request.Handler(func(r *RefreshRequest[T]) (*LoginResponse, error) {
+func Refresh[T User](newUser func() T) *request.RequestHandler[RefreshRequest[T], *LoginResponse] {
+	return request.Handler(func(r *RefreshRequest[T]) (*LoginResponse, error) {
 		claims, err := Parse(r.RefreshToken)
 		if err != nil {
 			return nil, err
@@ -329,16 +363,6 @@ func Routes[T User](newUser func() T) *AuthRoutes[T] {
 			ExpiresIn:    int(expires.Seconds()),
 		}, nil
 	})
-
-	return &AuthRoutes[T]{
-		UserCreate:     UserCreate,
-		Login:          Login,
-		VerifyEmail:    VerifyEmail,
-		ResetPassword:  ResetPassword,
-		ChangePassword: ChangePassword,
-		Refresh:        Refresh,
-	}
-
 }
 
 //go:embed emails/*
@@ -399,10 +423,10 @@ func mustCast[T any](v any) T {
 func RegisterRoutes[T User](r *router.Router, newUser func() T) {
 	authRoutes := Routes(newUser)
 
-	r.Post("/login", authRoutes.Login)
-	r.Post("/login/refresh", authRoutes.Refresh)
-	r.Post("/user/password/reset", authRoutes.ResetPassword)
-	r.Post("/user/password/change", authRoutes.ChangePassword)
-	r.Post("/user", authRoutes.UserCreate)
-	r.Get("/user/verify", authRoutes.VerifyEmail)
+	r.Post("/login", authRoutes.Login).Name("auth.login")
+	r.Post("/login/refresh", authRoutes.Refresh).Name("auth.refresh")
+	r.Post("/user/password/reset", authRoutes.ResetPassword).Name("auth.password.reset")
+	r.Post("/user/password/change", authRoutes.ChangePassword).Name("auth.password.change")
+	r.Post("/user", authRoutes.UserCreate).Name("auth.user.create")
+	r.Get("/user/verify", authRoutes.VerifyEmail).Name("auth.email.verify")
 }

@@ -4,19 +4,31 @@ import (
 	"context"
 	"reflect"
 	"sync"
+
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 type DependencyFactory[T any] func(ctx context.Context, tag string) (T, error)
 
 var (
-	contextType            = getType[context.Context]()
-	stringType             = getType[string]()
-	errorType              = getType[error]()
-	dependencyProviderType = getType[*DependencyProvider]()
+	contextType            = helpers.GetType[context.Context]()
+	stringType             = helpers.GetType[string]()
+	errorType              = helpers.GetType[error]()
+	dependencyProviderType = helpers.GetType[*DependencyProvider]()
 )
 
 func Register[T any](dp *DependencyProvider, factory DependencyFactory[T]) {
 	dp.Register(factory)
+}
+func RegisterWith[T, W any](dp *DependencyProvider, factory func(ctx context.Context, tag string, with W) (T, error)) {
+	Register(dp, func(ctx context.Context, tag string) (T, error) {
+		with, err := dp.resolve(ctx, helpers.GetType[W](), tag, nil)
+		if err != nil {
+			var zero T
+			return zero, err
+		}
+		return factory(ctx, tag, with.(W))
+	})
 }
 
 func RegisterSingleton[T any](dp *DependencyProvider, factory func() T) {

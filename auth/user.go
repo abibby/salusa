@@ -27,7 +27,7 @@ type UsernameUser struct {
 	model.BaseModel
 
 	ID           uuid.UUID `json:"id"       db:"id,primary"`
-	Username     string    `json:"username" db:"username"`
+	Username     string    `json:"username" db:"username,unique"`
 	PasswordHash []byte    `json:"-"        db:"password"`
 }
 
@@ -68,7 +68,7 @@ type EmailVerifiedUser struct {
 	model.BaseModel
 
 	ID           uuid.UUID `json:"id"    db:"id,primary"`
-	Email        string    `json:"email" db:"email"`
+	Email        string    `json:"email" db:"email,unique"`
 	PasswordHash []byte    `json:"-"     db:"password"`
 	Verified     bool      `json:"-"     db:"validated"`
 	LookupToken  string    `json:"-"     db:"lookup_token"`

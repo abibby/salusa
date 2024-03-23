@@ -7,6 +7,7 @@ import (
 	"github.com/abibby/salusa/salusadi"
 	"github.com/abibby/salusa/static/template/app/events"
 	"github.com/abibby/salusa/static/template/app/jobs"
+	"github.com/abibby/salusa/static/template/app/models"
 	"github.com/abibby/salusa/static/template/app/providers"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/abibby/salusa/static/template/database"
@@ -19,7 +20,7 @@ var Kernel = kernel.New[*config.Config](
 		database.Init,
 	),
 	kernel.Providers(
-		salusadi.Register,
+		salusadi.Register[*models.User],
 		event.RegisterChannelQueue,
 		providers.Register,
 	),

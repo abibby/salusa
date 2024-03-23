@@ -33,7 +33,7 @@ func newFillOptions() *FillOptions {
 type FillOption func(*FillOptions) *FillOptions
 
 var (
-	isFillablerType = getType[IsFillabler]()
+	isFillablerType = helpers.GetType[IsFillabler]()
 )
 
 func (dp *DependencyProvider) Fill(ctx context.Context, v any, opts ...FillOption) error {
@@ -69,7 +69,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 			return nil
 		}
 
-		v, err := dp.resolve(ctx, sf.Type, tag, false, opt)
+		v, err := dp.resolve(ctx, sf.Type, tag, opt)
 		if err == nil {
 			fv.Set(reflect.ValueOf(v))
 			return nil
@@ -88,7 +88,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 
 func AutoResolve[T any]() FillOption {
 	return func(fo *FillOptions) *FillOptions {
-		fo.autoResolve.Add(getType[T]())
+		fo.autoResolve.Add(helpers.GetType[T]())
 		return fo
 	}
 }

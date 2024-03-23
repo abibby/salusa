@@ -14,7 +14,7 @@ import (
 // Get executes the query as a select statement and returns the result.
 func (b *Builder[T]) Get(tx database.DB) ([]T, error) {
 	v := []T{}
-	err := b.Load(tx, &v)
+	err := b.subBuilder.Load(tx, &v)
 	if err != nil {
 		return nil, err
 	}
@@ -52,13 +52,18 @@ func (b *Builder[T]) Find(tx database.DB, primaryKeyValue any) (T, error) {
 	if len(pKeys) != 1 {
 		return m, fmt.Errorf("Find only supports tables with 1 primary key")
 	}
-	return b.Clone().
+	return b.
 		Where(pKeys[0], "=", primaryKeyValue).
 		First(tx)
 }
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *Builder[T]) Load(tx database.DB, v any) error {
+	return b.subBuilder.Load(tx, v)
+}
+
+// Load executes the query as a select statement and sets v to the result.
+func (b *SubBuilder) Load(tx database.DB, v any) error {
 	q, bindings, err := b.ToSQL(dialects.New())
 	if err != nil {
 		return err
@@ -81,8 +86,13 @@ func (b *Builder[T]) Load(tx database.DB, v any) error {
 	return nil
 }
 
-// Load executes the query as a select statement and sets v to the first record.
+// Load executes the query as a select statement and sets v to the result.
 func (b *Builder[T]) LoadOne(tx database.DB, v any) error {
+	return b.subBuilder.LoadOne(tx, v)
+}
+
+// Load executes the query as a select statement and sets v to the first record.
+func (b *SubBuilder) LoadOne(tx database.DB, v any) error {
 	q, bindings, err := b.Clone().
 		Limit(1).
 		ToSQL(dialects.New())
