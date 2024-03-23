@@ -58,7 +58,7 @@ func validateField(ctx context.Context, attribute string, request *http.Request,
 	if validator, ok := fv.Interface().(Validator); ok {
 		err := validator.Valid()
 		if err != nil {
-			vErr.AddError(attribute, err.Error())
+			vErr = vErr.AddError(attribute, err.Error())
 		}
 	}
 
@@ -88,7 +88,7 @@ func validateRule(ctx context.Context, attribute string, request *http.Request, 
 		if err != nil {
 			return err
 		}
-		vErr.AddError(attribute, msg)
+		vErr = vErr.AddError(attribute, msg)
 		return nil
 	}
 
@@ -112,7 +112,7 @@ func validateRule(ctx context.Context, attribute string, request *http.Request, 
 		if err != nil {
 			return err
 		}
-		vErr.AddError(attribute, msg)
+		vErr = vErr.AddError(attribute, msg)
 	}
 
 	return nil
@@ -160,14 +160,6 @@ func split(s, sep string) (string, string) {
 	}
 }
 
-//	func includes[T comparable](haystack []T, needle T) bool {
-//		for _, v := range haystack {
-//			if v == needle {
-//				return true
-//			}
-//		}
-//		return false
-//	}
 func filterZeros[T comparable](array []T) []T {
 	newArray := []T{}
 	var zero T

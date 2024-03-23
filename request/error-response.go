@@ -15,7 +15,7 @@ type HTMLError interface {
 //go:embed error.html
 var errorTemplate string
 
-type ErrResponse struct {
+type errResponse struct {
 	Error      string          `json:"error"`
 	Status     int             `json:"status"`
 	StatusText string          `json:"-"`
@@ -23,7 +23,7 @@ type ErrResponse struct {
 }
 
 func errorResponse(rootErr error, status int, r *http.Request) Responder {
-	response := ErrResponse{
+	response := errResponse{
 		Error:      rootErr.Error(),
 		Status:     status,
 		StatusText: http.StatusText(status),
@@ -39,6 +39,8 @@ func errorResponse(rootErr error, status int, r *http.Request) Responder {
 		}
 		if err, ok := rootErr.(HTMLError); ok {
 			response.Error = err.HTMLError()
+		} else {
+			response.Error = "<p>" + rootErr.Error() + "</p>"
 		}
 
 		reader, writer := io.Pipe()
