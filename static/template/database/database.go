@@ -16,12 +16,10 @@ func Init(ctx context.Context, k *kernel.Kernel) error {
 		return err
 	}
 
-	databasedi.RegisterFromConfig(
+	return databasedi.RegisterFromConfig(
 		ctx,
 		k.DependencyProvider(),
 		cfg.Database,
 		migrations.Use(),
 	)
-
-	return nil
 }

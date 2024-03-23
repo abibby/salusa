@@ -42,11 +42,11 @@ func (r *Response) AddHeader(key, value string) *Response {
 }
 
 func (r *Response) Respond(w http.ResponseWriter, _ *http.Request) error {
-	if r.status != 0 {
-		w.WriteHeader(r.status)
-	}
 	for k, v := range r.headers {
 		w.Header().Set(k, v)
+	}
+	if r.status != 0 {
+		w.WriteHeader(r.status)
 	}
 
 	_, err := io.Copy(w, r.body)

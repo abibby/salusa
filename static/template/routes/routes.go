@@ -19,6 +19,7 @@ func InitRoutes(r *router.Router) {
 		}
 	})
 
+	r.Get("/", resources.View("index.html")).Name("home")
 	r.Get("/login", resources.View("login.html")).Name("login")
 	r.Get("/user/create", resources.View("create_user.html")).Name("user.create")
 

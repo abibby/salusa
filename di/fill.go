@@ -65,19 +65,22 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		}
 
 		tag, ok := sf.Tag.Lookup("inject")
-		if !(ok || opt.autoResolve.Has(fv.Type())) {
+		if !ok && !opt.autoResolve.Has(fv.Type()) {
 			return nil
 		}
 
 		v, err := dp.resolve(ctx, sf.Type, tag, opt)
-		if err == nil {
-			fv.Set(reflect.ValueOf(v))
-			return nil
-		} else if !errors.Is(err, ErrNotRegistered) {
+		if errors.Is(err, ErrNotRegistered) {
+			for t, _ := range dp.factories {
+				fmt.Printf("%s\n", t)
+			}
+			return fmt.Errorf("unable to fill field %s (%s): %w", sf.Name, sf.Type.String(), ErrNotRegistered)
+		} else if err != nil {
 			return fmt.Errorf("failed to fill: %w", err)
 		}
 
-		return fmt.Errorf("unable to fill field %s: %w", sf.Name, ErrNotRegistered)
+		fv.Set(reflect.ValueOf(v))
+		return nil
 	})
 	if err != nil {
 		return err

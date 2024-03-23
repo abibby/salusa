@@ -1,6 +1,2 @@
 .vscode
-static/template/db.sqlite
 cover.out
-db.sqlite
-/tmp
-.env
