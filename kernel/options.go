@@ -5,29 +5,25 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/router"
 )
 
 type KernelOption func(*Kernel) *Kernel
 
-type KernelConfig struct {
-	Port int
-}
-
-func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
+func Bootstrap(bootstrap ...func(context.Context, *Kernel) error) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.bootstrap = bootstrap
 		return k
 	}
 }
 
-func Config(cb func() *KernelConfig) KernelOption {
+func Config[T KernelConfig](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
-		k.postBootstrap = append(k.postBootstrap, func() {
-			cfg := cb()
-			k.port = cfg.Port
+		cfg := cb()
+		di.RegisterSingleton(k.dp, func() T {
+			return cfg
 		})
+		k.cfg = cfg
 		return k
 	}
 }
@@ -45,6 +41,7 @@ func InitRoutes(cb func(r *router.Router)) KernelOption {
 			r := router.New()
 			r.WithDependencyProvider(k.dp)
 			cb(r)
+			k.Register(r.Register)
 			return r
 		}
 		return k
@@ -58,19 +55,19 @@ func Services(services ...Service) KernelOption {
 	}
 }
 
-func Listeners(listeners ...*Listener) KernelOption {
-	return func(k *Kernel) *Kernel {
-		k.listeners = map[event.EventType][]runner{}
-		for _, l := range listeners {
-			jobs, ok := k.listeners[l.eventType]
-			if !ok {
-				jobs = []runner{}
-			}
-			k.listeners[l.eventType] = append(jobs, l.runner)
-		}
-		return k
-	}
-}
+// func Listeners(listeners ...*Listener) KernelOption {
+// 	return func(k *Kernel) *Kernel {
+// 		k.listeners = map[event.EventType][]runner{}
+// 		for _, l := range listeners {
+// 			jobs, ok := k.listeners[l.eventType]
+// 			if !ok {
+// 				jobs = []runner{}
+// 			}
+// 			k.listeners[l.eventType] = append(jobs, l.runner)
+// 		}
+// 		return k
+// 	}
+// }
 
 func Providers(providers ...func(*di.DependencyProvider)) KernelOption {
 	return func(k *Kernel) *Kernel {

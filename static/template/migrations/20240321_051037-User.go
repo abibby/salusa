@@ -7,11 +7,13 @@ import (
 
 func init() {
 	migrations.Add(&migrate.Migration{
-		Name: "20230918_082648-User",
+		Name: "20240321_051037-User",
 		Up: schema.Create("users", func(table *schema.Blueprint) {
-			table.Int("id").Primary().AutoIncrement()
-			table.String("username")
+			table.Blob("id").Primary()
+			table.String("email").Unique()
 			table.Blob("password")
+			table.Bool("validated")
+			table.String("lookup_token")
 		}),
 		Down: schema.DropIfExists("users"),
 	})

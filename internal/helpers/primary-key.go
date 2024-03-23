@@ -19,6 +19,20 @@ func PrimaryKey(m any) []string {
 	return primary
 }
 
+func PrimaryKeyValue(m any) []any {
+	v := reflect.ValueOf(m)
+	keys := PrimaryKey(m)
+	values := make([]any, 0, len(keys))
+	for _, key := range keys {
+		v, ok := RGetValue(v, key)
+		if !ok {
+			continue
+		}
+		values = append(values, v)
+	}
+	return values
+}
+
 func primaryKey(t reflect.Type) ([]string, string) {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()

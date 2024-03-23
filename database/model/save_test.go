@@ -29,7 +29,8 @@ func TestSave_create(t *testing.T) {
 		assert.True(t, rows.Next())
 		id := 0
 		name := ""
-		rows.Scan(&id, &name)
+		err = rows.Scan(&id, &name)
+		assert.NoError(t, err)
 
 		assert.Equal(t, f.ID, id)
 		assert.Equal(t, f.Name, name)
@@ -57,7 +58,8 @@ func TestSave_update(t *testing.T) {
 		assert.True(t, rows.Next())
 		id := 0
 		name := ""
-		rows.Scan(&id, &name)
+		err = rows.Scan(&id, &name)
+		assert.NoError(t, err)
 
 		assert.Equal(t, f.ID, id)
 		assert.Equal(t, f.Name, name)

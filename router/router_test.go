@@ -1,13 +1,11 @@
 package router_test
 
 import (
-	"testing"
-
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 )
 
-func ExampleRouter(t *testing.T) {
+func ExampleRouter() {
 	r := router.New()
 
 	r.Group("/test", func(r *router.Router) {

@@ -1,6 +1,9 @@
 package request
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 type HTTPError struct {
 	err    error
@@ -16,9 +19,11 @@ func NewHTTPError(err error, status int) *HTTPError {
 		status: status,
 	}
 }
-
 func (e *HTTPError) Error() string {
-	return e.err.Error()
+	return fmt.Sprintf("http %d: %v", e.status, e.err)
+}
+func (e *HTTPError) Unwrap() error {
+	return e.err
 }
 
 func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {

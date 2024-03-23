@@ -117,15 +117,18 @@ func TestHasOne_invalid_foreign_key(t *testing.T) {
 
 func BenchmarkHasOneLoad(b *testing.B) {
 	test.RunBenchmark(b, "", func(t *testing.B, tx *sqlx.Tx) {
-		foos := make([]*test.Foo, 100)
-		for i := 0; i < 100; i++ {
-			f := &test.Foo{ID: i}
+		count := 1000
+		foos := make([]*test.Foo, count)
+		for i := 0; i < count; i++ {
+			f := &test.Foo{}
 			foos[i] = f
 			MustSave(tx, f)
-			MustSave(tx, &test.Bar{ID: i, FooID: i})
+			MustSave(tx, &test.Bar{FooID: f.ID})
 		}
+		var err error
 		for i := 0; i < b.N; i++ {
-			builder.Load(tx, foos, "Bars")
+			err = builder.Load(tx, foos, "Bars")
+			assert.NoError(t, err)
 		}
 
 	})

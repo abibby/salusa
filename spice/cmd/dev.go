@@ -6,8 +6,10 @@ package cmd
 import (
 	"log"
 	"os"
-	"os/exec"
+	"os/signal"
+	"syscall"
 
+	"github.com/cosmtrek/air/runner"
 	"github.com/spf13/cobra"
 )
 
@@ -16,18 +18,32 @@ var devCmd = &cobra.Command{
 	Use:   "dev",
 	Short: "",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		c := exec.Command("go", append([]string{"run", "-tags", "dev", "main.go"}, args...)...)
-		c.Stdout = os.Stdout
-		c.Stdin = os.Stdin
-		c.Stderr = os.Stderr
+	RunE: func(cmd *cobra.Command, args []string) error {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-		err := c.Run()
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			os.Exit(exitErr.ExitCode())
-		} else if err != nil {
-			log.Fatal(err)
+		cfg, err := runner.InitConfig("")
+		if err != nil {
+			return err
 		}
+
+		r, err := runner.NewEngineWithConfig(cfg, false)
+		if err != nil {
+			return err
+		}
+		go func() {
+			<-sigs
+			r.Stop()
+		}()
+
+		defer func() {
+			if e := recover(); e != nil {
+				log.Fatalf("PANIC: %+v", e)
+			}
+		}()
+
+		r.Run()
+		return nil
 	},
 }
 

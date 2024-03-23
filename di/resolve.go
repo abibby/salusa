@@ -3,17 +3,19 @@ package di
 import (
 	"context"
 	"reflect"
+
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 func Resolve[T any](ctx context.Context, dp *DependencyProvider) (T, error) {
 	var result T
-	v, err := dp.resolve(ctx, getType[T](), "")
+	v, err := dp.resolve(ctx, helpers.GetType[T](), "", nil)
 	if v != nil {
 		result = v.(T)
 	}
 	return result, err
 }
-func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string) (any, error) {
+func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string, opt *FillOptions) (any, error) {
 	if t == contextType {
 		return ctx, nil
 	}
@@ -31,7 +33,7 @@ func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag s
 		return nil, ErrNotRegistered
 	}
 	v := reflectNew(t)
-	err := dp.fill(ctx, v, nil)
+	err := dp.fill(ctx, v, opt)
 	if err != nil {
 		return nil, err
 	}

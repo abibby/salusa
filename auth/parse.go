@@ -3,12 +3,26 @@ package auth
 import (
 	"fmt"
 
+	"github.com/abibby/salusa/internal/helpers"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func Parse(token string) (jwt.MapClaims, error) {
+var ErrInvalidToken = fmt.Errorf("invalid token")
 
-	claims := jwt.MapClaims{}
+type ClaimType string
+
+var (
+	TypeAccess  = ClaimType("access")
+	TypeRefresh = ClaimType("refresh")
+)
+
+type Claims struct {
+	jwt.RegisteredClaims
+	Type ClaimType `json:"type,omitempty"`
+}
+
+func ParseOf[T jwt.Claims](token string) (T, error) {
+	claims := helpers.NewOf[T]()
 	t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -18,10 +32,15 @@ func Parse(token string) (jwt.MapClaims, error) {
 		return appKey, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse JWT: %w", err)
+		var zero T
+		return zero, fmt.Errorf("failed to parse JWT: %w", err)
 	}
 	if !t.Valid {
-		return nil, ErrInvalidToken
+		var zero T
+		return zero, ErrInvalidToken
 	}
 	return claims, nil
+}
+func Parse(token string) (*Claims, error) {
+	return ParseOf[*Claims](token)
 }

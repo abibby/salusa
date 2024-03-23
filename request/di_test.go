@@ -15,7 +15,7 @@ func TestInjectRequest(t *testing.T) {
 		Request *http.Request
 	}
 	dp := di.NewDependencyProvider()
-	request.RegisterDI(dp)
+	request.Register(dp)
 
 	httpRequest := httptest.NewRequest("GET", "http://0.0.0.0/", http.NoBody)
 
@@ -36,7 +36,7 @@ func TestInjectResponseWriter(t *testing.T) {
 	}
 
 	dp := di.NewDependencyProvider()
-	request.RegisterDI(dp)
+	request.Register(dp)
 
 	rw := httptest.NewRecorder()
 

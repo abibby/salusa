@@ -2,7 +2,9 @@ package request
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/abibby/salusa/router"
 )
@@ -25,10 +27,14 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 					handler(err)
 				}
 
-				if responder, ok := getResponder(err); ok {
-					responder.Respond(w, r)
-				} else {
-					errorResponse(err, http.StatusInternalServerError, r).Respond(w, r)
+				err = fmt.Errorf("%w\n%s", err, debug.Stack())
+				responder, ok := getResponder(err)
+				if !ok {
+					responder = NewHTTPError(err, http.StatusInternalServerError)
+				}
+				err = responder.Respond(w, r)
+				if err != nil {
+					log.Print(err)
 				}
 			}()
 

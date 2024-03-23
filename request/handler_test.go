@@ -8,7 +8,7 @@ import (
 	"github.com/abibby/salusa/request"
 )
 
-func ExampleHandler_Input() {
+func ExampleHandler_input() {
 	type ExampleRequest struct {
 		A int `query:"a"`
 		B int `query:"b"`
@@ -36,7 +36,7 @@ func ExampleHandler_Input() {
 	// }
 }
 
-func ExampleHandler_Error() {
+func ExampleHandler_error() {
 	type ExampleRequest struct {
 		A int `query:"a" validate:"min:1"`
 	}

@@ -11,7 +11,7 @@ import (
 var defaultDP = di.NewDependencyProvider()
 
 func init() {
-	RegisterDI(defaultDP)
+	Register(defaultDP)
 }
 
 type RequestHandler[TRequest, TResponse any] struct {
@@ -52,6 +52,8 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	if err != nil {
 		if responder, ok := err.(Responder); ok {
 			h.respond(w, r, responder)
+		} else if handler, ok := err.(http.Handler); ok {
+			handler.ServeHTTP(w, r)
 		} else {
 			h.respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
 		}
@@ -59,16 +61,19 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	}
 
 	var anyResp any = resp
-	if responder, ok := anyResp.(Responder); ok {
-		h.respond(w, r, responder)
-		return
+	switch resp := anyResp.(type) {
+	case Responder:
+		h.respond(w, r, resp)
+	case http.Handler:
+		resp.ServeHTTP(w, r)
+	default:
+		h.respond(w, r, NewJSONResponse(resp))
 	}
-	h.respond(w, r, NewJSONResponse(resp))
 }
 func (h *RequestHandler[TRequest, TResponse]) WithDependencyProvider(dp *di.DependencyProvider) {
 	h.dp = dp
 }
-func (h *RequestHandler[TRequest, TResponse]) Test(r *TRequest) (TResponse, error) {
+func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {
 	return h.handler(r)
 }
 

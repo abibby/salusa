@@ -25,22 +25,28 @@ func NewResponse(body io.Reader) *Response {
 	}
 }
 
+func (r *Response) Status() int {
+	return r.status
+}
 func (r *Response) SetStatus(status int) *Response {
 	r.status = status
 	return r
 }
 
+func (r *Response) Headers() map[string]string {
+	return r.headers
+}
 func (r *Response) AddHeader(key, value string) *Response {
 	r.headers[key] = value
 	return r
 }
 
 func (r *Response) Respond(w http.ResponseWriter, _ *http.Request) error {
-	if r.status != 0 {
-		w.WriteHeader(r.status)
-	}
 	for k, v := range r.headers {
 		w.Header().Set(k, v)
+	}
+	if r.status != 0 {
+		w.WriteHeader(r.status)
 	}
 
 	_, err := io.Copy(w, r.body)

@@ -1,32 +1,44 @@
 package config
 
 import (
-	"context"
 	"errors"
 	"os"
 
+	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/sqlite"
+	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/env"
-	"github.com/abibby/salusa/kernel"
 	"github.com/joho/godotenv"
 )
 
-var Port int
-var DBPath string
+type Config struct {
+	Port     int
+	DBPath   string
+	Database dialects.Config
+	Mail     email.Config
+}
 
-func Load(ctx context.Context) error {
+func Load() *Config {
 	err := godotenv.Load("./.env")
 	if errors.Is(err, os.ErrNotExist) {
+		// fall through
 	} else if err != nil {
-		return err
+		panic(err)
 	}
 
-	Port = env.Int("PORT", 2303)
-	DBPath = env.String("DATABASE_PATH", "./db.sqlite")
-
-	return nil
+	return &Config{
+		Port:     env.Int("PORT", 2303),
+		Database: sqlite.NewConfig(env.String("DATABASE_PATH", "./db.sqlite")),
+		Mail: &email.SMTPConfig{
+			From:     env.String("MAIL_FROM", "salusa@example.com"),
+			Host:     env.String("MAIL_HOST", "sandbox.smtp.mailtrap.io"),
+			Port:     env.Int("MAIL_PORT", 2525),
+			Username: env.String("MAIL_USERNAME", "user"),
+			Password: env.String("MAIL_PASSWORD", "pass"),
+		},
+	}
 }
-func Kernel() *kernel.KernelConfig {
-	return &kernel.KernelConfig{
-		Port: Port,
-	}
+
+func (c *Config) GetHTTPPort() int {
+	return c.Port
 }

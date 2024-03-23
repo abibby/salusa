@@ -2,7 +2,9 @@
 
 package resources
 
-import "embed"
+import (
+	"embed"
+)
 
 //go:embed dist/*
 var Content embed.FS

@@ -7,6 +7,7 @@ import (
 	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/di"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,12 +22,22 @@ func TestRegister(t *testing.T) {
 		assert.Same(t, db, newDB)
 	})
 
-	t.Run("tx", func(t *testing.T) {
+	t.Run("tx read", func(t *testing.T) {
 		dp := di.NewDependencyProvider()
 		db := sqlx.MustOpen("sqlite3", ":memory:")
 		databasedi.Register(dp, db)
 
-		tx, err := di.Resolve[*sqlx.Tx](context.Background(), dp)
+		tx, err := di.Resolve[databasedi.Read](context.Background(), dp)
+		assert.NoError(t, err)
+		assert.NotNil(t, tx)
+	})
+
+	t.Run("tx update", func(t *testing.T) {
+		dp := di.NewDependencyProvider()
+		db := sqlx.MustOpen("sqlite3", ":memory:")
+		databasedi.Register(dp, db)
+
+		tx, err := di.Resolve[databasedi.Update](context.Background(), dp)
 		assert.NoError(t, err)
 		assert.NotNil(t, tx)
 	})

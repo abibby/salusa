@@ -1,17 +1,17 @@
 package request
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/schema"
 )
 
 func Run(requestHttp *http.Request, requestStruct any) error {
-	var decoder = schema.NewDecoder()
+	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
 	decoder.SetAliasTag("query")
 
@@ -19,27 +19,50 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	if multiErr, ok := err.(schema.MultiError); ok {
 		return fromSchemaMultiError(multiErr)
 	} else if err != nil {
-		return fmt.Errorf("could decode query string: %w", err)
+		return fmt.Errorf("could not decode query string: %w", err)
 	}
 
 	if requestHttp.Body != http.NoBody {
 		defer requestHttp.Body.Close()
 
-		bodyBuff := bytes.Buffer{}
-		body := io.TeeReader(requestHttp.Body, &bodyBuff)
-
-		err := json.NewDecoder(body).Decode(requestStruct)
-		if jsonErr, ok := err.(*json.UnmarshalTypeError); ok {
-			return fromJsonUnmarshalTypeError(jsonErr, requestStruct)
-		} else if err != nil {
-			return fmt.Errorf("could decode body: %w", err)
-		}
-
-		m := map[string]json.RawMessage{}
-		err = json.Unmarshal(bodyBuff.Bytes(), &m)
+		body, err := io.ReadAll(requestHttp.Body)
 		if err != nil {
-			return fmt.Errorf("could decode body: %w", err)
+			return err
 		}
+
+		// bodyBuff := bytes.Buffer{}
+		// body := io.TeeReader(requestHttp.Body, &bodyBuff)
+		contentType := requestHttp.Header.Get("Content-Type")
+		switch contentType {
+		case "application/x-www-form-urlencoded":
+			bodyDecoder := schema.NewDecoder()
+			bodyDecoder.IgnoreUnknownKeys(true)
+			bodyDecoder.SetAliasTag("query")
+
+			v, err := url.ParseQuery(string(body))
+			if err != nil {
+				return err
+			}
+			err = bodyDecoder.Decode(requestStruct, v)
+			if multiErr, ok := err.(schema.MultiError); ok {
+				return fromSchemaMultiError(multiErr)
+			} else if err != nil {
+				return fmt.Errorf("could not decode body: %w", err)
+			}
+		default:
+			err := json.Unmarshal(body, requestStruct)
+			if jsonErr, ok := err.(*json.UnmarshalTypeError); ok {
+				return fromJsonUnmarshalTypeError(jsonErr, requestStruct)
+			} else if err != nil {
+				return fmt.Errorf("could not decode body: %w", err)
+			}
+		}
+
+		// m := map[string]json.RawMessage{}
+		// err = json.Unmarshal(bodyBuff.Bytes(), &m)
+		// if err != nil {
+		// 	return fmt.Errorf("could decode body: %w", err)
+		// }
 	}
 
 	err = Validate(requestHttp, requestStruct)

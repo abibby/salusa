@@ -19,9 +19,7 @@ func Register(dp *di.DependencyProvider, h slog.Handler) {
 		if h == nil {
 			h = slog.NewTextHandler(os.Stderr, nil)
 		}
-		logger := slog.New(
-			h,
-		)
+		logger := slog.New(h)
 
 		with := ctx.Value(withKey)
 		if with != nil {

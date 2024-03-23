@@ -38,13 +38,15 @@ var list = request.Handler(func(r *ListRequest) ([]*Foo, error) {
 })
 
 type AddRequest struct {
-	Name string   `query:"name"`
-	Tx   *sqlx.Tx `inject:""`
+	Name   string            `query:"name"`
+	Update databasedi.Update `inject:""`
 }
 
 var add = request.Handler(func(r *AddRequest) (*Foo, error) {
 	foo := &Foo{Name: r.Name}
-	err := model.Save(r.Tx, foo)
+	err := r.Update(func(tx *sqlx.Tx) error {
+		return model.Save(tx, foo)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -83,5 +85,8 @@ func main() {
 	r.Get("/foo/create", add)
 	r.Get("/foo/{foo}", get)
 
-	http.ListenAndServe(":8087", r)
+	err = http.ListenAndServe(":8087", r)
+	if err != nil {
+		panic(err)
+	}
 }

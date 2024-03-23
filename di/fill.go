@@ -33,7 +33,7 @@ func newFillOptions() *FillOptions {
 type FillOption func(*FillOptions) *FillOptions
 
 var (
-	isFillablerType = getType[IsFillabler]()
+	isFillablerType = helpers.GetType[IsFillabler]()
 )
 
 func (dp *DependencyProvider) Fill(ctx context.Context, v any, opts ...FillOption) error {
@@ -59,27 +59,39 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		return fmt.Errorf("di: Fill(non-struct "+v.Type().String()+"): %w", ErrFillParameters)
 	}
 
-	return helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
-		tag, ok := sf.Tag.Lookup("inject")
-		if !(ok || opt.autoResolve.Has(fv.Type())) {
+	err := helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
+		if !sf.IsExported() {
 			return nil
 		}
 
-		v, err := dp.resolve(ctx, sf.Type, tag)
-		if err == nil {
-			fv.Set(reflect.ValueOf(v))
+		tag, ok := sf.Tag.Lookup("inject")
+		if !ok && !opt.autoResolve.Has(fv.Type()) {
 			return nil
-		} else if !errors.Is(err, ErrNotRegistered) {
+		}
+
+		v, err := dp.resolve(ctx, sf.Type, tag, opt)
+		if errors.Is(err, ErrNotRegistered) {
+			for t, _ := range dp.factories {
+				fmt.Printf("%s\n", t)
+			}
+			return fmt.Errorf("unable to fill field %s (%s): %w", sf.Name, sf.Type.String(), ErrNotRegistered)
+		} else if err != nil {
 			return fmt.Errorf("failed to fill: %w", err)
 		}
 
-		return fmt.Errorf("unable to fill field %s: %w", sf.Name, ErrNotRegistered)
+		fv.Set(reflect.ValueOf(v))
+		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func AutoResolve[T any]() FillOption {
 	return func(fo *FillOptions) *FillOptions {
-		fo.autoResolve.Add(getType[T]())
+		fo.autoResolve.Add(helpers.GetType[T]())
 		return fo
 	}
 }

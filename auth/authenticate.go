@@ -4,21 +4,19 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 var (
 	ErrInvalidAuthorizationHeader = fmt.Errorf("missing or invalid Authorization header")
 	ErrUnexpectedAlgorithm        = fmt.Errorf("unexpected algorithm")
-	ErrInvalidToken               = fmt.Errorf("invalid token")
 )
 
-func authenticate(r *http.Request) (jwt.MapClaims, error) {
+func authenticate(r *http.Request) (*Claims, error) {
+	prefix := "Bearer "
 	authHeader := r.Header.Get("Authorization")
-	if !strings.HasPrefix(authHeader, "Bearer ") {
+	if !strings.HasPrefix(authHeader, prefix) {
 		return nil, ErrInvalidAuthorizationHeader
 	}
-	tokenStr := authHeader[7:]
+	tokenStr := authHeader[len(prefix):]
 	return Parse(tokenStr)
 }

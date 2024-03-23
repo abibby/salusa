@@ -33,9 +33,5 @@ func GetTable(m any) string {
 
 func GetTableSingular(m any) string {
 	name := GetTable(m)
-
-	if strings.HasSuffix(name, "s") {
-		name = name[:len(name)-1]
-	}
-	return name
+	return strings.TrimSuffix(name, "s")
 }
