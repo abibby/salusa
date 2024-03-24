@@ -84,6 +84,7 @@ func (r *Router) Group(prefix string, cb func(r *Router)) {
 	cb(&Router{
 		prefix: path.Join(r.prefix, prefix),
 		router: r.router.PathPrefix(prefix).Subrouter(),
+		routes: r.routes,
 	})
 }
 
