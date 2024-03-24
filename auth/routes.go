@@ -68,7 +68,7 @@ type VerifyEmailRequest struct {
 
 type ResetPasswordRequest struct {
 	Token    string             `json:"token" validate:"required|min:1"`
-	Password string             `json:"email" validate:"required"`
+	Password string             `json:"password" validate:"required"`
 	Update   databasedi.Update  `inject:""`
 	Ctx      context.Context    `inject:""`
 	URL      router.URLResolver `inject:""`
