@@ -152,7 +152,7 @@ func userCreate[T User, R any](newUser func(request R) T) *request.RequestHandle
 
 			if v, ok := cast[EmailVerified](u); ok {
 				r.Logger.Info("email verification sent", "email", v.GetEmail())
-				err = sendEmails(v, r.Mailer, r.URL, "auth.email.verify")
+				err = sendEmails(v, r.Mailer, r.URL, "verify_email.html", "auth.email.verify")
 				if err != nil {
 					return fmt.Errorf("could not send emails: %w", err)
 				}
@@ -343,7 +343,7 @@ func forgotPassword[T User](resetPathName string) *request.RequestHandler[Forgot
 				return nil
 			}
 
-			err = sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, resetPathName)
+			err = sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, "reset_password.html", resetPathName)
 			if err != nil {
 				return err
 			}
@@ -440,7 +440,7 @@ func updatePassword(u User, password string) error {
 	return nil
 }
 
-func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, routeName string) error {
+func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, templateName, routeName string) error {
 	token := uuid.New().String()
 
 	v.SetLookupToken(token)
@@ -454,7 +454,7 @@ func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, rout
 	type verifyEmail struct {
 		Link string
 	}
-	err = t.ExecuteTemplate(b, "verify_email.html", &verifyEmail{
+	err = t.ExecuteTemplate(b, templateName, &verifyEmail{
 		Link: r.Resolve(routeName, "token", token),
 	})
 	if err != nil {
