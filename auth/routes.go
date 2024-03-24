@@ -115,22 +115,22 @@ type AuthRoutes[T User] struct {
 	Refresh        *request.RequestHandler[RefreshRequest[T], *LoginResponse]
 }
 
-func Routes[T User, R any](newUser func(request R) T) *AuthRoutes[T] {
+func Routes[T User, R any](newUser func(request R) T, resetPathName string) *AuthRoutes[T] {
 	verify := verifyEmail[T]()
 	reset := resetPassword[T]()
 	return &AuthRoutes[T]{
-		UserCreate:     userCreate(newUser, verify),
+		UserCreate:     userCreate(newUser),
 		Login:          login[T](),
 		VerifyEmail:    verify,
 		ResetPassword:  reset,
 		ChangePassword: changePassword[T](),
 		Refresh:        refresh[T](),
-		ForgotPassword: forgotPassword[T](reset),
+		ForgotPassword: forgotPassword[T](resetPathName),
 	}
 
 }
 
-func userCreate[T User, R any](newUser func(request R) T, verifyEmail http.Handler) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
+func userCreate[T User, R any](newUser func(request R) T) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
 	return request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
 		req := helpers.NewOf[R]()
 		err := request.Run(r.Request, req)
@@ -152,7 +152,7 @@ func userCreate[T User, R any](newUser func(request R) T, verifyEmail http.Handl
 
 			if v, ok := cast[EmailVerified](u); ok {
 				r.Logger.Info("email verification sent", "email", v.GetEmail())
-				err = sendEmails(v, r.Mailer, r.URL, verifyEmail)
+				err = sendEmails(v, r.Mailer, r.URL, "auth.email.verify")
 				if err != nil {
 					return fmt.Errorf("could not send emails: %w", err)
 				}
@@ -317,7 +317,7 @@ func resetPassword[T User]() *request.RequestHandler[ResetPasswordRequest, *Rese
 	})
 }
 
-func forgotPassword[T User](resetPassword http.Handler) *request.RequestHandler[ForgotPasswordRequest, *ForgotPasswordResponse] {
+func forgotPassword[T User](resetPathName string) *request.RequestHandler[ForgotPasswordRequest, *ForgotPasswordResponse] {
 	return request.Handler(func(r *ForgotPasswordRequest) (*ForgotPasswordResponse, error) {
 		u := helpers.NewOf[T]()
 		_, ok := cast[EmailVerified](u)
@@ -343,7 +343,7 @@ func forgotPassword[T User](resetPassword http.Handler) *request.RequestHandler[
 				return nil
 			}
 
-			err = sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, resetPassword)
+			err = sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, resetPathName)
 			if err != nil {
 				return err
 			}
@@ -440,7 +440,7 @@ func updatePassword(u User, password string) error {
 	return nil
 }
 
-func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, verifyHandler http.Handler) error {
+func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, routeName string) error {
 	token := uuid.New().String()
 
 	v.SetLookupToken(token)
@@ -452,10 +452,10 @@ func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, veri
 
 	b := &bytes.Buffer{}
 	type verifyEmail struct {
-		VerifyLink string
+		Link string
 	}
 	err = t.ExecuteTemplate(b, "verify_email.html", &verifyEmail{
-		VerifyLink: r.ResolveHandler(verifyHandler, "token", token),
+		Link: r.Resolve(routeName, "token", token),
 	})
 	if err != nil {
 		return err
@@ -481,8 +481,8 @@ func mustCast[T any](v any) T {
 	return v.(T)
 }
 
-func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T) {
-	authRoutes := Routes(newUser)
+func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T, resetPathName string) {
+	authRoutes := Routes(newUser, resetPathName)
 
 	r.Post("/login", authRoutes.Login).Name("auth.login")
 	r.Post("/login/refresh", authRoutes.Refresh).Name("auth.refresh")

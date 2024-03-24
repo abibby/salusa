@@ -49,7 +49,7 @@ var nullLogger = slog.New(slog.NewTextHandler(&DevNull{}, nil))
 
 func TestAuthRoutes_UserCreate(t *testing.T) {
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
-		routes := auth.Routes(auth.NewUsernameUser)
+		routes := auth.Routes(auth.NewUsernameUser, "/reset-password")
 		ctx := context.Background()
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
 			Password: "pass",
@@ -70,7 +70,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 	})
 
 	Run(t, "email verification", func(t *testing.T, tx *sqlx.Tx) {
-		routes := auth.Routes(auth.NewEmailVerifiedUser)
+		routes := auth.Routes(auth.NewEmailVerifiedUser, "/reset-password")
 		ctx := context.Background()
 		m := emailtest.NewTestMailer()
 		urlResolver := routertest.NewTestResolver()
@@ -89,7 +89,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		sent := m.EmailsSent()
 		assert.Len(t, sent, 1)
 		assert.Equal(t, []string{"user@example.com"}, sent[0].To)
-		assert.Contains(t, string(sent[0].HTMLBody), urlResolver.ResolveHandler(routes.VerifyEmail, "token", resp.User.LookupToken))
+		assert.Contains(t, string(sent[0].HTMLBody), urlResolver.Resolve("auth.email.verify", "token", resp.User.LookupToken))
 
 		u, err := builder.From[*auth.EmailVerifiedUser]().WithContext(ctx).Find(tx, resp.User.ID)
 		assert.NoError(t, err)
@@ -101,7 +101,7 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 }
 
 func TestAuthRoutes_Login(t *testing.T) {
-	routes := auth.Routes(auth.NewUsernameUser)
+	routes := auth.Routes(auth.NewUsernameUser, "/reset-password")
 
 	// Hashed password salted with the id
 	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
@@ -195,7 +195,7 @@ func TestAuthRoutes_Login(t *testing.T) {
 }
 
 func TestAuthRoutes_VerifyEmail(t *testing.T) {
-	routes := auth.Routes(auth.NewEmailVerifiedUser)
+	routes := auth.Routes(auth.NewEmailVerifiedUser, "/reset-password")
 
 	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
@@ -231,7 +231,7 @@ func TestAuthRoutes_VerifyEmail(t *testing.T) {
 }
 
 func TestAuthRoutes_ResetPassword(t *testing.T) {
-	routes := auth.Routes(auth.NewEmailVerifiedUser)
+	routes := auth.Routes(auth.NewEmailVerifiedUser, "/reset-password")
 
 	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
@@ -265,7 +265,7 @@ func TestAuthRoutes_ResetPassword(t *testing.T) {
 }
 
 func TestAuthRoutes_ChangePassword(t *testing.T) {
-	routes := auth.Routes(auth.NewUsernameUser)
+	routes := auth.Routes(auth.NewUsernameUser, "/reset-password")
 
 	// Hashed password salted with the id
 	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
@@ -305,7 +305,7 @@ func TestAuthRoutes_ChangePassword(t *testing.T) {
 }
 
 func TestAuthRoutes_Refresh(t *testing.T) {
-	routes := auth.Routes(auth.NewUsernameUser)
+	routes := auth.Routes(auth.NewUsernameUser, "/reset-password")
 
 	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()

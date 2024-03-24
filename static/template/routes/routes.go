@@ -17,7 +17,7 @@ func InitRoutes(r *router.Router) {
 		return &models.User{
 			EmailVerifiedUser: *auth.NewEmailVerifiedUser(r),
 		}
-	})
+	}, "/reset-password")
 
 	r.Get("/", resources.View("index.html")).Name("home")
 	r.Get("/login", resources.View("login.html")).Name("login")
