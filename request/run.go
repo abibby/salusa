@@ -1,6 +1,7 @@
 package request
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,11 +16,7 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	decoder.IgnoreUnknownKeys(true)
 	decoder.SetAliasTag("query")
 
-	bodyReader, err := requestHttp.GetBody()
-	if err != nil {
-		return fmt.Errorf("failed to copy body: %w", err)
-	}
-	err = decoder.Decode(requestStruct, requestHttp.URL.Query())
+	err := decoder.Decode(requestStruct, requestHttp.URL.Query())
 	if multiErr, ok := err.(schema.MultiError); ok {
 		return fromSchemaMultiError(multiErr)
 	} else if err != nil {
@@ -27,15 +24,16 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	}
 
 	if requestHttp.Body != http.NoBody {
-		defer requestHttp.Body.Close()
-
+		b := &bytes.Buffer{}
+		newBodyReader := io.TeeReader(requestHttp.Body, b)
+		bodyReader := requestHttp.Body
+		defer bodyReader.Close()
 		body, err := io.ReadAll(bodyReader)
 		if err != nil {
 			return err
 		}
+		requestHttp.Body = io.NopCloser(newBodyReader)
 
-		// bodyBuff := bytes.Buffer{}
-		// body := io.TeeReader(requestHttp.Body, &bodyBuff)
 		contentType := requestHttp.Header.Get("Content-Type")
 		switch contentType {
 		case "application/x-www-form-urlencoded":
@@ -61,12 +59,6 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 				return fmt.Errorf("could not decode body: %w", err)
 			}
 		}
-
-		// m := map[string]json.RawMessage{}
-		// err = json.Unmarshal(bodyBuff.Bytes(), &m)
-		// if err != nil {
-		// 	return fmt.Errorf("could decode body: %w", err)
-		// }
 	}
 
 	err = Validate(requestHttp, requestStruct)
