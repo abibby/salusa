@@ -13,9 +13,9 @@ func InitRoutes(r *router.Router) {
 	r.Use(request.HandleErrors())
 	r.Use(auth.AttachUser())
 
-	auth.RegisterRoutes(r, func() *models.User {
+	auth.RegisterRoutes(r, func(r *auth.EmailVerifiedUserCreateRequest) *models.User {
 		return &models.User{
-			EmailVerifiedUser: *auth.NewEmailVerifiedUser(),
+			EmailVerifiedUser: *auth.NewEmailVerifiedUser(r),
 		}
 	})
 

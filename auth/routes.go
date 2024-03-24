@@ -17,8 +17,8 @@ import (
 	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/email"
+	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/request"
-	"github.com/abibby/salusa/request/rules"
 	"github.com/abibby/salusa/router"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -32,14 +32,14 @@ var (
 )
 
 type UserCreateRequest struct {
-	Username string `json:"username"`
 	Password string `json:"password"`
 
-	Mailer email.Mailer       `inject:""`
-	Update databasedi.Update  `inject:""`
-	Ctx    context.Context    `inject:""`
-	URL    router.URLResolver `inject:""`
-	Logger *slog.Logger       `inject:""`
+	Mailer  email.Mailer       `inject:""`
+	Update  databasedi.Update  `inject:""`
+	Ctx     context.Context    `inject:""`
+	URL     router.URLResolver `inject:""`
+	Logger  *slog.Logger       `inject:""`
+	Request *http.Request      `inject:""`
 }
 type UserCreateResponse[T User] struct {
 	User T `json:"user"`
@@ -103,51 +103,49 @@ type AuthRoutes[T User] struct {
 	Refresh        *request.RequestHandler[RefreshRequest[T], *LoginResponse]
 }
 
-func Routes[T User](newUser func() T) *AuthRoutes[T] {
-	verify := VerifyEmail(newUser)
+func Routes[T User, R any](newUser func(request R) T) *AuthRoutes[T] {
+	verify := VerifyEmail[T]()
 
 	return &AuthRoutes[T]{
 		UserCreate:     UserCreate(newUser, verify),
-		Login:          Login(newUser),
+		Login:          Login[T](),
 		VerifyEmail:    verify,
-		ResetPassword:  ResetPassword(newUser),
-		ChangePassword: ChangePassword(newUser),
-		Refresh:        Refresh(newUser),
+		ResetPassword:  ResetPassword[T](),
+		ChangePassword: ChangePassword[T](),
+		Refresh:        Refresh[T](),
 	}
 
 }
 
-func UserCreate[T User](newUser func() T, verifyEmail http.Handler) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
+func UserCreate[T User, R any](newUser func(request R) T, verifyEmail http.Handler) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
 	return request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
-		u := newUser()
-		u.SetUsername(r.Username)
-
-		err := updatePassword(u, r.Password)
+		req := helpers.NewOf[R]()
+		err := request.Run(r.Request, req)
 		if err != nil {
 			return nil, err
 		}
-
-		if v, ok := cast[EmailVerified](u); ok {
-			r.Logger.Info("email verification sent", "email", v.GetEmail())
-
-			if rule, ok := rules.GetRule("email"); ok {
-				valid := rule(&rules.ValidationOptions{
-					Value: r.Username,
-				})
-				if !valid {
-					err := &request.ValidationError{}
-					err.AddError("username", "username must be an email")
-					return nil, err
-				}
-			}
-			err = sendEmails(v, r.Mailer, r.URL, verifyEmail)
-			if err != nil {
-				return nil, fmt.Errorf("could not send emails: %w", err)
-			}
-			r.Logger.Info("email verification sent", "email", v.GetEmail())
-		}
+		u := newUser(req)
 
 		err = r.Update(func(tx *sqlx.Tx) error {
+			err := model.SaveContext(r.Ctx, tx, u)
+			if err != nil {
+				return err
+			}
+
+			err = updatePassword(u, r.Password)
+			if err != nil {
+				return err
+			}
+
+			if v, ok := cast[EmailVerified](u); ok {
+				r.Logger.Info("email verification sent", "email", v.GetEmail())
+				err = sendEmails(v, r.Mailer, r.URL, verifyEmail)
+				if err != nil {
+					return fmt.Errorf("could not send emails: %w", err)
+				}
+				r.Logger.Info("email verification sent", "email", v.GetEmail())
+			}
+
 			return model.SaveContext(r.Ctx, tx, u)
 		})
 		if err != nil {
@@ -160,15 +158,21 @@ func UserCreate[T User](newUser func() T, verifyEmail http.Handler) *request.Req
 	})
 }
 
-func Login[T User](newUser func() T) *request.RequestHandler[LoginRequest, *LoginResponse] {
+func Login[T User]() *request.RequestHandler[LoginRequest, *LoginResponse] {
 	return request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
-		u := newUser()
-		var err error
-		err = r.Read(func(tx *sqlx.Tx) error {
-			u, err = builder.From[T]().
-				WithContext(r.Ctx).
-				Where(u.UsernameColumn(), "=", r.Username).
-				First(tx)
+		u := helpers.NewOf[T]()
+		userColumns := u.UsernameColumns()
+		if len(userColumns) == 0 {
+			panic("need columns")
+		}
+		err := r.Read(func(tx *sqlx.Tx) error {
+			q := builder.From[T]().WithContext(r.Ctx)
+			for _, column := range userColumns {
+				q = q.OrWhere(column, "=", r.Username)
+			}
+
+			var err error
+			u, err = q.First(tx)
 			return err
 		})
 		if err != nil {
@@ -219,9 +223,9 @@ func Login[T User](newUser func() T) *request.RequestHandler[LoginRequest, *Logi
 	})
 }
 
-func VerifyEmail[T User](newUser func() T) *request.RequestHandler[VerifyEmailRequest, http.Handler] {
+func VerifyEmail[T User]() *request.RequestHandler[VerifyEmailRequest, http.Handler] {
 	return request.Handler(func(r *VerifyEmailRequest) (http.Handler, error) {
-		emptyValidated, ok := cast[EmailVerified](newUser())
+		emptyValidated, ok := cast[EmailVerified](helpers.NewOf[T]())
 		if !ok {
 			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
 		}
@@ -256,9 +260,9 @@ func VerifyEmail[T User](newUser func() T) *request.RequestHandler[VerifyEmailRe
 	})
 }
 
-func ResetPassword[T User](newUser func() T) *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
+func ResetPassword[T User]() *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
 	return request.Handler(func(r *ResetPasswordRequest) (*ResetPasswordResponse[T], error) {
-		u := newUser()
+		u := helpers.NewOf[T]()
 		var err error
 		zeroValidated, ok := cast[EmailVerified](u)
 		if !ok {
@@ -300,7 +304,7 @@ func ResetPassword[T User](newUser func() T) *request.RequestHandler[ResetPasswo
 	})
 }
 
-func ChangePassword[T User](newUser func() T) *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]] {
+func ChangePassword[T User]() *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]] {
 	return request.Handler(func(r *ChangePasswordRequest[T]) (*ChangePasswordResponse[T], error) {
 		err := bcrypt.CompareHashAndPassword(r.User.GetPasswordHash(), r.User.SaltedPassword(r.OldPassword))
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
@@ -327,7 +331,7 @@ func ChangePassword[T User](newUser func() T) *request.RequestHandler[ChangePass
 	})
 }
 
-func Refresh[T User](newUser func() T) *request.RequestHandler[RefreshRequest[T], *LoginResponse] {
+func Refresh[T User]() *request.RequestHandler[RefreshRequest[T], *LoginResponse] {
 	return request.Handler(func(r *RefreshRequest[T]) (*LoginResponse, error) {
 		claims, err := Parse(r.RefreshToken)
 		if err != nil {
@@ -425,7 +429,7 @@ func mustCast[T any](v any) T {
 	return v.(T)
 }
 
-func RegisterRoutes[T User](r *router.Router, newUser func() T) {
+func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T) {
 	authRoutes := Routes(newUser)
 
 	r.Post("/login", authRoutes.Login).Name("auth.login")
