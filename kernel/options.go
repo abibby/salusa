@@ -55,20 +55,6 @@ func Services(services ...Service) KernelOption {
 	}
 }
 
-// func Listeners(listeners ...*Listener) KernelOption {
-// 	return func(k *Kernel) *Kernel {
-// 		k.listeners = map[event.EventType][]runner{}
-// 		for _, l := range listeners {
-// 			jobs, ok := k.listeners[l.eventType]
-// 			if !ok {
-// 				jobs = []runner{}
-// 			}
-// 			k.listeners[l.eventType] = append(jobs, l.runner)
-// 		}
-// 		return k
-// 	}
-// }
-
 func Providers(providers ...func(*di.DependencyProvider)) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.providers = providers
