@@ -67,14 +67,24 @@ type VerifyEmailRequest struct {
 }
 
 type ResetPasswordRequest struct {
-	Token    string             `json:"token"`
-	Password string             `json:"password"`
+	Token    string             `json:"token" validate:"required|min:1"`
+	Password string             `json:"email" validate:"required"`
 	Update   databasedi.Update  `inject:""`
 	Ctx      context.Context    `inject:""`
 	URL      router.URLResolver `inject:""`
 }
 type ResetPasswordResponse[T User] struct {
 	User T `json:"user"`
+}
+
+type ForgotPasswordRequest struct {
+	Email  string             `json:"email" validate:"required|email"`
+	Update databasedi.Update  `inject:""`
+	Ctx    context.Context    `inject:""`
+	URL    router.URLResolver `inject:""`
+	Mailer email.Mailer       `inject:""`
+}
+type ForgotPasswordResponse struct {
 }
 
 type ChangePasswordRequest[T User] struct {
@@ -99,25 +109,27 @@ type AuthRoutes[T User] struct {
 	Login          *request.RequestHandler[LoginRequest, *LoginResponse]
 	VerifyEmail    *request.RequestHandler[VerifyEmailRequest, http.Handler]
 	ResetPassword  *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]]
+	ForgotPassword *request.RequestHandler[ForgotPasswordRequest, *ForgotPasswordResponse]
 	ChangePassword *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]]
 	Refresh        *request.RequestHandler[RefreshRequest[T], *LoginResponse]
 }
 
 func Routes[T User, R any](newUser func(request R) T) *AuthRoutes[T] {
-	verify := VerifyEmail[T]()
-
+	verify := verifyEmail[T]()
+	reset := resetPassword[T]()
 	return &AuthRoutes[T]{
-		UserCreate:     UserCreate(newUser, verify),
-		Login:          Login[T](),
+		UserCreate:     userCreate(newUser, verify),
+		Login:          login[T](),
 		VerifyEmail:    verify,
-		ResetPassword:  ResetPassword[T](),
-		ChangePassword: ChangePassword[T](),
-		Refresh:        Refresh[T](),
+		ResetPassword:  reset,
+		ChangePassword: changePassword[T](),
+		Refresh:        refresh[T](),
+		ForgotPassword: forgotPassword[T](reset),
 	}
 
 }
 
-func UserCreate[T User, R any](newUser func(request R) T, verifyEmail http.Handler) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
+func userCreate[T User, R any](newUser func(request R) T, verifyEmail http.Handler) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
 	return request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
 		req := helpers.NewOf[R]()
 		err := request.Run(r.Request, req)
@@ -158,7 +170,7 @@ func UserCreate[T User, R any](newUser func(request R) T, verifyEmail http.Handl
 	})
 }
 
-func Login[T User]() *request.RequestHandler[LoginRequest, *LoginResponse] {
+func login[T User]() *request.RequestHandler[LoginRequest, *LoginResponse] {
 	return request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
 		u := helpers.NewOf[T]()
 		userColumns := u.UsernameColumns()
@@ -223,7 +235,7 @@ func Login[T User]() *request.RequestHandler[LoginRequest, *LoginResponse] {
 	})
 }
 
-func VerifyEmail[T User]() *request.RequestHandler[VerifyEmailRequest, http.Handler] {
+func verifyEmail[T User]() *request.RequestHandler[VerifyEmailRequest, http.Handler] {
 	return request.Handler(func(r *VerifyEmailRequest) (http.Handler, error) {
 		emptyValidated, ok := cast[EmailVerified](helpers.NewOf[T]())
 		if !ok {
@@ -260,7 +272,7 @@ func VerifyEmail[T User]() *request.RequestHandler[VerifyEmailRequest, http.Hand
 	})
 }
 
-func ResetPassword[T User]() *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
+func resetPassword[T User]() *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
 	return request.Handler(func(r *ResetPasswordRequest) (*ResetPasswordResponse[T], error) {
 		u := helpers.NewOf[T]()
 		var err error
@@ -304,7 +316,38 @@ func ResetPassword[T User]() *request.RequestHandler[ResetPasswordRequest, *Rese
 	})
 }
 
-func ChangePassword[T User]() *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]] {
+func forgotPassword[T User](resetPassword http.Handler) *request.RequestHandler[ForgotPasswordRequest, *ForgotPasswordResponse] {
+	return request.Handler(func(r *ForgotPasswordRequest) (*ForgotPasswordResponse, error) {
+		u := helpers.NewOf[T]()
+		_, ok := cast[EmailVerified](u)
+		if !ok {
+			panic("not email verified")
+		}
+		userColumns := u.UsernameColumns()
+		if len(userColumns) == 0 {
+			panic("need columns")
+		}
+		err := r.Update(func(tx *sqlx.Tx) error {
+			q := builder.From[T]().WithContext(r.Ctx)
+			for _, column := range userColumns {
+				q = q.OrWhere(column, "=", r.Email)
+			}
+
+			u, err := q.First(tx)
+			if err != nil {
+				return err
+			}
+			if reflect.ValueOf(u).IsZero() {
+				return nil
+			}
+
+			return sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, resetPassword)
+		})
+		return &ForgotPasswordResponse{}, err
+	})
+}
+
+func changePassword[T User]() *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]] {
 	return request.Handler(func(r *ChangePasswordRequest[T]) (*ChangePasswordResponse[T], error) {
 		err := bcrypt.CompareHashAndPassword(r.User.GetPasswordHash(), r.User.SaltedPassword(r.OldPassword))
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
@@ -331,7 +374,7 @@ func ChangePassword[T User]() *request.RequestHandler[ChangePasswordRequest[T], 
 	})
 }
 
-func Refresh[T User]() *request.RequestHandler[RefreshRequest[T], *LoginResponse] {
+func refresh[T User]() *request.RequestHandler[RefreshRequest[T], *LoginResponse] {
 	return request.Handler(func(r *RefreshRequest[T]) (*LoginResponse, error) {
 		claims, err := Parse(r.RefreshToken)
 		if err != nil {
@@ -377,10 +420,6 @@ func Refresh[T User]() *request.RequestHandler[RefreshRequest[T], *LoginResponse
 //go:embed emails/*
 var emails embed.FS
 
-type verifyEmail struct {
-	VerifyLink string
-}
-
 func updatePassword(u User, password string) error {
 	hash, err := bcrypt.GenerateFromPassword(u.SaltedPassword(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -402,6 +441,9 @@ func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, veri
 	}
 
 	b := &bytes.Buffer{}
+	type verifyEmail struct {
+		VerifyLink string
+	}
 	err = t.ExecuteTemplate(b, "verify_email.html", &verifyEmail{
 		VerifyLink: r.ResolveHandler(verifyHandler, "token", token),
 	})

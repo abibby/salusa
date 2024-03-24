@@ -37,6 +37,40 @@ func TestSave_create(t *testing.T) {
 
 		assert.False(t, rows.Next())
 	})
+
+	test.Run(t, "autoincrement", func(t *testing.T, tx *sqlx.Tx) {
+		f1 := &test.Foo{
+			Name: "test",
+		}
+		err := model.Save(tx, f1)
+		assert.NoError(t, err)
+		f2 := &test.Foo{
+			Name: "test",
+		}
+		err = model.Save(tx, f2)
+		assert.NoError(t, err)
+
+		rows, err := tx.QueryContext(context.Background(), "select id, name from foos")
+		assert.NoError(t, err)
+
+		id := 0
+		name := ""
+		assert.True(t, rows.Next())
+		err = rows.Scan(&id, &name)
+		assert.NoError(t, err)
+
+		assert.Equal(t, f1.ID, id)
+		assert.Equal(t, f1.Name, name)
+
+		assert.True(t, rows.Next())
+		err = rows.Scan(&id, &name)
+		assert.NoError(t, err)
+
+		assert.Equal(t, f2.ID, id)
+		assert.Equal(t, f2.Name, name)
+
+		assert.False(t, rows.Next())
+	})
 }
 
 func TestSave_update(t *testing.T) {
