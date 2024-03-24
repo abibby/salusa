@@ -15,7 +15,11 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	decoder.IgnoreUnknownKeys(true)
 	decoder.SetAliasTag("query")
 
-	err := decoder.Decode(requestStruct, requestHttp.URL.Query())
+	bodyReader, err := requestHttp.GetBody()
+	if err != nil {
+		return fmt.Errorf("failed to copy body: %w", err)
+	}
+	err = decoder.Decode(requestStruct, requestHttp.URL.Query())
 	if multiErr, ok := err.(schema.MultiError); ok {
 		return fromSchemaMultiError(multiErr)
 	} else if err != nil {
@@ -25,7 +29,7 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	if requestHttp.Body != http.NoBody {
 		defer requestHttp.Body.Close()
 
-		body, err := io.ReadAll(requestHttp.Body)
+		body, err := io.ReadAll(bodyReader)
 		if err != nil {
 			return err
 		}
