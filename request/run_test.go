@@ -100,3 +100,21 @@ func TestRun_doesnt_fail_with_extra_query_params(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestRun_works_multiple_times(t *testing.T) {
+	type Request struct {
+		Foo int `json:"foo"`
+	}
+
+	httpRequest := httptest.NewRequest("GET", "http://0.0.0.0/?bar=foo", bytes.NewBuffer([]byte(`{ "foo": 10 }`)))
+
+	structRequest := &Request{}
+	err := Run(httpRequest, structRequest)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, structRequest.Foo)
+
+	structRequest = &Request{}
+	err = Run(httpRequest, structRequest)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, structRequest.Foo)
+}

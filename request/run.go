@@ -24,22 +24,20 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	}
 
 	if requestHttp.Body != http.NoBody {
-		b := &bytes.Buffer{}
-		newBodyReader := io.TeeReader(requestHttp.Body, b)
-		bodyReader := requestHttp.Body
-		defer bodyReader.Close()
-		body, err := io.ReadAll(bodyReader)
+		defer requestHttp.Body.Close()
+		body, err := io.ReadAll(requestHttp.Body)
 		if err != nil {
 			return err
 		}
-		requestHttp.Body = io.NopCloser(newBodyReader)
+
+		requestHttp.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		contentType := requestHttp.Header.Get("Content-Type")
 		switch contentType {
 		case "application/x-www-form-urlencoded":
 			bodyDecoder := schema.NewDecoder()
 			bodyDecoder.IgnoreUnknownKeys(true)
-			bodyDecoder.SetAliasTag("query")
+			bodyDecoder.SetAliasTag("json")
 
 			v, err := url.ParseQuery(string(body))
 			if err != nil {
