@@ -27,7 +27,7 @@ func columnsAndValues(v reflect.Value) ([]string, []any) {
 			continue
 		}
 
-		if field.Anonymous {
+		if field.Anonymous && field.Type.Kind() == reflect.Struct {
 			subColumns, subValues := columnsAndValues(v.Field(i))
 			columns = append(columns, subColumns...)
 			values = append(values, subValues...)
