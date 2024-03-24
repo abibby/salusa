@@ -71,9 +71,6 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 
 		v, err := dp.resolve(ctx, sf.Type, tag, opt)
 		if errors.Is(err, ErrNotRegistered) {
-			for t, _ := range dp.factories {
-				fmt.Printf("%s\n", t)
-			}
 			return fmt.Errorf("unable to fill field %s (%s): %w", sf.Name, sf.Type.String(), ErrNotRegistered)
 		} else if err != nil {
 			return fmt.Errorf("failed to fill: %w", err)
