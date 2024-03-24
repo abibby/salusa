@@ -8,11 +8,10 @@ import (
 type User interface {
 	model.Model
 	GetID() string
-	SetUsername(string)
 	GetPasswordHash() []byte
 	SetPasswordHash([]byte)
 	SaltedPassword(password string) []byte
-	UsernameColumn() string
+	UsernameColumns() []string
 }
 
 type EmailVerified interface {
@@ -33,9 +32,15 @@ type UsernameUser struct {
 
 var _ User = (*UsernameUser)(nil)
 
-func NewUsernameUser() *UsernameUser {
+type UsernameUserCreateRequest struct {
+	Username string `json:"username" validate:"required"`
+}
+
+func NewUsernameUser(request *UsernameUserCreateRequest) *UsernameUser {
 	return &UsernameUser{
-		ID: uuid.New(),
+		ID:           uuid.New(),
+		Username:     request.Username,
+		PasswordHash: []byte{},
 	}
 }
 
@@ -45,11 +50,8 @@ func (u *UsernameUser) GetID() string {
 func (u *UsernameUser) GetUsername() string {
 	return u.Username
 }
-func (u *UsernameUser) SetUsername(username string) {
-	u.Username = username
-}
-func (u *UsernameUser) UsernameColumn() string {
-	return "username"
+func (u *UsernameUser) UsernameColumns() []string {
+	return []string{"username"}
 }
 func (u *UsernameUser) GetPasswordHash() []byte {
 	return u.PasswordHash
@@ -77,9 +79,15 @@ type EmailVerifiedUser struct {
 var _ EmailVerified = (*EmailVerifiedUser)(nil)
 var _ User = (*EmailVerifiedUser)(nil)
 
-func NewEmailVerifiedUser() *EmailVerifiedUser {
+type EmailVerifiedUserCreateRequest struct {
+	Email string `json:"username"  validate:"required|email"`
+}
+
+func NewEmailVerifiedUser(request *EmailVerifiedUserCreateRequest) *EmailVerifiedUser {
 	return &EmailVerifiedUser{
-		ID: uuid.New(),
+		ID:           uuid.New(),
+		Email:        request.Email,
+		PasswordHash: []byte{},
 	}
 }
 
@@ -89,11 +97,8 @@ func (u *EmailVerifiedUser) GetID() string {
 func (u *EmailVerifiedUser) GetUsername() string {
 	return u.Email
 }
-func (u *EmailVerifiedUser) SetUsername(username string) {
-	u.Email = username
-}
-func (u *EmailVerifiedUser) UsernameColumn() string {
-	return "email"
+func (u *EmailVerifiedUser) UsernameColumns() []string {
+	return []string{"email"}
 }
 func (u *EmailVerifiedUser) GetPasswordHash() []byte {
 	return u.PasswordHash

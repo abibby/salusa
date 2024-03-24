@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
 	"net/http"
@@ -51,11 +52,11 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		routes := auth.Routes(auth.NewUsernameUser)
 		ctx := context.Background()
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
-			Username: "user",
 			Password: "pass",
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
 			Logger:   nullLogger,
+			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user"}`)),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
@@ -74,13 +75,13 @@ func TestAuthRoutes_UserCreate(t *testing.T) {
 		m := emailtest.NewTestMailer()
 		urlResolver := routertest.NewTestResolver()
 		resp, err := routes.UserCreate.Run(&auth.UserCreateRequest{
-			Username: "user@example.com",
 			Password: "pass",
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
 			Mailer:   m,
 			URL:      urlResolver,
 			Logger:   nullLogger,
+			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user@example.com"}`)),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user@example.com", resp.User.Email)
