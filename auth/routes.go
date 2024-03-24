@@ -83,6 +83,7 @@ type ForgotPasswordRequest struct {
 	Ctx    context.Context    `inject:""`
 	URL    router.URLResolver `inject:""`
 	Mailer email.Mailer       `inject:""`
+	Logger *slog.Logger       `inject:""`
 }
 type ForgotPasswordResponse struct {
 }
@@ -338,11 +339,20 @@ func forgotPassword[T User](resetPassword http.Handler) *request.RequestHandler[
 				return err
 			}
 			if reflect.ValueOf(u).IsZero() {
+				r.Logger.Info("password reset attempt for unused email", slog.String("email", r.Email))
 				return nil
 			}
 
-			return sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, resetPassword)
+			err = sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, resetPassword)
+			if err != nil {
+				return err
+			}
+			return model.SaveContext(r.Ctx, tx, u)
 		})
+		if err != nil {
+			return nil, err
+		}
+		r.Logger.Info("password reset attempt for unused email", slog.String("email", r.Email))
 		return &ForgotPasswordResponse{}, err
 	})
 }
