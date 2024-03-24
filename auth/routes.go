@@ -478,6 +478,7 @@ func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T) 
 	r.Post("/login/refresh", authRoutes.Refresh).Name("auth.refresh")
 	r.Post("/user/password/reset", authRoutes.ResetPassword).Name("auth.password.reset")
 	r.Post("/user/password/change", authRoutes.ChangePassword).Name("auth.password.change")
+	r.Post("/user/password/forgot", authRoutes.ForgotPassword).Name("auth.password.forgot")
 	r.Post("/user", authRoutes.UserCreate).Name("auth.user.create")
 	r.Get("/user/verify", authRoutes.VerifyEmail).Name("auth.email.verify")
 }
