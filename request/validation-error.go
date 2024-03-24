@@ -41,7 +41,7 @@ func (e ValidationError) HasErrors() bool {
 	return len(e) > 0
 }
 
-func (e ValidationError) AddError(key string, message string) ValidationError {
+func (e ValidationError) AddError(key string, message string) {
 	messages := e[key]
 	if messages == nil {
 		messages = []string{message}
@@ -49,7 +49,6 @@ func (e ValidationError) AddError(key string, message string) ValidationError {
 		messages = append(messages, message)
 	}
 	e[key] = messages
-	return e
 }
 func (e ValidationError) Merge(vErr ValidationError) {
 	for k, v := range vErr {

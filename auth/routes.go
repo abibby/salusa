@@ -135,7 +135,9 @@ func UserCreate[T User](newUser func() T, verifyEmail http.Handler) *request.Req
 					Value: r.Username,
 				})
 				if !valid {
-					return nil, request.ValidationError{}.AddError("username", "username must be an email")
+					err := &request.ValidationError{}
+					err.AddError("username", "username must be an email")
+					return nil, err
 				}
 			}
 			err = sendEmails(v, r.Mailer, r.URL, verifyEmail)
@@ -162,7 +164,7 @@ func Login[T User](newUser func() T) *request.RequestHandler[LoginRequest, *Logi
 	return request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
 		u := newUser()
 		var err error
-		r.Read(func(tx *sqlx.Tx) error {
+		err = r.Read(func(tx *sqlx.Tx) error {
 			u, err = builder.From[T]().
 				WithContext(r.Ctx).
 				Where(u.UsernameColumn(), "=", r.Username).
@@ -262,7 +264,7 @@ func ResetPassword[T User](newUser func() T) *request.RequestHandler[ResetPasswo
 		if !ok {
 			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
 		}
-		r.Update(func(tx *sqlx.Tx) error {
+		err = r.Update(func(tx *sqlx.Tx) error {
 			u, err = builder.From[T]().
 				WithContext(r.Ctx).
 				Where(zeroValidated.LookupTokenColumn(), "=", r.Token).
@@ -289,6 +291,9 @@ func ResetPassword[T User](newUser func() T) *request.RequestHandler[ResetPasswo
 			return model.SaveContext(r.Ctx, tx, u)
 
 		})
+		if err != nil {
+			return nil, err
+		}
 		return &ResetPasswordResponse[T]{
 			User: u,
 		}, nil

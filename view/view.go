@@ -33,7 +33,10 @@ func Factory(dp *di.DependencyProvider, fsys fs.FS, patterns ...string) ViewFunc
 			data := &viewData{}
 			err := dp.Fill(r.Context(), data)
 			if err != nil {
-				request.NewHTTPError(err, http.StatusInternalServerError).Respond(w, r)
+				err = request.NewHTTPError(err, http.StatusInternalServerError).Respond(w, r)
+				if err != nil {
+					panic(err)
+				}
 				return
 			}
 			b := &bytes.Buffer{}
@@ -41,10 +44,16 @@ func Factory(dp *di.DependencyProvider, fsys fs.FS, patterns ...string) ViewFunc
 				"route": data.URL.Resolve,
 			}).ExecuteTemplate(b, file, data)
 			if err != nil {
-				request.NewHTTPError(err, http.StatusInternalServerError).Respond(w, r)
+				err = request.NewHTTPError(err, http.StatusInternalServerError).Respond(w, r)
+				if err != nil {
+					panic(err)
+				}
 				return
 			}
-			io.Copy(w, b)
+			_, err = io.Copy(w, b)
+			if err != nil {
+				panic(err)
+			}
 		})
 	}
 }

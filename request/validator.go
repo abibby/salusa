@@ -58,7 +58,7 @@ func validateField(ctx context.Context, attribute string, request *http.Request,
 	if validator, ok := fv.Interface().(Validator); ok {
 		err := validator.Valid()
 		if err != nil {
-			vErr = vErr.AddError(attribute, err.Error())
+			vErr.AddError(attribute, err.Error())
 		}
 	}
 
@@ -88,7 +88,7 @@ func validateRule(ctx context.Context, attribute string, request *http.Request, 
 		if err != nil {
 			return err
 		}
-		vErr = vErr.AddError(attribute, msg)
+		vErr.AddError(attribute, msg)
 		return nil
 	}
 
@@ -112,7 +112,7 @@ func validateRule(ctx context.Context, attribute string, request *http.Request, 
 		if err != nil {
 			return err
 		}
-		vErr = vErr.AddError(attribute, msg)
+		vErr.AddError(attribute, msg)
 	}
 
 	return nil
