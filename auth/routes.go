@@ -1,13 +1,11 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	_ "embed"
 	"errors"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"reflect"
@@ -20,6 +18,7 @@ import (
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
+	"github.com/abibby/salusa/view"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
@@ -31,80 +30,6 @@ var (
 	ErrNonEmailVerifiedUser = errors.New("non email verified user")
 )
 
-type UserCreateRequest struct {
-	Password string `json:"password"`
-
-	Mailer  email.Mailer       `inject:""`
-	Update  databasedi.Update  `inject:""`
-	Ctx     context.Context    `inject:""`
-	URL     router.URLResolver `inject:""`
-	Logger  *slog.Logger       `inject:""`
-	Request *http.Request      `inject:""`
-}
-type UserCreateResponse[T User] struct {
-	User T `json:"user"`
-}
-
-type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-
-	Ctx  context.Context `inject:""`
-	Read databasedi.Read `inject:""`
-}
-type LoginResponse struct {
-	AccessToken  string `json:"token"`
-	TokenType    string `json:"token_type"`
-	RefreshToken string `json:"refresh"`
-	ExpiresIn    int    `json:"expires_in"`
-}
-
-type VerifyEmailRequest struct {
-	Token  string             `query:"token"`
-	Update databasedi.Update  `inject:""`
-	Ctx    context.Context    `inject:""`
-	URL    router.URLResolver `inject:""`
-}
-
-type ResetPasswordRequest struct {
-	Token    string             `json:"token" validate:"required|min:1"`
-	Password string             `json:"password" validate:"required"`
-	Update   databasedi.Update  `inject:""`
-	Ctx      context.Context    `inject:""`
-	URL      router.URLResolver `inject:""`
-}
-type ResetPasswordResponse[T User] struct {
-	User T `json:"user"`
-}
-
-type ForgotPasswordRequest struct {
-	Email  string             `json:"email" validate:"required|email"`
-	Update databasedi.Update  `inject:""`
-	Ctx    context.Context    `inject:""`
-	URL    router.URLResolver `inject:""`
-	Mailer email.Mailer       `inject:""`
-	Logger *slog.Logger       `inject:""`
-}
-type ForgotPasswordResponse struct {
-}
-
-type ChangePasswordRequest[T User] struct {
-	OldPassword string            `json:"old_password"`
-	NewPassword string            `json:"new_password"`
-	User        T                 `inject:""`
-	Update      databasedi.Update `inject:""`
-	Ctx         context.Context   `inject:""`
-}
-type ChangePasswordResponse[T User] struct {
-	User T `json:"user"`
-}
-type RefreshRequest[T User] struct {
-	RefreshToken string          `json:"refresh"`
-	User         T               `inject:""`
-	Read         databasedi.Read `inject:""`
-	Ctx          context.Context `inject:""`
-}
-
 type AuthRoutes[T User] struct {
 	UserCreate     *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]]
 	Login          *request.RequestHandler[LoginRequest, *LoginResponse]
@@ -115,29 +40,67 @@ type AuthRoutes[T User] struct {
 	Refresh        *request.RequestHandler[RefreshRequest[T], *LoginResponse]
 }
 
-func Routes[T User, R any](newUser func(request R) T, resetPathName string) *AuthRoutes[T] {
-	verify := verifyEmail[T]()
-	reset := resetPassword[T]()
+type RouteOptions[T User, R any] struct {
+	NewUser           func(request R) T
+	ResetPasswordName string
+}
+
+//go:embed emails/*
+var emails embed.FS
+var defaultViewTemplate = view.NewViewTemplate(emails, "**/*.html")
+
+func Routes[T User, R any](newUser func(request R) T, resetPasswordName string) *AuthRoutes[T] {
+	options := &RouteOptions[T, R]{
+		NewUser:           newUser,
+		ResetPasswordName: resetPasswordName,
+	}
 	return &AuthRoutes[T]{
-		UserCreate:     userCreate(newUser),
-		Login:          login[T](),
-		VerifyEmail:    verify,
-		ResetPassword:  reset,
-		ChangePassword: changePassword[T](),
-		Refresh:        refresh[T](),
-		ForgotPassword: forgotPassword[T](resetPathName),
+		UserCreate:     options.userCreate(),
+		Login:          options.login(),
+		VerifyEmail:    options.verifyEmail(),
+		ResetPassword:  options.resetPassword(),
+		ChangePassword: options.changePassword(),
+		Refresh:        options.refresh(),
+		ForgotPassword: options.forgotPassword(),
 	}
 
 }
 
-func userCreate[T User, R any](newUser func(request R) T) *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
+func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T, resetPasswordName string) {
+	authRoutes := Routes(newUser, resetPasswordName)
+
+	r.Post("/login", authRoutes.Login).Name("auth.login")
+	r.Post("/login/refresh", authRoutes.Refresh).Name("auth.refresh")
+	r.Post("/user/password/reset", authRoutes.ResetPassword).Name("auth.password.reset")
+	r.Post("/user/password/change", authRoutes.ChangePassword).Name("auth.password.change")
+	r.Post("/user/password/forgot", authRoutes.ForgotPassword).Name("auth.password.forgot")
+	r.Post("/user", authRoutes.UserCreate).Name("auth.user.create")
+	r.Get("/user/verify", authRoutes.VerifyEmail).Name("auth.email.verify")
+}
+
+type UserCreateRequest struct {
+	Password string `json:"password"`
+
+	Mailer   email.Mailer       `inject:""`
+	Update   databasedi.Update  `inject:""`
+	Ctx      context.Context    `inject:""`
+	Logger   *slog.Logger       `inject:""`
+	Request  *http.Request      `inject:""`
+	URL      router.URLResolver `inject:""`
+	Template *view.ViewTemplate `inject:",optional"`
+}
+type UserCreateResponse[T User] struct {
+	User T `json:"user"`
+}
+
+func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
 	return request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
 		req := helpers.NewOf[R]()
 		err := request.Run(r.Request, req)
 		if err != nil {
 			return nil, err
 		}
-		u := newUser(req)
+		u := o.NewUser(req)
 
 		err = r.Update(func(tx *sqlx.Tx) error {
 			err := model.SaveContext(r.Ctx, tx, u)
@@ -152,7 +115,14 @@ func userCreate[T User, R any](newUser func(request R) T) *request.RequestHandle
 
 			if v, ok := cast[EmailVerified](u); ok {
 				r.Logger.Info("email verification sent", "email", v.GetEmail())
-				err = sendEmails(v, r.Mailer, r.URL, "verify_email.html", "auth.email.verify")
+				err = o.sendEmails(&sendEmailOptions{
+					URL:          r.URL,
+					ViewTemplate: r.Template,
+					User:         v,
+					Mailer:       r.Mailer,
+					TemplateName: "verify_email.html",
+					Subject:      "Verify your email",
+				})
 				if err != nil {
 					return fmt.Errorf("could not send emails: %w", err)
 				}
@@ -171,7 +141,21 @@ func userCreate[T User, R any](newUser func(request R) T) *request.RequestHandle
 	})
 }
 
-func login[T User]() *request.RequestHandler[LoginRequest, *LoginResponse] {
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+
+	Ctx  context.Context `inject:""`
+	Read databasedi.Read `inject:""`
+}
+type LoginResponse struct {
+	AccessToken  string `json:"token"`
+	TokenType    string `json:"token_type"`
+	RefreshToken string `json:"refresh"`
+	ExpiresIn    int    `json:"expires_in"`
+}
+
+func (o *RouteOptions[T, R]) login() *request.RequestHandler[LoginRequest, *LoginResponse] {
 	return request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
 		u := helpers.NewOf[T]()
 		userColumns := u.UsernameColumns()
@@ -236,7 +220,14 @@ func login[T User]() *request.RequestHandler[LoginRequest, *LoginResponse] {
 	})
 }
 
-func verifyEmail[T User]() *request.RequestHandler[VerifyEmailRequest, http.Handler] {
+type VerifyEmailRequest struct {
+	Token  string             `query:"token"`
+	Update databasedi.Update  `inject:""`
+	Ctx    context.Context    `inject:""`
+	URL    router.URLResolver `inject:""`
+}
+
+func (o *RouteOptions[T, R]) verifyEmail() *request.RequestHandler[VerifyEmailRequest, http.Handler] {
 	return request.Handler(func(r *VerifyEmailRequest) (http.Handler, error) {
 		emptyValidated, ok := cast[EmailVerified](helpers.NewOf[T]())
 		if !ok {
@@ -273,7 +264,18 @@ func verifyEmail[T User]() *request.RequestHandler[VerifyEmailRequest, http.Hand
 	})
 }
 
-func resetPassword[T User]() *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
+type ResetPasswordRequest struct {
+	Token    string             `json:"token" validate:"required|min:1"`
+	Password string             `json:"password" validate:"required"`
+	Update   databasedi.Update  `inject:""`
+	Ctx      context.Context    `inject:""`
+	URL      router.URLResolver `inject:""`
+}
+type ResetPasswordResponse[T User] struct {
+	User T `json:"user"`
+}
+
+func (o *RouteOptions[T, R]) resetPassword() *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
 	return request.Handler(func(r *ResetPasswordRequest) (*ResetPasswordResponse[T], error) {
 		u := helpers.NewOf[T]()
 		var err error
@@ -317,7 +319,19 @@ func resetPassword[T User]() *request.RequestHandler[ResetPasswordRequest, *Rese
 	})
 }
 
-func forgotPassword[T User](resetPathName string) *request.RequestHandler[ForgotPasswordRequest, *ForgotPasswordResponse] {
+type ForgotPasswordRequest struct {
+	Email    string             `json:"email" validate:"required|email"`
+	Update   databasedi.Update  `inject:""`
+	Ctx      context.Context    `inject:""`
+	Mailer   email.Mailer       `inject:""`
+	Logger   *slog.Logger       `inject:""`
+	URL      router.URLResolver `inject:""`
+	Template *view.ViewTemplate `inject:",optional"`
+}
+type ForgotPasswordResponse struct {
+}
+
+func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPasswordRequest, *ForgotPasswordResponse] {
 	return request.Handler(func(r *ForgotPasswordRequest) (*ForgotPasswordResponse, error) {
 		u := helpers.NewOf[T]()
 		_, ok := cast[EmailVerified](u)
@@ -343,7 +357,14 @@ func forgotPassword[T User](resetPathName string) *request.RequestHandler[Forgot
 				return nil
 			}
 
-			err = sendEmails(mustCast[EmailVerified](u), r.Mailer, r.URL, "reset_password.html", resetPathName)
+			err = o.sendEmails(&sendEmailOptions{
+				URL:          r.URL,
+				ViewTemplate: r.Template,
+				User:         mustCast[EmailVerified](u),
+				Mailer:       r.Mailer,
+				TemplateName: "reset_password.html",
+				Subject:      "Password reset",
+			})
 			if err != nil {
 				return err
 			}
@@ -357,7 +378,18 @@ func forgotPassword[T User](resetPathName string) *request.RequestHandler[Forgot
 	})
 }
 
-func changePassword[T User]() *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]] {
+type ChangePasswordRequest[T User] struct {
+	OldPassword string            `json:"old_password"`
+	NewPassword string            `json:"new_password"`
+	User        T                 `inject:""`
+	Update      databasedi.Update `inject:""`
+	Ctx         context.Context   `inject:""`
+}
+type ChangePasswordResponse[T User] struct {
+	User T `json:"user"`
+}
+
+func (o *RouteOptions[T, R]) changePassword() *request.RequestHandler[ChangePasswordRequest[T], *ChangePasswordResponse[T]] {
 	return request.Handler(func(r *ChangePasswordRequest[T]) (*ChangePasswordResponse[T], error) {
 		err := bcrypt.CompareHashAndPassword(r.User.GetPasswordHash(), r.User.SaltedPassword(r.OldPassword))
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
@@ -384,7 +416,14 @@ func changePassword[T User]() *request.RequestHandler[ChangePasswordRequest[T], 
 	})
 }
 
-func refresh[T User]() *request.RequestHandler[RefreshRequest[T], *LoginResponse] {
+type RefreshRequest[T User] struct {
+	RefreshToken string          `json:"refresh"`
+	User         T               `inject:""`
+	Read         databasedi.Read `inject:""`
+	Ctx          context.Context `inject:""`
+}
+
+func (o *RouteOptions[T, R]) refresh() *request.RequestHandler[RefreshRequest[T], *LoginResponse] {
 	return request.Handler(func(r *RefreshRequest[T]) (*LoginResponse, error) {
 		claims, err := Parse(r.RefreshToken)
 		if err != nil {
@@ -427,9 +466,6 @@ func refresh[T User]() *request.RequestHandler[RefreshRequest[T], *LoginResponse
 	})
 }
 
-//go:embed emails/*
-var emails embed.FS
-
 func updatePassword(u User, password string) error {
 	hash, err := bcrypt.GenerateFromPassword(u.SaltedPassword(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -440,32 +476,43 @@ func updatePassword(u User, password string) error {
 	return nil
 }
 
-func sendEmails(v EmailVerified, mailer email.Mailer, r router.URLResolver, templateName, routeName string) error {
+type sendEmailOptions struct {
+	URL          router.URLResolver
+	ViewTemplate *view.ViewTemplate
+	User         EmailVerified
+	Mailer       email.Mailer
+	TemplateName string
+	Subject      string
+}
+
+func (o *RouteOptions[T, R]) sendEmails(opt *sendEmailOptions) error {
 	token := uuid.New().String()
 
-	v.SetLookupToken(token)
+	opt.User.SetLookupToken(token)
 
-	t, err := template.ParseFS(emails, "emails/*")
-	if err != nil {
-		return err
+	if opt.ViewTemplate == nil {
+		opt.ViewTemplate = defaultViewTemplate
 	}
 
-	b := &bytes.Buffer{}
-	type verifyEmail struct {
-		Link string
-	}
-	err = t.ExecuteTemplate(b, templateName, &verifyEmail{
-		Link: r.Resolve(routeName, "token", token),
+	viewResponse, err := view.View(opt.TemplateName, map[string]any{
+		"ResetPasswordName": o.ResetPasswordName,
+		"Token":             token,
+	}).Run(&view.ViewRequest{
+		URL:      opt.URL,
+		Template: opt.ViewTemplate,
 	})
 	if err != nil {
 		return err
 	}
-
-	err = mailer.Mail(&email.Message{
+	b, err := viewResponse.Bytes()
+	if err != nil {
+		return err
+	}
+	err = opt.Mailer.Mail(&email.Message{
 		From:     "salusa@example.com",
-		To:       []string{v.GetEmail()},
-		Subject:  "Verify your account",
-		HTMLBody: b.String(),
+		To:       []string{opt.User.GetEmail()},
+		Subject:  opt.Subject,
+		HTMLBody: string(b),
 	})
 	if err != nil {
 		return fmt.Errorf("error sending mail: %w", err)
@@ -479,16 +526,4 @@ func cast[T any](v any) (T, bool) {
 }
 func mustCast[T any](v any) T {
 	return v.(T)
-}
-
-func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T, resetPathName string) {
-	authRoutes := Routes(newUser, resetPathName)
-
-	r.Post("/login", authRoutes.Login).Name("auth.login")
-	r.Post("/login/refresh", authRoutes.Refresh).Name("auth.refresh")
-	r.Post("/user/password/reset", authRoutes.ResetPassword).Name("auth.password.reset")
-	r.Post("/user/password/change", authRoutes.ChangePassword).Name("auth.password.change")
-	r.Post("/user/password/forgot", authRoutes.ForgotPassword).Name("auth.password.forgot")
-	r.Post("/user", authRoutes.UserCreate).Name("auth.user.create")
-	r.Get("/user/verify", authRoutes.VerifyEmail).Name("auth.email.verify")
 }

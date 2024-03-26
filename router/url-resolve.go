@@ -18,10 +18,10 @@ type URLResolver interface {
 	ResolveHandler(h http.Handler, params ...any) string
 }
 
-func (r *Router) Register(dp *di.DependencyProvider) {
-	di.Register(dp, func(ctx context.Context, tag string) (URLResolver, error) {
+func (r *Router) Register(ctx context.Context) {
+	di.Register(ctx, func(ctx context.Context, tag string) (URLResolver, error) {
 		origin := ""
-		req, err := di.Resolve[*http.Request](ctx, dp)
+		req, err := di.Resolve[*http.Request](ctx)
 		if err != nil {
 			origin = "/"
 		} else {

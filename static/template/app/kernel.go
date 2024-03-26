@@ -1,8 +1,6 @@
 package app
 
 import (
-	"context"
-
 	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/event/cron"
 	"github.com/abibby/salusa/kernel"
@@ -21,16 +19,11 @@ import (
 var Kernel = kernel.New[*config.Config](
 	kernel.Config(config.Load),
 	kernel.Bootstrap(
-		database.Init,
-		func(ctx context.Context, k *kernel.Kernel) error {
-			resources.View = view.Factory(k.DependencyProvider(), resources.Content, "**/*.html")
-			return nil
-		},
-	),
-	kernel.Providers(
 		salusadi.Register[*models.User],
 		event.RegisterChannelQueue,
 		providers.Register,
+		database.Init,
+		view.Register(resources.Content, "**/*.html"),
 	),
 	kernel.Services(
 		cron.Service().

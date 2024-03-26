@@ -36,6 +36,10 @@ var (
 	isFillablerType = helpers.GetType[IsFillabler]()
 )
 
+func Fill(ctx context.Context, v any, opts ...FillOption) error {
+	dp := GetDependencyProvider(ctx)
+	return dp.Fill(ctx, v, opts...)
+}
 func (dp *DependencyProvider) Fill(ctx context.Context, v any, opts ...FillOption) error {
 	opt := newFillOptions()
 	for _, o := range opts {
@@ -69,14 +73,14 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 			return nil
 		}
 
-		v, err := dp.resolve(ctx, sf.Type, tag, opt)
+		result, err := dp.resolve(ctx, sf.Type, tag, opt)
 		if errors.Is(err, ErrNotRegistered) {
-			return fmt.Errorf("unable to fill field %s (%s): %w", sf.Name, sf.Type.String(), ErrNotRegistered)
+			return fmt.Errorf("unable to fill field %s.%s: %w", v.Type().String(), sf.Name, errNotRegistered(sf.Type))
 		} else if err != nil {
 			return fmt.Errorf("failed to fill: %w", err)
 		}
 
-		fv.Set(reflect.ValueOf(v))
+		fv.Set(reflect.ValueOf(result))
 		return nil
 	})
 	if err != nil {
@@ -100,8 +104,8 @@ func reflectNew(t reflect.Type) reflect.Value {
 	return reflect.New(t).Elem()
 }
 
-func isFillable(t reflect.Type) bool {
+func isFillable(t reflect.Type, tag string) bool {
 	return t.Kind() == reflect.Pointer &&
 		t.Elem().Kind() == reflect.Struct &&
-		t.Implements(isFillablerType)
+		(t.Implements(isFillablerType) || tag == "fill")
 }

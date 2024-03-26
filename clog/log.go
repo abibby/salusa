@@ -14,8 +14,8 @@ const (
 	withKey key = iota
 )
 
-func Register(dp *di.DependencyProvider, h slog.Handler) {
-	di.Register(dp, func(ctx context.Context, tag string) (*slog.Logger, error) {
+func Register(ctx context.Context, h slog.Handler) {
+	di.Register(ctx, func(ctx context.Context, tag string) (*slog.Logger, error) {
 		if h == nil {
 			h = slog.NewTextHandler(os.Stderr, nil)
 		}

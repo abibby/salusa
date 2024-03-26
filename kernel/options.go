@@ -4,13 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/router"
 )
 
 type KernelOption func(*Kernel) *Kernel
 
-func Bootstrap(bootstrap ...func(context.Context, *Kernel) error) KernelOption {
+func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.bootstrap = bootstrap
 		return k
@@ -20,15 +19,15 @@ func Bootstrap(bootstrap ...func(context.Context, *Kernel) error) KernelOption {
 func Config[T KernelConfig](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
 		cfg := cb()
-		di.RegisterSingleton(k.dp, func() T {
-			return cfg
+		k.dp.Register(func(ctx context.Context, tag string) (T, error) {
+			return cfg, nil
 		})
 		k.cfg = cfg
 		return k
 	}
 }
 
-func RootHandler(rootHandler func() http.Handler) KernelOption {
+func RootHandler(rootHandler func(ctx context.Context) http.Handler) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.rootHandler = rootHandler
 		return k
@@ -37,11 +36,11 @@ func RootHandler(rootHandler func() http.Handler) KernelOption {
 
 func InitRoutes(cb func(r *router.Router)) KernelOption {
 	return func(k *Kernel) *Kernel {
-		k.rootHandler = func() http.Handler {
+		k.rootHandler = func(ctx context.Context) http.Handler {
 			r := router.New()
 			r.WithDependencyProvider(k.dp)
 			cb(r)
-			k.Register(r.Register)
+			r.Register(ctx)
 			return r
 		}
 		return k
@@ -51,13 +50,6 @@ func InitRoutes(cb func(r *router.Router)) KernelOption {
 func Services(services ...Service) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.services = services
-		return k
-	}
-}
-
-func Providers(providers ...func(*di.DependencyProvider)) KernelOption {
-	return func(k *Kernel) *Kernel {
-		k.providers = providers
 		return k
 	}
 }

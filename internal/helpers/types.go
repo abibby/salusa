@@ -21,3 +21,8 @@ func GetType[T any]() reflect.Type {
 	var v [0]T
 	return reflect.TypeOf(v).Elem()
 }
+
+func Zero[T any]() T {
+	var v T
+	return v
+}

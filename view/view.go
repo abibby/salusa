@@ -2,6 +2,7 @@ package view
 
 import (
 	"bytes"
+	"context"
 	"html/template"
 	"io"
 	"io/fs"
@@ -12,48 +13,72 @@ import (
 	"github.com/abibby/salusa/router"
 )
 
-type viewData struct {
-	URL router.URLResolver `inject:""`
+type ViewTemplate struct {
+	fsys     fs.FS
+	patterns []string
 }
 
-type ViewFunc func(file string) http.HandlerFunc
+type ViewRequest struct {
+	URL      router.URLResolver `inject:""`
+	Template *ViewTemplate      `inject:""`
+}
+type ViewResponse struct {
+	req  *ViewRequest
+	file string
+	data any
+}
 
-func Factory(dp *di.DependencyProvider, fsys fs.FS, patterns ...string) ViewFunc {
+var _ request.Responder = (*ViewResponse)(nil)
+
+func (vr *ViewResponse) Execute(w io.Writer) error {
+	tpl, err := template.New("").
+		Funcs(template.FuncMap{
+			"route": vr.req.URL.Resolve,
+		}).
+		ParseFS(vr.req.Template.fsys, vr.req.Template.patterns...)
+	if err != nil {
+		return err
+	}
+	return tpl.ExecuteTemplate(w, vr.file, vr.data)
+}
+
+func (vr *ViewResponse) Respond(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Add("Content-Type", "text/html")
+	return vr.Execute(w)
+}
+
+func (vr *ViewResponse) Bytes() ([]byte, error) {
+	b := &bytes.Buffer{}
+	err := vr.Execute(b)
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
+func View(file string, data any) *request.RequestHandler[ViewRequest, *ViewResponse] {
+	return request.Handler(func(r *ViewRequest) (*ViewResponse, error) {
+		return &ViewResponse{
+			req:  r,
+			file: file,
+			data: data,
+		}, nil
+	})
+}
+func NewViewTemplate(fsys fs.FS, patterns ...string) *ViewTemplate {
 	if len(patterns) == 0 {
 		patterns = []string{"**/*.html"}
 	}
-
-	tpl, err := template.ParseFS(fsys, patterns...)
-	if err != nil {
-		panic(err)
+	return &ViewTemplate{
+		fsys:     fsys,
+		patterns: patterns,
 	}
-
-	return func(file string) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			data := &viewData{}
-			err := dp.Fill(r.Context(), data)
-			if err != nil {
-				err = request.NewHTTPError(err, http.StatusInternalServerError).Respond(w, r)
-				if err != nil {
-					panic(err)
-				}
-				return
-			}
-			b := &bytes.Buffer{}
-			err = tpl.Funcs(template.FuncMap{
-				"route": data.URL.Resolve,
-			}).ExecuteTemplate(b, file, data)
-			if err != nil {
-				err = request.NewHTTPError(err, http.StatusInternalServerError).Respond(w, r)
-				if err != nil {
-					panic(err)
-				}
-				return
-			}
-			_, err = io.Copy(w, b)
-			if err != nil {
-				panic(err)
-			}
+}
+func Register(fsys fs.FS, patterns ...string) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		di.RegisterSingleton(ctx, func() *ViewTemplate {
+			return NewViewTemplate(fsys, patterns...)
 		})
+		return nil
 	}
 }

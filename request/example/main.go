@@ -9,15 +9,12 @@ import (
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/mattn/go-sqlite3"
 )
-
-var DP = di.NewDependencyProvider()
 
 type Foo struct {
 	model.BaseModel
@@ -78,8 +75,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	databasedi.Register(DP, db)
 
 	r.Get("/foo", list)
 	r.Get("/foo/create", add)

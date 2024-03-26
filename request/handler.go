@@ -8,15 +8,12 @@ import (
 	"github.com/abibby/salusa/di"
 )
 
-var defaultDP = di.NewDependencyProvider()
-
 func init() {
-	Register(defaultDP)
+	Register(context.Background())
 }
 
 type RequestHandler[TRequest, TResponse any] struct {
 	handler func(r *TRequest) (TResponse, error)
-	dp      *di.DependencyProvider
 }
 
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +31,7 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	ctx = context.WithValue(ctx, requestKey, r)
 	ctx = context.WithValue(ctx, responseKey, w)
 
-	err = h.dp.Fill(ctx, &req,
+	err = di.Fill(ctx, &req,
 		di.AutoResolve[context.Context](),
 		di.AutoResolve[*http.Request](),
 		di.AutoResolve[http.ResponseWriter](),
@@ -70,9 +67,6 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 		h.respond(w, r, NewJSONResponse(resp))
 	}
 }
-func (h *RequestHandler[TRequest, TResponse]) WithDependencyProvider(dp *di.DependencyProvider) {
-	h.dp = dp
-}
 func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {
 	return h.handler(r)
 }
@@ -82,14 +76,13 @@ func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error
 func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) *RequestHandler[TRequest, TResponse] {
 	return &RequestHandler[TRequest, TResponse]{
 		handler: callback,
-		dp:      defaultDP,
 	}
 }
 
 func (h *RequestHandler[TRequest, TResponse]) respond(w http.ResponseWriter, req *http.Request, r Responder) {
 	err := r.Respond(w, req)
 	if err != nil {
-		logger, err := di.Resolve[*slog.Logger](req.Context(), h.dp)
+		logger, err := di.Resolve[*slog.Logger](req.Context())
 		if err != nil {
 			logger = slog.Default()
 		}

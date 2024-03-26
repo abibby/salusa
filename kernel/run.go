@@ -20,7 +20,7 @@ func (k *Kernel) Run(ctx context.Context) error {
 func (k *Kernel) RunHttpServer(ctx context.Context) error {
 	slog.Info(fmt.Sprintf("http://localhost:%d", k.cfg.GetHTTPPort()))
 
-	handler := k.rootHandler()
+	handler := k.rootHandler(ctx)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", k.cfg.GetHTTPPort()),

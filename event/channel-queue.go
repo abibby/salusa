@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/abibby/salusa/di"
@@ -28,8 +29,9 @@ func (q ChannelQueue) Pop(events map[EventType]reflect.Type) (Event, error) {
 	return decodeEvent(<-q.channel, events)
 }
 
-func RegisterChannelQueue(dp *di.DependencyProvider) {
-	di.RegisterSingleton(dp, func() Queue {
+func RegisterChannelQueue(ctx context.Context) error {
+	di.RegisterSingleton(ctx, func() Queue {
 		return NewChannelQueue()
 	})
+	return nil
 }

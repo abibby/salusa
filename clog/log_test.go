@@ -12,11 +12,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func register() (*di.DependencyProvider, *bytes.Buffer) {
-	dp := di.NewDependencyProvider()
+func register() (context.Context, *bytes.Buffer) {
+	ctx := di.ContextWithDependencyProvider(
+		context.Background(),
+		di.NewDependencyProvider(),
+	)
+
 	b := bytes.NewBuffer([]byte{})
 
-	clog.Register(dp, slog.NewTextHandler(b, &slog.HandlerOptions{
+	clog.Register(ctx, slog.NewTextHandler(b, &slog.HandlerOptions{
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				return slog.Time(slog.TimeKey, time.Time{})
@@ -25,17 +29,16 @@ func register() (*di.DependencyProvider, *bytes.Buffer) {
 		},
 	}))
 
-	return dp, b
+	return ctx, b
 }
 
 func TestWith(t *testing.T) {
 	t.Run("with string", func(t *testing.T) {
-		dp, b := register()
-		ctx := context.Background()
+		ctx, b := register()
 
 		ctx = clog.With(ctx, slog.String("foo", "bar"))
 
-		l, err := di.Resolve[*slog.Logger](ctx, dp)
+		l, err := di.Resolve[*slog.Logger](ctx)
 		assert.NoError(t, err)
 
 		l.Warn("test")
@@ -43,13 +46,12 @@ func TestWith(t *testing.T) {
 	})
 
 	t.Run("with multiple", func(t *testing.T) {
-		dp, b := register()
-		ctx := context.Background()
+		ctx, b := register()
 
 		ctx = clog.With(ctx, slog.String("a", "1"))
 		ctx = clog.With(ctx, slog.String("b", "2"))
 
-		l, err := di.Resolve[*slog.Logger](ctx, dp)
+		l, err := di.Resolve[*slog.Logger](ctx)
 		assert.NoError(t, err)
 
 		l.Warn("test")
@@ -59,13 +61,14 @@ func TestWith(t *testing.T) {
 
 func TestResolve(t *testing.T) {
 	t.Run("no handler", func(t *testing.T) {
-		dp := di.NewDependencyProvider()
+		ctx := di.ContextWithDependencyProvider(
+			context.Background(),
+			di.NewDependencyProvider(),
+		)
 
-		clog.Register(dp, nil)
+		clog.Register(ctx, nil)
 
-		ctx := context.Background()
-
-		l, err := di.Resolve[*slog.Logger](ctx, dp)
+		l, err := di.Resolve[*slog.Logger](ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, l)
 	})

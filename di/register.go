@@ -17,11 +17,13 @@ var (
 	dependencyProviderType = helpers.GetType[*DependencyProvider]()
 )
 
-func Register[T any](dp *DependencyProvider, factory DependencyFactory[T]) {
+func Register[T any](ctx context.Context, factory DependencyFactory[T]) {
+	dp := GetDependencyProvider(ctx)
 	dp.Register(factory)
 }
-func RegisterWith[T, W any](dp *DependencyProvider, factory func(ctx context.Context, tag string, with W) (T, error)) {
-	Register(dp, func(ctx context.Context, tag string) (T, error) {
+func RegisterWith[T, W any](ctx context.Context, factory func(ctx context.Context, tag string, with W) (T, error)) {
+	Register(ctx, func(ctx context.Context, tag string) (T, error) {
+		dp := GetDependencyProvider(ctx)
 		with, err := dp.resolve(ctx, helpers.GetType[W](), tag, nil)
 		if err != nil {
 			var zero T
@@ -31,14 +33,16 @@ func RegisterWith[T, W any](dp *DependencyProvider, factory func(ctx context.Con
 	})
 }
 
-func RegisterSingleton[T any](dp *DependencyProvider, factory func() T) {
+func RegisterSingleton[T any](ctx context.Context, factory func() T) {
+	dp := GetDependencyProvider(ctx)
 	v := factory()
 	dp.Register(func(ctx context.Context, tag string) (T, error) {
 		return v, nil
 	})
 }
 
-func RegisterLazySingleton[T any](dp *DependencyProvider, factory func() T) {
+func RegisterLazySingleton[T any](ctx context.Context, factory func() T) {
+	dp := GetDependencyProvider(ctx)
 	var v T
 	initialize := sync.OnceFunc(func() {
 		v = factory()
@@ -49,6 +53,7 @@ func RegisterLazySingleton[T any](dp *DependencyProvider, factory func() T) {
 	})
 }
 
+// factory should be of type DependencyFactory[T any] func(ctx context.Context, tag string) (T, error)
 func (d *DependencyProvider) Register(factory any) {
 	v := reflect.ValueOf(factory)
 	t := v.Type()

@@ -15,7 +15,7 @@ import (
 type Update func(func(tx *sqlx.Tx) error) error
 type Read func(func(tx *sqlx.Tx) error) error
 
-func RegisterFromConfig(ctx context.Context, dp *di.DependencyProvider, cfg dialects.Config, migrations *migrate.Migrations) error {
+func RegisterFromConfig(ctx context.Context, cfg dialects.Config, migrations *migrate.Migrations) error {
 	cfg.SetDialect()
 	db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
 	if err != nil {
@@ -27,20 +27,20 @@ func RegisterFromConfig(ctx context.Context, dp *di.DependencyProvider, cfg dial
 		return err
 	}
 
-	Register(dp, db)
+	Register(ctx, db)
 	return nil
 }
 
-func Register(dp *di.DependencyProvider, db *sqlx.DB) {
-	di.RegisterSingleton(dp, func() *sqlx.DB {
+func Register(ctx context.Context, db *sqlx.DB) {
+	di.RegisterSingleton(ctx, func() *sqlx.DB {
 		return db
 	})
-	di.Register(dp, func(ctx context.Context, tag string) (Read, error) {
+	di.Register(ctx, func(ctx context.Context, tag string) (Read, error) {
 		return func(f func(tx *sqlx.Tx) error) error {
 			return runTx(ctx, db, f, true)
 		}, nil
 	})
-	di.Register(dp, func(ctx context.Context, tag string) (Update, error) {
+	di.Register(ctx, func(ctx context.Context, tag string) (Update, error) {
 		return func(f func(tx *sqlx.Tx) error) error {
 			return runTx(ctx, db, f, false)
 		}, nil

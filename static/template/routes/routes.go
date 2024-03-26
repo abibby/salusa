@@ -6,7 +6,7 @@ import (
 	"github.com/abibby/salusa/router"
 	"github.com/abibby/salusa/static/template/app/handlers"
 	"github.com/abibby/salusa/static/template/app/models"
-	"github.com/abibby/salusa/static/template/resources"
+	"github.com/abibby/salusa/view"
 )
 
 func InitRoutes(r *router.Router) {
@@ -19,9 +19,9 @@ func InitRoutes(r *router.Router) {
 		}
 	}, "/reset-password")
 
-	r.Get("/", resources.View("index.html")).Name("home")
-	r.Get("/login", resources.View("login.html")).Name("login")
-	r.Get("/user/create", resources.View("create_user.html")).Name("user.create")
+	r.Get("/", view.View("index.html", nil)).Name("home")
+	r.Get("/login", view.View("login.html", nil)).Name("login")
+	r.Get("/user/create", view.View("create_user.html", nil)).Name("user.create")
 
 	r.Get("/user", handlers.UserList)
 	r.Get("/user/{id}", handlers.UserGet)

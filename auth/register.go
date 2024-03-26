@@ -9,18 +9,18 @@ import (
 )
 
 type userRegisterDeps struct {
-	DB     *sqlx.DB
-	Claims *Claims
+	DB     *sqlx.DB `inject:""`
+	Claims *Claims  `inject:""`
 }
 
-func Register[T User](dp *di.DependencyProvider) {
-	di.Register(dp, func(ctx context.Context, tag string) (*Claims, error) {
+func Register[T User](ctx context.Context) error {
+	di.Register(ctx, func(ctx context.Context, tag string) (*Claims, error) {
 		c, _ := GetClaimsCtx(ctx)
 		return c, nil
 	})
-	di.Register(dp, func(ctx context.Context, tag string) (T, error) {
+	di.Register(ctx, func(ctx context.Context, tag string) (T, error) {
 		deps := &userRegisterDeps{}
-		err := dp.Fill(ctx, deps)
+		err := di.Fill(ctx, deps)
 		if err != nil {
 			var zero T
 			return zero, err
@@ -32,4 +32,5 @@ func Register[T User](dp *di.DependencyProvider) {
 
 		return builder.From[T]().WithContext(ctx).Find(deps.DB, deps.Claims.Subject)
 	})
+	return nil
 }

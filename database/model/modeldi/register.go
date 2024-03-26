@@ -14,27 +14,21 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func Register[T model.Model](dp *di.DependencyProvider) {
-	di.Register(dp, func(ctx context.Context, tag string) (T, error) {
-		var zero T
-		if tag == "" {
-			return zero, fmt.Errorf("no tag")
-		}
-		req, err := di.Resolve[*http.Request](ctx, dp)
-		if err != nil {
-			return zero, fmt.Errorf("count not find request: %w", err)
-		}
-		db, err := di.Resolve[*sqlx.DB](ctx, dp)
-		if err != nil {
-			return zero, fmt.Errorf("count not find db: %w", err)
-		}
+type modelDeps struct {
+	Request *http.Request `inject:""`
+	DB      *sqlx.DB      `inject:""`
+}
 
-		v, ok := getValue(req, tag)
+func Register[T model.Model](ctx context.Context) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, deps *modelDeps) (T, error) {
+		var zero T
+
+		v, ok := getValue(deps.Request, tag)
 		if !ok {
 			return zero, fmt.Errorf("could not fetch model %s not in request", tag)
 		}
 
-		u, err := builder.From[T]().WithContext(ctx).Find(db, v)
+		u, err := builder.From[T]().WithContext(ctx).Find(deps.DB, v)
 		if err != nil {
 			return zero, err
 		}

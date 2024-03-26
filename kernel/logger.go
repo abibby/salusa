@@ -8,7 +8,7 @@ import (
 )
 
 func (k *Kernel) Logger(ctx context.Context) *slog.Logger {
-	logger, err := di.Resolve[*slog.Logger](ctx, k.dp)
+	logger, err := di.Resolve[*slog.Logger](ctx)
 	if err != nil {
 		logger = slog.Default()
 		logger.Warn("no logger in di", slog.Any("error", err))

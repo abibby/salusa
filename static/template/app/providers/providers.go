@@ -9,19 +9,20 @@ import (
 )
 
 // var ModelRegistrar = modeldi.NewModelRegistrar()
-var registrar = []func(*di.DependencyProvider){}
+var registrar = []func(context.Context){}
 
-func Add(register func(*di.DependencyProvider)) {
+func Add(register func(context.Context)) {
 	registrar = append(registrar, register)
 }
 
 // Register registers any custom di providers
-func Register(dp *di.DependencyProvider) {
+func Register(ctx context.Context) error {
 	for _, register := range registrar {
-		register(dp)
+		register(ctx)
 	}
 
-	di.RegisterWith(dp, func(ctx context.Context, tag string, cfg *config.Config) (email.Mailer, error) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, cfg *config.Config) (email.Mailer, error) {
 		return cfg.Mail.Mailer(), nil
 	})
+	return nil
 }

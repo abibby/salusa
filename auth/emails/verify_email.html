@@ -8,10 +8,10 @@
   <body>
     <h1>Verify Your Email</h1>
     <p>
-      <a href="{{ .Link }}">Verify Email</a>
+      <a href="{{ route "auth.email.verify" "token" .Token }}">Verify Email</a>
     </p>
     <p>
-      <a href="{{ .Link }}">{{ .Link }}</a>
+      <a href="{{ route "auth.email.verify" "token" .Token }}">{{ route "auth.email.verify" "token" .Token }}</a>
     </p>
   </body>
 </html>
