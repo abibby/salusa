@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/set"
@@ -68,14 +69,19 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 			return nil
 		}
 
-		tag, ok := sf.Tag.Lookup("inject")
+		rawTag, ok := sf.Tag.Lookup("inject")
 		if !ok && !opt.autoResolve.Has(fv.Type()) {
 			return nil
 		}
+		tag := parseTag(rawTag)
 
-		result, err := dp.resolve(ctx, sf.Type, tag, opt)
+		result, err := dp.resolve(ctx, sf.Type, tag.Name, opt)
 		if errors.Is(err, ErrNotRegistered) {
-			return fmt.Errorf("unable to fill field %s.%s: %w", v.Type().String(), sf.Name, errNotRegistered(sf.Type))
+			if tag.Optional {
+				return nil
+			} else {
+				return fmt.Errorf("unable to fill field %s.%s: %w", v.Type().String(), sf.Name, errNotRegistered(sf.Type))
+			}
 		} else if err != nil {
 			return fmt.Errorf("failed to fill: %w", err)
 		}
@@ -108,4 +114,21 @@ func isFillable(t reflect.Type, tag string) bool {
 	return t.Kind() == reflect.Pointer &&
 		t.Elem().Kind() == reflect.Struct &&
 		(t.Implements(isFillablerType) || tag == "fill")
+}
+
+type fillTag struct {
+	Name     string
+	Optional bool
+}
+
+func parseTag(rawTag string) *fillTag {
+	parts := strings.Split(rawTag, ",")
+	tag := &fillTag{}
+	tag.Name = parts[0]
+	for _, p := range parts[1:] {
+		if p == "optional" {
+			tag.Optional = true
+		}
+	}
+	return tag
 }

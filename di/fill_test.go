@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/di"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,10 +18,7 @@ func TestFill(t *testing.T) {
 			NoTag   *Struct
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() *Struct {
 			return &Struct{}
 		})
@@ -44,10 +40,7 @@ func TestFill(t *testing.T) {
 			di.Fillable
 			B *FillableB `inject:""`
 		}
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() *Struct {
 			return &Struct{}
 		})
@@ -68,10 +61,7 @@ func TestFill(t *testing.T) {
 			WithTag *Struct `inject:"with tag"`
 			Empty   *Struct `inject:""`
 		}
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.Register(ctx, func(ctx context.Context, tag string) (*Struct, error) {
 			return &Struct{
 				Value: tag,
@@ -91,10 +81,7 @@ func TestFill(t *testing.T) {
 			Miss *int `inject:""`
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		f := &Fillable{}
 		err := di.Fill(ctx, f)
 		assert.ErrorIs(t, err, di.ErrNotRegistered)
@@ -105,10 +92,7 @@ func TestFill(t *testing.T) {
 			di.Fillable
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		f := Fillable{}
 		err := di.Fill(ctx, f)
 		assert.ErrorIs(t, err, di.ErrFillParameters)
@@ -117,10 +101,7 @@ func TestFill(t *testing.T) {
 	t.Run("not struct", func(t *testing.T) {
 		type Fillable int
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		f := Fillable(0)
 		err := di.Fill(ctx, &f)
 		assert.ErrorIs(t, err, di.ErrFillParameters)
@@ -133,10 +114,7 @@ func TestFill(t *testing.T) {
 			S *Struct `inject:""`
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		resolveErr := fmt.Errorf("error in register")
 		di.Register(ctx, func(ctx context.Context, tag string) (*Struct, error) {
 			return nil, resolveErr
@@ -158,10 +136,7 @@ func TestFill(t *testing.T) {
 			NoTag           *StructB
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() *StructA {
 			return &StructA{}
 		})
@@ -190,10 +165,7 @@ func TestFill(t *testing.T) {
 			NotFillable *NotFillable `inject:""`
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() *Struct {
 			return &Struct{}
 		})
@@ -216,10 +188,7 @@ func TestFill(t *testing.T) {
 			F *Fillable1 `inject:""`
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() *Struct {
 			return &Struct{}
 		})
@@ -241,17 +210,26 @@ func TestFill(t *testing.T) {
 			F *Fillable1 `inject:"fill"`
 		}
 
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() *Struct {
 			return &Struct{}
 		})
 		f := &FillableRoot{}
 		err := di.Fill(ctx, f)
 		assert.NoError(t, err)
-		spew.Dump(f)
 		assert.NotNil(t, f.F.F.S)
+	})
+
+	t.Run("optional", func(t *testing.T) {
+		type Struct struct{ V int }
+		type FillableRoot struct {
+			S *Struct `inject:",optional"`
+		}
+
+		ctx := di.TestDependencyProviderContext()
+		f := &FillableRoot{}
+		err := di.Fill(ctx, f)
+		assert.NoError(t, err)
+		assert.Nil(t, f.S)
 	})
 }

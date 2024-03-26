@@ -12,10 +12,7 @@ import (
 func TestRegister(t *testing.T) {
 	t.Run("singlton", func(t *testing.T) {
 		type Struct struct{ V int }
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() *Struct {
 			return &Struct{}
 		})
@@ -30,10 +27,7 @@ func TestRegister(t *testing.T) {
 
 	t.Run("interface", func(t *testing.T) {
 		type Interface interface{}
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		type Struct struct{ V int }
 		di.Register(ctx, func(ctx context.Context, tag string) (Interface, error) {
 			return &Struct{}, nil
@@ -51,10 +45,7 @@ func TestRegister(t *testing.T) {
 		type Struct struct {
 			A int
 		}
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		i := 0
 		di.Register(ctx, func(ctx context.Context, tag string) (*Struct, error) {
 			i++
@@ -71,20 +62,14 @@ func TestRegister(t *testing.T) {
 	})
 
 	t.Run("not registered", func(t *testing.T) {
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		v, err := di.Resolve[int](ctx)
 		assert.Zero(t, v)
 		assert.ErrorIs(t, err, di.ErrNotRegistered)
 	})
 
 	t.Run("same name", func(t *testing.T) {
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		{
 			type Struct int
 			di.RegisterSingleton(ctx, func() Struct {
@@ -113,10 +98,7 @@ func TestRegister(t *testing.T) {
 			WithTag *Struct `inject:""`
 			NoTag   *Struct
 		}
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 
 		di.RegisterSingleton(ctx, func() *Struct {
 			return &Struct{}
@@ -129,10 +111,7 @@ func TestRegister(t *testing.T) {
 	})
 
 	t.Run("basic type", func(t *testing.T) {
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		di.RegisterSingleton(ctx, func() int {
 			return 123
 		})
@@ -145,10 +124,7 @@ func TestRegister(t *testing.T) {
 
 func TestRegisterLazySingleton(t *testing.T) {
 	t.Run("is lazy", func(t *testing.T) {
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		type Struct struct{ V int }
 		runs := 0
 		di.RegisterLazySingleton(ctx, func() *Struct {
@@ -197,10 +173,7 @@ func TestResolve(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		type Struct struct{ V int }
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		resolveErr := fmt.Errorf("resolve error")
 		di.Register(ctx, func(ctx context.Context, tag string) (*Struct, error) {
 			return nil, resolveErr
@@ -218,10 +191,7 @@ func TestResolve(t *testing.T) {
 			di.Fillable
 			S *Struct `inject:""`
 		}
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
+		ctx := di.TestDependencyProviderContext()
 		resolveErr := fmt.Errorf("resolve error")
 		di.Register(ctx, func(ctx context.Context, tag string) (*Struct, error) {
 			return nil, resolveErr
