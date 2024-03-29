@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -15,19 +13,19 @@ var (
 func GetValue(v any, key string) (any, bool) {
 	result, err := RGetValue(reflect.ValueOf(v), key)
 	if err != nil {
-		spew.Dump(err)
+		return nil, false
 	}
-	return result, err == nil
+	return result.Interface(), err == nil
 }
-func RGetValue(v reflect.Value, key string) (any, error) {
+func RGetValue(v reflect.Value, key string) (reflect.Value, error) {
 	if v.Kind() == reflect.Ptr {
 		if v.IsNil() {
-			return nil, fmt.Errorf("v must not be nil")
+			return reflect.Value{}, fmt.Errorf("v must not be nil")
 		}
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("v must be a struct")
+		return reflect.Value{}, fmt.Errorf("v must be a struct")
 	}
 	rt := v.Type()
 	for i := 0; i < rt.NumField(); i++ {
@@ -42,10 +40,10 @@ func RGetValue(v reflect.Value, key string) (any, error) {
 			return result, nil
 		}
 		if FieldName(ft) == key {
-			return v.Field(i).Interface(), nil
+			return v.Field(i), nil
 		}
 	}
-	return nil, ErrNotFound
+	return reflect.Value{}, ErrNotFound
 }
 
 func FieldName(f reflect.StructField) string {

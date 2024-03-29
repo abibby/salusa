@@ -31,7 +31,7 @@ func PrimaryKeyValue(m any) ([]any, error) {
 		if err != nil {
 			return nil, fmt.Errorf("can't find key %s on %s: %w", key, modelValue.Type(), err)
 		}
-		values[i] = v
+		values[i] = v.Interface()
 	}
 	return values, nil
 }

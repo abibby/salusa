@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/abibby/salusa/database/builder"
@@ -111,6 +112,16 @@ func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequ
 		}
 		u := o.NewUser(req)
 
+		for _, col := range u.UsernameColumns() {
+			v, err := helpers.RGetValue(reflect.ValueOf(u), col)
+			if err != nil {
+				return nil, err
+			}
+			if v.Kind() == reflect.String {
+				v.Set(reflect.ValueOf(strings.ToLower(v.String())))
+			}
+		}
+
 		err = r.Update(func(tx *sqlx.Tx) error {
 			err := model.SaveContext(r.Ctx, tx, u)
 			if err != nil {
@@ -177,7 +188,7 @@ func (o *RouteOptions[T, R]) login() *request.RequestHandler[LoginRequest, *Logi
 		err = r.Read(func(tx *sqlx.Tx) error {
 			q := builder.From[T]().WithContext(r.Ctx)
 			for _, column := range userColumns {
-				q = q.OrWhere(column, "=", r.Username)
+				q = q.OrWhere(column, "=", strings.ToLower(r.Username))
 			}
 
 			var err error
@@ -366,7 +377,7 @@ func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPass
 		err = r.Update(func(tx *sqlx.Tx) error {
 			q := builder.From[T]().WithContext(r.Ctx)
 			for _, column := range userColumns {
-				q = q.OrWhere(column, "=", r.Email)
+				q = q.OrWhere(column, "=", strings.ToLower(r.Email))
 			}
 
 			u, err := q.First(tx)

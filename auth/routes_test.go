@@ -58,6 +58,26 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 		// assert.NotZero(t, u.ValidationCode)
 	})
 
+	Run(t, "force lowercase usernames", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		resp, err := usernameRoutes.UserCreate.Run(&auth.UserCreateRequest{
+			Password: "pass",
+			Update:   dbtest.Update(tx),
+			Ctx:      ctx,
+			Logger:   nullLogger,
+			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"USER"}`)),
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, "user", resp.User.Username)
+
+		u, err := builder.From[*auth.UsernameUser]().WithContext(ctx).Find(tx, resp.User.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, u, resp.User)
+		assert.NotNil(t, u.PasswordHash)
+		// assert.False(t, u.Validated)
+		// assert.NotZero(t, u.ValidationCode)
+	})
+
 	Run(t, "email verification", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
 		urlResolver := routertest.NewTestResolver()
