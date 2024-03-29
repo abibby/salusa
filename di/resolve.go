@@ -2,6 +2,7 @@ package di
 
 import (
 	"context"
+	"errors"
 	"reflect"
 
 	"github.com/abibby/salusa/internal/helpers"
@@ -19,8 +20,20 @@ func Resolve[T any](ctx context.Context) (T, error) {
 }
 
 func ResolveFill[T any](ctx context.Context) (T, error) {
-	v := helpers.NewOf[T]()
-	err := Fill(ctx, v)
+	v, err := Resolve[T](ctx)
+	if err == nil || !errors.Is(err, ErrNotRegistered) {
+		return v, err
+	}
+	v, err = helpers.NewOf[T]()
+	if err != nil {
+		var zero T
+		return zero, errNotRegistered(helpers.GetType[T]())
+	}
+	err = Fill(ctx, v)
+	if err != nil {
+		var zero T
+		return zero, err
+	}
 	return v, err
 }
 func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string, opt *FillOptions) (any, error) {

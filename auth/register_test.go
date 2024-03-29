@@ -16,20 +16,6 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	t.Run("register", func(t *testing.T) {
-		db := sqlx.MustOpen("sqlite3", ":memory:")
-		defer db.Close()
-
-		ctx := di.TestDependencyProviderContext()
-		databasedi.Register(ctx, db)
-		err := auth.Register[*AutoIncrementUser](ctx)
-		assert.NoError(t, err)
-
-		u, err := di.Resolve[*AutoIncrementUser](ctx)
-		assert.NoError(t, err)
-		assert.Nil(t, u)
-	})
-
 	t.Run("register autoincrement", func(t *testing.T) {
 		db := sqlx.MustOpen("sqlite3", ":memory:")
 		defer db.Close()
@@ -83,5 +69,27 @@ func TestRegister(t *testing.T) {
 		u, err := di.Resolve[*auth.UsernameUser](ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, u)
+	})
+
+	t.Run("no claims", func(t *testing.T) {
+		db := sqlx.MustOpen("sqlite3", ":memory:")
+		defer db.Close()
+		migrate.MustMigrateModel(db, &auth.UsernameUser{})
+		createdUser := &auth.UsernameUser{
+			ID:           uuid.New(),
+			Username:     "user",
+			PasswordHash: []byte{},
+		}
+		err := model.Save(db, createdUser)
+		assert.NoError(t, err)
+
+		ctx := di.TestDependencyProviderContext()
+		databasedi.Register(ctx, db)
+		err = auth.Register[*auth.UsernameUser](ctx)
+		assert.NoError(t, err)
+
+		u, err := di.Resolve[*auth.UsernameUser](ctx)
+		assert.ErrorIs(t, err, auth.Err401Unauthorized)
+		assert.Nil(t, u)
 	})
 }

@@ -70,12 +70,18 @@ func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T, 
 	authRoutes := Routes(newUser, resetPasswordName)
 
 	r.Post("/login", authRoutes.Login).Name("auth.login")
-	r.Post("/login/refresh", authRoutes.Refresh).Name("auth.refresh")
 	r.Post("/user/password/reset", authRoutes.ResetPassword).Name("auth.password.reset")
-	r.Post("/user/password/change", authRoutes.ChangePassword).Name("auth.password.change")
 	r.Post("/user/password/forgot", authRoutes.ForgotPassword).Name("auth.password.forgot")
 	r.Post("/user", authRoutes.UserCreate).Name("auth.user.create")
 	r.Get("/user/verify", authRoutes.VerifyEmail).Name("auth.email.verify")
+	r.Post("/login/refresh", authRoutes.Refresh).Name("auth.refresh")
+
+	r.Group("", func(r *router.Router) {
+		r.Use(AttachUser())
+		r.Use(LoggedIn())
+
+		r.Post("/user/password/change", authRoutes.ChangePassword).Name("auth.password.change")
+	})
 }
 
 type UserCreateRequest struct {
@@ -95,8 +101,11 @@ type UserCreateResponse[T User] struct {
 
 func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
 	return request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
-		req := helpers.NewOf[R]()
-		err := request.Run(r.Request, req)
+		req, err := helpers.NewOf[R]()
+		if err != nil {
+			return nil, err
+		}
+		err = request.Run(r.Request, req)
 		if err != nil {
 			return nil, err
 		}
@@ -157,12 +166,15 @@ type LoginResponse struct {
 
 func (o *RouteOptions[T, R]) login() *request.RequestHandler[LoginRequest, *LoginResponse] {
 	return request.Handler(func(r *LoginRequest) (*LoginResponse, error) {
-		u := helpers.NewOf[T]()
+		u, err := helpers.NewOf[T]()
+		if err != nil {
+			return nil, err
+		}
 		userColumns := u.UsernameColumns()
 		if len(userColumns) == 0 {
 			panic("need columns")
 		}
-		err := r.Read(func(tx *sqlx.Tx) error {
+		err = r.Read(func(tx *sqlx.Tx) error {
 			q := builder.From[T]().WithContext(r.Ctx)
 			for _, column := range userColumns {
 				q = q.OrWhere(column, "=", r.Username)
@@ -229,12 +241,16 @@ type VerifyEmailRequest struct {
 
 func (o *RouteOptions[T, R]) verifyEmail() *request.RequestHandler[VerifyEmailRequest, http.Handler] {
 	return request.Handler(func(r *VerifyEmailRequest) (http.Handler, error) {
-		emptyValidated, ok := cast[EmailVerified](helpers.NewOf[T]())
+		v, err := helpers.NewOf[T]()
+		if err != nil {
+			return nil, err
+		}
+		emptyValidated, ok := cast[EmailVerified](v)
 		if !ok {
 			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
 		}
 
-		err := r.Update(func(tx *sqlx.Tx) error {
+		err = r.Update(func(tx *sqlx.Tx) error {
 			u, err := builder.From[T]().
 				WithContext(r.Ctx).
 				Where(emptyValidated.LookupTokenColumn(), "=", r.Token).
@@ -277,8 +293,10 @@ type ResetPasswordResponse[T User] struct {
 
 func (o *RouteOptions[T, R]) resetPassword() *request.RequestHandler[ResetPasswordRequest, *ResetPasswordResponse[T]] {
 	return request.Handler(func(r *ResetPasswordRequest) (*ResetPasswordResponse[T], error) {
-		u := helpers.NewOf[T]()
-		var err error
+		u, err := helpers.NewOf[T]()
+		if err != nil {
+			return nil, err
+		}
 		zeroValidated, ok := cast[EmailVerified](u)
 		if !ok {
 			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
@@ -333,7 +351,10 @@ type ForgotPasswordResponse struct {
 
 func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPasswordRequest, *ForgotPasswordResponse] {
 	return request.Handler(func(r *ForgotPasswordRequest) (*ForgotPasswordResponse, error) {
-		u := helpers.NewOf[T]()
+		u, err := helpers.NewOf[T]()
+		if err != nil {
+			return nil, err
+		}
 		_, ok := cast[EmailVerified](u)
 		if !ok {
 			panic("not email verified")
@@ -342,7 +363,7 @@ func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPass
 		if len(userColumns) == 0 {
 			panic("need columns")
 		}
-		err := r.Update(func(tx *sqlx.Tx) error {
+		err = r.Update(func(tx *sqlx.Tx) error {
 			q := builder.From[T]().WithContext(r.Ctx)
 			for _, column := range userColumns {
 				q = q.OrWhere(column, "=", r.Email)

@@ -22,7 +22,11 @@ type Claims struct {
 }
 
 func ParseOf[T jwt.Claims](token string) (T, error) {
-	claims := helpers.NewOf[T]()
+	claims, err := helpers.NewOf[T]()
+	if err != nil {
+		var zero T
+		return zero, err
+	}
 	t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

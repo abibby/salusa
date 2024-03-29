@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/di"
@@ -24,9 +25,14 @@ func Register[T User](ctx context.Context) error {
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, deps *userRegisterDeps) (T, error) {
 		var zero T
 		if deps.Claims == nil {
-			return zero, nil
+			return zero, Err401Unauthorized
 		}
-		pkeyValues, err := helpers.PrimaryKeyValue(helpers.NewOf[T]())
+		v, err := helpers.NewOf[T]()
+		if err != nil {
+			var zero T
+			return zero, err
+		}
+		pkeyValues, err := helpers.PrimaryKeyValue(v)
 		if err != nil {
 			return zero, err
 		}
@@ -47,7 +53,14 @@ func Register[T User](ctx context.Context) error {
 			pkey = deps.Claims.Subject
 		}
 
-		return builder.From[T]().WithContext(ctx).Find(deps.DB, pkey)
+		u, err := builder.From[T]().WithContext(ctx).Find(deps.DB, pkey)
+		if err != nil {
+			return zero, err
+		}
+		if reflect.ValueOf(u).IsZero() {
+			return zero, Err401Unauthorized
+		}
+		return u, err
 	})
 	return nil
 }

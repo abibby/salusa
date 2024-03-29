@@ -1,14 +1,22 @@
 package helpers
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
-func NewOf[T any]() T {
-	var zero T
-	t := reflect.TypeOf(zero)
+func NewOf[T any]() (T, error) {
+	var zero [0]T
+	t := reflect.TypeOf(zero).Elem()
 	if t.Kind() == reflect.Pointer {
-		return reflect.New(t.Elem()).Interface().(T)
+		return reflect.New(t.Elem()).Interface().(T), nil
 	}
-	return zero
+
+	if t.Kind() == reflect.Interface {
+		var zero T
+		return zero, fmt.Errorf("cannot create a new interface %s", t)
+	}
+	return reflect.New(t).Elem().Interface().(T), nil
 }
 func Create(t reflect.Type) reflect.Value {
 	if t.Kind() == reflect.Pointer {
