@@ -9,7 +9,10 @@ import (
 )
 
 func init() {
-	Register(context.Background())
+	err := Register(context.Background())
+	if err != nil {
+		panic(err)
+	}
 }
 
 type RequestHandler[TRequest, TResponse any] struct {

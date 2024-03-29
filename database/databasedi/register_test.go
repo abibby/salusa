@@ -55,11 +55,12 @@ func TestRegister(t *testing.T) {
 		assert.NotNil(t, update)
 
 		run := 0
-		update(func(tx *sqlx.Tx) error {
+		err = update(func(tx *sqlx.Tx) error {
 			run++
 			assert.NotNil(t, tx)
 			return nil
 		})
+		assert.NoError(t, err)
 		assert.Equal(t, 1, run)
 	})
 }

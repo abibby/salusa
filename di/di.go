@@ -10,7 +10,7 @@ import (
 type contextKey uint8
 
 const (
-	dpKey uint8 = iota
+	dpKey contextKey = iota
 )
 
 type DependencyProvider struct {

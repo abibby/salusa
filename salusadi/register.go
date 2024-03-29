@@ -10,7 +10,13 @@ import (
 
 func Register[T auth.User](ctx context.Context) error {
 	clog.Register(ctx, nil)
-	request.Register(ctx)
-	auth.Register[T](ctx)
+	err := request.Register(ctx)
+	if err != nil {
+		return err
+	}
+	err = auth.Register[T](ctx)
+	if err != nil {
+		return err
+	}
 	return nil
 }
