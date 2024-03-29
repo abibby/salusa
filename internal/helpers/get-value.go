@@ -1,34 +1,51 @@
 package helpers
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
+
+	"github.com/davecgh/go-spew/spew"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 func GetValue(v any, key string) (any, bool) {
-	return RGetValue(reflect.ValueOf(v), key)
+	result, err := RGetValue(reflect.ValueOf(v), key)
+	if err != nil {
+		spew.Dump(err)
+	}
+	return result, err == nil
 }
-func RGetValue(rv reflect.Value, key string) (any, bool) {
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
+func RGetValue(v reflect.Value, key string) (any, error) {
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return nil, fmt.Errorf("v must not be nil")
+		}
+		v = v.Elem()
 	}
-	if rv.Kind() != reflect.Struct {
-		return nil, false
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("v must be a struct")
 	}
-	rt := rv.Type()
+	rt := v.Type()
 	for i := 0; i < rt.NumField(); i++ {
 		ft := rt.Field(i)
 		if ft.Anonymous {
-			result, ok := RGetValue(rv.Field(i), key)
-			if ok {
-				return result, true
+			result, err := RGetValue(v.Field(i), key)
+			if errors.Is(err, ErrNotFound) {
+				continue
+			} else if err != nil {
+				return result, err
 			}
-			continue
+			return result, nil
 		}
 		if FieldName(ft) == key {
-			return rv.Field(i).Interface(), true
+			return v.Field(i).Interface(), nil
 		}
 	}
-	return nil, false
+	return nil, ErrNotFound
 }
 
 func FieldName(f reflect.StructField) string {

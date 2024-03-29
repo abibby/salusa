@@ -23,13 +23,12 @@ func Register[T any](ctx context.Context, factory DependencyFactory[T]) {
 }
 func RegisterWith[T, W any](ctx context.Context, factory func(ctx context.Context, tag string, with W) (T, error)) {
 	Register(ctx, func(ctx context.Context, tag string) (T, error) {
-		dp := GetDependencyProvider(ctx)
-		with, err := dp.resolve(ctx, helpers.GetType[W](), tag, nil)
+		with, err := ResolveFill[W](ctx)
 		if err != nil {
 			var zero T
 			return zero, err
 		}
-		return factory(ctx, tag, with.(W))
+		return factory(ctx, tag, with)
 	})
 }
 

@@ -1,6 +1,9 @@
 package helpers
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type PrimaryKeyer interface {
 	PrimaryKey() []string
@@ -19,18 +22,18 @@ func PrimaryKey(m any) []string {
 	return primary
 }
 
-func PrimaryKeyValue(m any) []any {
-	v := reflect.ValueOf(m)
+func PrimaryKeyValue(m any) ([]any, error) {
+	modelValue := reflect.ValueOf(m)
 	keys := PrimaryKey(m)
-	values := make([]any, 0, len(keys))
-	for _, key := range keys {
-		v, ok := RGetValue(v, key)
-		if !ok {
-			continue
+	values := make([]any, len(keys))
+	for i, key := range keys {
+		v, err := RGetValue(modelValue, key)
+		if err != nil {
+			return nil, fmt.Errorf("can't find key %s on %s: %w", key, modelValue.Type(), err)
 		}
-		values = append(values, v)
+		values[i] = v
 	}
-	return values
+	return values, nil
 }
 
 func primaryKey(t reflect.Type) ([]string, string) {

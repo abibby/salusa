@@ -66,7 +66,10 @@ func ToAttrs(params []any) ([]*Attr, error) {
 				attrs = append(attrs, active)
 				active = nil
 			case model.Model:
-				pKeyValues := helpers.PrimaryKeyValue(p)
+				pKeyValues, err := helpers.PrimaryKeyValue(p)
+				if err != nil {
+					return nil, err
+				}
 				if len(pKeyValues) != 1 {
 					return nil, fmt.Errorf("invalid attrs: model must have only 1 primary key found %d", len(pKeyValues))
 				}

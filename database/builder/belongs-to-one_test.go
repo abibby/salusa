@@ -31,7 +31,8 @@ func ExampleBelongsTo() {
 		Bar   *builder.BelongsTo[*Bar]
 	}
 
-	db, _ := sqlx.Open("sqlite3", ":memory:")
+	db := sqlx.MustOpen("sqlite3", ":memory:")
+	defer db.Close()
 
 	createFoo, err := migrate.CreateFromModel(&Foo{})
 	check(err)

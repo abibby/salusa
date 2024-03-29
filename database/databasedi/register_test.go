@@ -14,6 +14,7 @@ func TestRegister(t *testing.T) {
 	t.Run("db", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
 		db := sqlx.MustOpen("sqlite3", ":memory:")
+		defer db.Close()
 		databasedi.Register(ctx, db)
 
 		newDB, err := di.Resolve[*sqlx.DB](ctx)
@@ -24,6 +25,7 @@ func TestRegister(t *testing.T) {
 	t.Run("tx read", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
 		db := sqlx.MustOpen("sqlite3", ":memory:")
+		defer db.Close()
 		databasedi.Register(ctx, db)
 
 		read, err := di.Resolve[databasedi.Read](ctx)
@@ -34,6 +36,7 @@ func TestRegister(t *testing.T) {
 	t.Run("tx update", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
 		db := sqlx.MustOpen("sqlite3", ":memory:")
+		defer db.Close()
 		databasedi.Register(ctx, db)
 
 		update, err := di.Resolve[databasedi.Update](ctx)
@@ -44,6 +47,7 @@ func TestRegister(t *testing.T) {
 	t.Run("tx", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
 		db := sqlx.MustOpen("sqlite3", ":memory:")
+		defer db.Close()
 		databasedi.Register(ctx, db)
 
 		update, err := di.Resolve[databasedi.Update](ctx)

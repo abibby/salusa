@@ -18,8 +18,6 @@ func TestGetValue(t *testing.T) {
 	type C struct {
 		Foo *A `db:"foo"`
 	}
-	var nilA *A
-	var nilC *C
 
 	testCases := []struct {
 		Name          string
@@ -28,18 +26,18 @@ func TestGetValue(t *testing.T) {
 		ExpectedValue any
 		ExpectedOk    bool
 	}{
-		{"heap find", A{Foo: "bar"}, "Foo", "bar", true},
-		{"heap miss", A{}, "Bar", nil, false},
-		{"pointer find", &A{Foo: "bar"}, "Foo", "bar", true},
-		{"pointer miss", &A{}, "Bar", nil, false},
-		{"nil pointer find", nilA, "Foo", nil, false},
-		{"nil pointer miss", nilA, "Bar", nil, false},
-		{"anonymise find", &B{A: A{Foo: "bar"}}, "Foo", "bar", true},
-		{"anonymise miss", &B{}, "Bar", nil, false},
-		{"nil tag find", nilC, "foo", nil, false},
-		{"nil tag miss Foo", nilC, "Foo", nil, false},
-		{"nil tag miss", nilC, "bar", nil, false},
-		{"nil value", C{}, "foo", (*A)(nil), true},
+		{Name: "stack find", Value: A{Foo: "bar"}, Field: "Foo", ExpectedValue: "bar", ExpectedOk: true},
+		{Name: "stack miss", Value: A{}, Field: "Bar", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "pointer find", Value: &A{Foo: "bar"}, Field: "Foo", ExpectedValue: "bar", ExpectedOk: true},
+		{Name: "pointer miss", Value: &A{}, Field: "Bar", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "nil pointer find", Value: (*A)(nil), Field: "Foo", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "nil pointer miss", Value: (*A)(nil), Field: "Bar", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "anonymise find", Value: &B{A: A{Foo: "bar"}}, Field: "Foo", ExpectedValue: "bar", ExpectedOk: true},
+		{Name: "anonymise miss", Value: &B{}, Field: "Bar", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "nil tag find", Value: (*C)(nil), Field: "foo", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "nil tag miss Foo", Value: (*C)(nil), Field: "Foo", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "nil tag miss", Value: (*C)(nil), Field: "bar", ExpectedValue: nil, ExpectedOk: false},
+		{Name: "nil value", Value: C{}, Field: "foo", ExpectedValue: (*A)(nil), ExpectedOk: true},
 	}
 
 	for _, tc := range testCases {

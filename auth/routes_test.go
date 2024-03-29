@@ -12,8 +12,6 @@ import (
 	"github.com/abibby/salusa/auth"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dbtest"
-	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/email/emailtest"
 	"github.com/abibby/salusa/router/routertest"
@@ -24,22 +22,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
-
-var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
-	sqlite.UseSQLite()
-	db, err := sqlx.Open("sqlite3", ":memory:")
-	if err != nil {
-		return nil, err
-	}
-	ctx := context.Background()
-	err = migrate.RunModelCreate(ctx, db, &auth.UsernameUser{}, &auth.EmailVerifiedUser{})
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-})
-
-var Run = runner.Run
 
 type DevNull struct{}
 
