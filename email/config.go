@@ -13,5 +13,5 @@ type SMTPConfig struct {
 }
 
 func (c *SMTPConfig) Mailer() Mailer {
-	return NewSMTPMailer(c.Host, c.Port, c.Username, c.Password)
+	return NewSMTPMailer(c.Host, c.Port, c.Username, c.Password, c.From)
 }

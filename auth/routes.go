@@ -134,21 +134,14 @@ func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequ
 			}
 
 			if v, ok := cast[EmailVerified](u); ok {
-				go func() {
-					err = o.sendEmails(&sendEmailOptions{
-						URL:          r.URL,
-						ViewTemplate: r.Template,
-						User:         v,
-						Mailer:       r.Mailer,
-						TemplateName: "verify_email.html",
-						Subject:      "Verify your email",
-					})
-					if err != nil {
-						r.Logger.Info("could not send verification email", "email", v.GetEmail(), "error", err)
-						return
-					}
-					r.Logger.Info("email verification sent", "email", v.GetEmail())
-				}()
+				o.sendEmails(&sendEmailOptions{
+					URL:          r.URL,
+					ViewTemplate: r.Template,
+					User:         v,
+					Mailer:       r.Mailer,
+					TemplateName: "verify_email.html",
+					Subject:      "Verify your email",
+				})
 			}
 
 			return model.SaveContext(r.Ctx, tx, u)
@@ -391,21 +384,14 @@ func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPass
 				return nil
 			}
 
-			go func() {
-				err = o.sendEmails(&sendEmailOptions{
-					URL:          r.URL,
-					ViewTemplate: r.Template,
-					User:         mustCast[EmailVerified](u),
-					Mailer:       r.Mailer,
-					TemplateName: "reset_password.html",
-					Subject:      "Password reset",
-				})
-				if err != nil {
-					r.Logger.Info("password failed to send", slog.String("email", r.Email), slog.Any("error", err))
-					return
-				}
-				r.Logger.Info("password reset sent", slog.String("email", r.Email))
-			}()
+			o.sendEmails(&sendEmailOptions{
+				URL:          r.URL,
+				ViewTemplate: r.Template,
+				User:         mustCast[EmailVerified](u),
+				Mailer:       r.Mailer,
+				TemplateName: "reset_password.html",
+				Subject:      "Password reset",
+			})
 			return model.SaveContext(r.Ctx, tx, u)
 		})
 		if err != nil {
@@ -518,43 +504,61 @@ type sendEmailOptions struct {
 	ViewTemplate *view.ViewTemplate
 	User         EmailVerified
 	Mailer       email.Mailer
+	Logger       slog.Logger
 	TemplateName string
 	Subject      string
 }
 
-func (o *RouteOptions[T, R]) sendEmails(opt *sendEmailOptions) error {
+func (o *RouteOptions[T, R]) sendEmails(opt *sendEmailOptions) {
 	token := uuid.New().String()
 
 	opt.User.SetLookupToken(token)
 
-	if opt.ViewTemplate == nil {
-		opt.ViewTemplate = defaultViewTemplate
-	}
+	go func() {
+		if opt.ViewTemplate == nil {
+			opt.ViewTemplate = defaultViewTemplate
+		}
 
-	viewResponse, err := view.View(opt.TemplateName, map[string]any{
-		"ResetPasswordName": o.ResetPasswordName,
-		"Token":             token,
-	}).Run(&view.ViewRequest{
-		URL:      opt.URL,
-		Template: opt.ViewTemplate,
-	})
-	if err != nil {
-		return err
-	}
-	b, err := viewResponse.Bytes()
-	if err != nil {
-		return err
-	}
-	err = opt.Mailer.Mail(&email.Message{
-		From:     "salusa@example.com",
-		To:       []string{opt.User.GetEmail()},
-		Subject:  opt.Subject,
-		HTMLBody: string(b),
-	})
-	if err != nil {
-		return fmt.Errorf("error sending mail: %w", err)
-	}
-	return nil
+		viewResponse, err := view.View(opt.TemplateName, map[string]any{
+			"ResetPasswordName": o.ResetPasswordName,
+			"Token":             token,
+		}).Run(&view.ViewRequest{
+			URL:      opt.URL,
+			Template: opt.ViewTemplate,
+		})
+		if err != nil {
+			opt.Logger.Warn("failed to generate auth email body",
+				"template", opt.TemplateName,
+				"error", err,
+			)
+			return
+		}
+		b, err := viewResponse.Bytes()
+		if err != nil {
+			opt.Logger.Warn("failed to read auth email body",
+				"template", opt.TemplateName,
+				"error", err,
+			)
+			return
+		}
+		err = opt.Mailer.Mail(&email.Message{
+			To:       []string{opt.User.GetEmail()},
+			Subject:  opt.Subject,
+			HTMLBody: string(b),
+		})
+		if err != nil {
+			opt.Logger.Warn("failed to send auth email",
+				"email", opt.User.GetEmail(),
+				"subject", opt.Subject,
+				"error", err,
+			)
+			return
+		}
+		opt.Logger.Info("auth email sent successfully",
+			"email", opt.User.GetEmail(),
+			"subject", opt.Subject,
+		)
+	}()
 }
 
 func cast[T any](v any) (T, bool) {
