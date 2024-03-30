@@ -139,6 +139,7 @@ func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequ
 					ViewTemplate: r.Template,
 					User:         v,
 					Mailer:       r.Mailer,
+					Logger:       r.Logger,
 					TemplateName: "verify_email.html",
 					Subject:      "Verify your email",
 				})
@@ -389,6 +390,7 @@ func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPass
 				ViewTemplate: r.Template,
 				User:         mustCast[EmailVerified](u),
 				Mailer:       r.Mailer,
+				Logger:       r.Logger,
 				TemplateName: "reset_password.html",
 				Subject:      "Password reset",
 			})
@@ -504,7 +506,7 @@ type sendEmailOptions struct {
 	ViewTemplate *view.ViewTemplate
 	User         EmailVerified
 	Mailer       email.Mailer
-	Logger       slog.Logger
+	Logger       *slog.Logger
 	TemplateName string
 	Subject      string
 }

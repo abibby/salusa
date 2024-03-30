@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/abibby/salusa/auth"
 	"github.com/abibby/salusa/database/builder"
@@ -94,6 +95,8 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user@example.com", resp.User.Email)
+
+		time.Sleep(time.Millisecond * 20)
 
 		sent := m.EmailsSent()
 		assert.Len(t, sent, 1)
@@ -369,6 +372,8 @@ func TestAuthRoutesForgotPassword(t *testing.T) {
 			Template: emailTemplates,
 		})
 		assert.NoError(t, err)
+
+		time.Sleep(time.Millisecond * 20)
 
 		u, err := builder.From[*auth.EmailVerifiedUser]().WithContext(ctx).Find(tx, id)
 		assert.NoError(t, err)
