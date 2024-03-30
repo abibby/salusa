@@ -1,435 +1,421 @@
 package builder
 
-import "context"
-
-// WithContext adds a context to the query that will be used when fetching results.
-func (b *ModelBuilder[T]) WithContext(ctx context.Context) *ModelBuilder[T] {
-	b = b.Clone()
-	b.subBuilder = b.subBuilder.WithContext(ctx)
-	return b
-}
-
 // From sets the table which the query is targeting.
-func (b *ModelBuilder[T]) From(table string) *ModelBuilder[T] {
+func (b *Builder) From(table string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.From(table)
+	b.from = b.from.From(table)
 	return b
 }
 
 // GroupBy sets the "group by" clause to the query.
-func (b *ModelBuilder[T]) GroupBy(columns ...string) *ModelBuilder[T] {
+func (b *Builder) GroupBy(columns ...string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.GroupBy(columns...)
+	b.groupBys = b.groupBys.GroupBy(columns...)
 	return b
 }
 
 // GroupBy adds a "group by" clause to the query.
-func (b *ModelBuilder[T]) AddGroupBy(columns ...string) *ModelBuilder[T] {
+func (b *Builder) AddGroupBy(columns ...string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.AddGroupBy(columns...)
+	b.groupBys = b.groupBys.AddGroupBy(columns...)
 	return b
 }
 
 // Join adds a join clause to the query.
-func (b *ModelBuilder[T]) Join(table, localColumn, operator, foreignColumn string) *ModelBuilder[T] {
+func (b *Builder) Join(table, localColumn, operator, foreignColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Join(table, localColumn, operator, foreignColumn)
+	b.joins = b.joins.Join(table, localColumn, operator, foreignColumn)
 	return b
 }
 
 // LeftJoin adds a left join clause to the query.
-func (b *ModelBuilder[T]) LeftJoin(table, localColumn, operator, foreignColumn string) *ModelBuilder[T] {
+func (b *Builder) LeftJoin(table, localColumn, operator, foreignColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.LeftJoin(table, localColumn, operator, foreignColumn)
+	b.joins = b.joins.LeftJoin(table, localColumn, operator, foreignColumn)
 	return b
 }
 
 // RightJoin adds a right join clause to the query.
-func (b *ModelBuilder[T]) RightJoin(table, localColumn, operator, foreignColumn string) *ModelBuilder[T] {
+func (b *Builder) RightJoin(table, localColumn, operator, foreignColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.RightJoin(table, localColumn, operator, foreignColumn)
+	b.joins = b.joins.RightJoin(table, localColumn, operator, foreignColumn)
 	return b
 }
 
 // InnerJoin adds an inner join clause to the query.
-func (b *ModelBuilder[T]) InnerJoin(table, localColumn, operator, foreignColumn string) *ModelBuilder[T] {
+func (b *Builder) InnerJoin(table, localColumn, operator, foreignColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.InnerJoin(table, localColumn, operator, foreignColumn)
+	b.joins = b.joins.InnerJoin(table, localColumn, operator, foreignColumn)
 	return b
 }
 
 // CrossJoin adds a cross join clause to the query.
-func (b *ModelBuilder[T]) CrossJoin(table, localColumn, operator, foreignColumn string) *ModelBuilder[T] {
+func (b *Builder) CrossJoin(table, localColumn, operator, foreignColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.CrossJoin(table, localColumn, operator, foreignColumn)
+	b.joins = b.joins.CrossJoin(table, localColumn, operator, foreignColumn)
 	return b
 }
 
 // JoinOn adds a join clause to the query with a complex on statement.
-func (b *ModelBuilder[T]) JoinOn(table string, cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) JoinOn(table string, cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.JoinOn(table, cb)
+	b.joins = b.joins.JoinOn(table, cb)
 	return b
 }
 
 // LeftJoinOn adds a left join clause to the query with a complex on statement.
-func (b *ModelBuilder[T]) LeftJoinOn(table string, cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) LeftJoinOn(table string, cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.LeftJoinOn(table, cb)
+	b.joins = b.joins.LeftJoinOn(table, cb)
 	return b
 }
 
 // RightJoinOn adds a right join clause to the query with a complex on statement.
-func (b *ModelBuilder[T]) RightJoinOn(table string, cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) RightJoinOn(table string, cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.RightJoinOn(table, cb)
+	b.joins = b.joins.RightJoinOn(table, cb)
 	return b
 }
 
 // InnerJoinOn adds an inner join clause to the query with a complex on statement.
-func (b *ModelBuilder[T]) InnerJoinOn(table string, cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) InnerJoinOn(table string, cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.InnerJoinOn(table, cb)
+	b.joins = b.joins.InnerJoinOn(table, cb)
 	return b
 }
 
 // CrossJoinOn adds a cross join clause to the query with a complex on statement.
-func (b *ModelBuilder[T]) CrossJoinOn(table string, cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) CrossJoinOn(table string, cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.CrossJoinOn(table, cb)
+	b.joins = b.joins.CrossJoinOn(table, cb)
 	return b
 }
 
 // Limit set the maximum number of rows to return.
-func (b *ModelBuilder[T]) Limit(limit int) *ModelBuilder[T] {
+func (b *Builder) Limit(limit int) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Limit(limit)
+	b.limit = b.limit.Limit(limit)
 	return b
 }
 
 // Offset sets the number of rows to skip before returning the result.
-func (b *ModelBuilder[T]) Offset(offset int) *ModelBuilder[T] {
+func (b *Builder) Offset(offset int) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Offset(offset)
+	b.limit = b.limit.Offset(offset)
 	return b
 }
 
 // OrderBy adds an order by clause to the query.
-func (b *ModelBuilder[T]) OrderBy(column string) *ModelBuilder[T] {
+func (b *Builder) OrderBy(column string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrderBy(column)
+	b.orderBys = b.orderBys.OrderBy(column)
 	return b
 }
 
 // OrderByDesc adds a descending order by clause to the query.
-func (b *ModelBuilder[T]) OrderByDesc(column string) *ModelBuilder[T] {
+func (b *Builder) OrderByDesc(column string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrderByDesc(column)
+	b.orderBys = b.orderBys.OrderByDesc(column)
 	return b
 }
 
 // Unordered removes all order by clauses from the query.
-func (b *ModelBuilder[T]) Unordered() *ModelBuilder[T] {
+func (b *Builder) Unordered() *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Unordered()
+	b.orderBys = b.orderBys.Unordered()
 	return b
 }
 
 // WithScope adds a local scope to a query.
-func (b *ModelBuilder[T]) WithScope(scope *Scope) *ModelBuilder[T] {
+func (b *Builder) WithScope(scope *Scope) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WithScope(scope)
+	b.scopes = b.scopes.WithScope(scope)
 	return b
 }
 
 // WithoutScope removes the given scope from the local scopes.
-func (b *ModelBuilder[T]) WithoutScope(scope *Scope) *ModelBuilder[T] {
+func (b *Builder) WithoutScope(scope *Scope) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WithoutScope(scope)
+	b.scopes = b.scopes.WithoutScope(scope)
 	return b
 }
 
 // WithoutGlobalScope removes a global scope from the query.
-func (b *ModelBuilder[T]) WithoutGlobalScope(scope *Scope) *ModelBuilder[T] {
+func (b *Builder) WithoutGlobalScope(scope *Scope) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WithoutGlobalScope(scope)
+	b.scopes = b.scopes.WithoutGlobalScope(scope)
 	return b
 }
 
 // Select sets the columns to be selected.
-func (b *ModelBuilder[T]) Select(columns ...string) *ModelBuilder[T] {
+func (b *Builder) Select(columns ...string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Select(columns...)
+	b.selects = b.selects.Select(columns...)
 	return b
 }
 
 // AddSelect adds new columns to be selected.
-func (b *ModelBuilder[T]) AddSelect(columns ...string) *ModelBuilder[T] {
+func (b *Builder) AddSelect(columns ...string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.AddSelect(columns...)
+	b.selects = b.selects.AddSelect(columns...)
 	return b
 }
 
 // SelectSubquery sets a subquery to be selected.
-func (b *ModelBuilder[T]) SelectSubquery(sb QueryBuilder, as string) *ModelBuilder[T] {
+func (b *Builder) SelectSubquery(sb QueryBuilder, as string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.SelectSubquery(sb, as)
+	b.selects = b.selects.SelectSubquery(sb, as)
 	return b
 }
 
 // AddSelectSubquery adds a subquery to be selected.
-func (b *ModelBuilder[T]) AddSelectSubquery(sb QueryBuilder, as string) *ModelBuilder[T] {
+func (b *Builder) AddSelectSubquery(sb QueryBuilder, as string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.AddSelectSubquery(sb, as)
+	b.selects = b.selects.AddSelectSubquery(sb, as)
 	return b
 }
 
 // SelectFunction sets a column to be selected with a function applied.
-func (b *ModelBuilder[T]) SelectFunction(function, column string) *ModelBuilder[T] {
+func (b *Builder) SelectFunction(function, column string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.SelectFunction(function, column)
+	b.selects = b.selects.SelectFunction(function, column)
 	return b
 }
 
 // SelectFunction adds a column to be selected with a function applied.
-func (b *ModelBuilder[T]) AddSelectFunction(function, column string) *ModelBuilder[T] {
+func (b *Builder) AddSelectFunction(function, column string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.AddSelectFunction(function, column)
+	b.selects = b.selects.AddSelectFunction(function, column)
 	return b
 }
 
 // Distinct forces the query to only return distinct results.
-func (b *ModelBuilder[T]) Distinct() *ModelBuilder[T] {
+func (b *Builder) Distinct() *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Distinct()
+	b.selects = b.selects.Distinct()
 	return b
 }
 
 // Where adds a basic where clause to the query.
-func (b *ModelBuilder[T]) Where(column, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) Where(column, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Where(column, operator, value)
+	b.wheres = b.wheres.Where(column, operator, value)
 	return b
 }
 
 // Having adds a basic having clause to the query.
-func (b *ModelBuilder[T]) Having(column, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) Having(column, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Having(column, operator, value)
+	b.havings = b.havings.Where(column, operator, value)
 	return b
 }
 
 // OrWhere adds an or where clause to the query
-func (b *ModelBuilder[T]) OrWhere(column, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) OrWhere(column, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrWhere(column, operator, value)
+	b.wheres = b.wheres.OrWhere(column, operator, value)
 	return b
 }
 
 // OrHaving adds an or having clause to the query
-func (b *ModelBuilder[T]) OrHaving(column, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) OrHaving(column, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrHaving(column, operator, value)
+	b.havings = b.havings.OrWhere(column, operator, value)
 	return b
 }
 
 // WhereColumn adds a where clause to the query comparing two columns.
-func (b *ModelBuilder[T]) WhereColumn(column, operator string, valueColumn string) *ModelBuilder[T] {
+func (b *Builder) WhereColumn(column, operator string, valueColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WhereColumn(column, operator, valueColumn)
+	b.wheres = b.wheres.WhereColumn(column, operator, valueColumn)
 	return b
 }
 
 // HavingColumn adds a having clause to the query comparing two columns.
-func (b *ModelBuilder[T]) HavingColumn(column, operator string, valueColumn string) *ModelBuilder[T] {
+func (b *Builder) HavingColumn(column, operator string, valueColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingColumn(column, operator, valueColumn)
+	b.havings = b.havings.WhereColumn(column, operator, valueColumn)
 	return b
 }
 
 // OrWhereColumn adds an or where clause to the query comparing two columns.
-func (b *ModelBuilder[T]) OrWhereColumn(column, operator string, valueColumn string) *ModelBuilder[T] {
+func (b *Builder) OrWhereColumn(column, operator string, valueColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrWhereColumn(column, operator, valueColumn)
+	b.wheres = b.wheres.OrWhereColumn(column, operator, valueColumn)
 	return b
 }
 
 // OrHavingColumn adds an or having clause to the query comparing two columns.
-func (b *ModelBuilder[T]) OrHavingColumn(column, operator string, valueColumn string) *ModelBuilder[T] {
+func (b *Builder) OrHavingColumn(column, operator string, valueColumn string) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrHavingColumn(column, operator, valueColumn)
+	b.havings = b.havings.OrWhereColumn(column, operator, valueColumn)
 	return b
 }
 
 // WhereIn adds a where in clause to the query.
-func (b *ModelBuilder[T]) WhereIn(column string, values []any) *ModelBuilder[T] {
+func (b *Builder) WhereIn(column string, values []any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WhereIn(column, values)
+	b.wheres = b.wheres.WhereIn(column, values)
 	return b
 }
 
 // HavingIn adds a having in clause to the query.
-func (b *ModelBuilder[T]) HavingIn(column string, values []any) *ModelBuilder[T] {
+func (b *Builder) HavingIn(column string, values []any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingIn(column, values)
+	b.havings = b.havings.WhereIn(column, values)
 	return b
 }
 
 // OrWhereIn adds an or where in clause to the query.
-func (b *ModelBuilder[T]) OrWhereIn(column string, values []any) *ModelBuilder[T] {
+func (b *Builder) OrWhereIn(column string, values []any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrWhereIn(column, values)
+	b.wheres = b.wheres.OrWhereIn(column, values)
 	return b
 }
 
 // OrHavingIn adds an or having in clause to the query.
-func (b *ModelBuilder[T]) OrHavingIn(column string, values []any) *ModelBuilder[T] {
+func (b *Builder) OrHavingIn(column string, values []any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrHavingIn(column, values)
+	b.havings = b.havings.OrWhereIn(column, values)
 	return b
 }
 
 // WhereExists add an exists clause to the query.
-func (b *ModelBuilder[T]) WhereExists(query QueryBuilder) *ModelBuilder[T] {
+func (b *Builder) WhereExists(query QueryBuilder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WhereExists(query)
+	b.wheres = b.wheres.WhereExists(query)
 	return b
 }
 
 // HavingExists add an exists clause to the query.
-func (b *ModelBuilder[T]) HavingExists(query QueryBuilder) *ModelBuilder[T] {
+func (b *Builder) HavingExists(query QueryBuilder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingExists(query)
+	b.havings = b.havings.WhereExists(query)
 	return b
 }
 
 // WhereExists add an exists clause to the query.
-func (b *ModelBuilder[T]) OrWhereExists(query QueryBuilder) *ModelBuilder[T] {
+func (b *Builder) OrWhereExists(query QueryBuilder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrWhereExists(query)
+	b.wheres = b.wheres.OrWhereExists(query)
 	return b
 }
 
 // WhereExists add an exists clause to the query.
-func (b *ModelBuilder[T]) OrHavingExists(query QueryBuilder) *ModelBuilder[T] {
+func (b *Builder) OrHavingExists(query QueryBuilder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrHavingExists(query)
+	b.havings = b.havings.OrWhereExists(query)
 	return b
 }
 
 // WhereSubquery adds a where clause to the query comparing a column and a subquery.
-func (b *ModelBuilder[T]) WhereSubquery(subquery QueryBuilder, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) WhereSubquery(subquery QueryBuilder, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WhereSubquery(subquery, operator, value)
+	b.wheres = b.wheres.WhereSubquery(subquery, operator, value)
 	return b
 }
 
 // HavingSubquery adds a having clause to the query comparing a column and a subquery.
-func (b *ModelBuilder[T]) HavingSubquery(subquery QueryBuilder, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) HavingSubquery(subquery QueryBuilder, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingSubquery(subquery, operator, value)
+	b.havings = b.havings.WhereSubquery(subquery, operator, value)
 	return b
 }
 
 // OrWhereSubquery adds an or where clause to the query comparing a column and a subquery.
-func (b *ModelBuilder[T]) OrWhereSubquery(subquery QueryBuilder, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) OrWhereSubquery(subquery QueryBuilder, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrWhereSubquery(subquery, operator, value)
+	b.wheres = b.wheres.OrWhereSubquery(subquery, operator, value)
 	return b
 }
 
 // OrHavingSubquery adds an or having clause to the query comparing a column and a subquery.
-func (b *ModelBuilder[T]) OrHavingSubquery(subquery QueryBuilder, operator string, value any) *ModelBuilder[T] {
+func (b *Builder) OrHavingSubquery(subquery QueryBuilder, operator string, value any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrHavingSubquery(subquery, operator, value)
+	b.havings = b.havings.OrWhereSubquery(subquery, operator, value)
 	return b
 }
 
 // WhereHas adds a relationship exists condition to the query with where clauses.
-func (b *ModelBuilder[T]) WhereHas(relation string, cb func(q *Builder) *Builder) *ModelBuilder[T] {
+func (b *Builder) WhereHas(relation string, cb func(q *Builder) *Builder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WhereHas(relation, cb)
+	b.wheres = b.wheres.WhereHas(relation, cb)
 	return b
 }
 
 // HavingHas adds a relationship exists condition to the query with having clauses.
-func (b *ModelBuilder[T]) HavingHas(relation string, cb func(q *Builder) *Builder) *ModelBuilder[T] {
+func (b *Builder) HavingHas(relation string, cb func(q *Builder) *Builder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingHas(relation, cb)
+	b.havings = b.havings.WhereHas(relation, cb)
 	return b
 }
 
 // OrWhereHas adds a relationship exists condition to the query with where clauses and an or.
-func (b *ModelBuilder[T]) OrWhereHas(relation string, cb func(q *Builder) *Builder) *ModelBuilder[T] {
+func (b *Builder) OrWhereHas(relation string, cb func(q *Builder) *Builder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrWhereHas(relation, cb)
+	b.wheres = b.wheres.OrWhereHas(relation, cb)
 	return b
 }
 
 // OrHavingHas adds a relationship exists condition to the query with having clauses and an or.
-func (b *ModelBuilder[T]) OrHavingHas(relation string, cb func(q *Builder) *Builder) *ModelBuilder[T] {
+func (b *Builder) OrHavingHas(relation string, cb func(q *Builder) *Builder) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrHavingHas(relation, cb)
+	b.havings = b.havings.OrWhereHas(relation, cb)
 	return b
 }
 
 // WhereRaw adds a raw where clause to the query.
-func (b *ModelBuilder[T]) WhereRaw(rawSql string, bindings ...any) *ModelBuilder[T] {
+func (b *Builder) WhereRaw(rawSql string, bindings ...any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.WhereRaw(rawSql, bindings...)
+	b.wheres = b.wheres.WhereRaw(rawSql, bindings...)
 	return b
 }
 
 // HavingRaw adds a raw having clause to the query.
-func (b *ModelBuilder[T]) HavingRaw(rawSql string, bindings ...any) *ModelBuilder[T] {
+func (b *Builder) HavingRaw(rawSql string, bindings ...any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingRaw(rawSql, bindings...)
+	b.havings = b.havings.WhereRaw(rawSql, bindings...)
 	return b
 }
 
 // OrWhereRaw adds a raw or where clause to the query.
-func (b *ModelBuilder[T]) OrWhereRaw(rawSql string, bindings ...any) *ModelBuilder[T] {
+func (b *Builder) OrWhereRaw(rawSql string, bindings ...any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrWhereRaw(rawSql, bindings...)
+	b.wheres = b.wheres.OrWhereRaw(rawSql, bindings...)
 	return b
 }
 
 // OrHavingRaw adds a raw or having clause to the query.
-func (b *ModelBuilder[T]) OrHavingRaw(rawSql string, bindings ...any) *ModelBuilder[T] {
+func (b *Builder) OrHavingRaw(rawSql string, bindings ...any) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.OrHavingRaw(rawSql, bindings...)
+	b.havings = b.havings.OrWhereRaw(rawSql, bindings...)
 	return b
 }
 
 // And adds a group of conditions to the query
-func (b *ModelBuilder[T]) And(cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) And(cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.And(cb)
+	b.wheres = b.wheres.And(cb)
 	return b
 }
 
 // HavingAnd adds a group of conditions to the query
-func (b *ModelBuilder[T]) HavingAnd(cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) HavingAnd(cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingAnd(cb)
+	b.havings = b.havings.And(cb)
 	return b
 }
 
 // Or adds a group of conditions to the query with an or
-func (b *ModelBuilder[T]) Or(cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) Or(cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.Or(cb)
+	b.wheres = b.wheres.Or(cb)
 	return b
 }
 
 // HavingOr adds a group of conditions to the query with an or
-func (b *ModelBuilder[T]) HavingOr(cb func(q *Conditions)) *ModelBuilder[T] {
+func (b *Builder) HavingOr(cb func(q *Conditions)) *Builder {
 	b = b.Clone()
-	b.subBuilder = b.subBuilder.HavingOr(cb)
-	return b
-}
-func (b *ModelBuilder[T]) Dump() *ModelBuilder[T] {
-	b = b.Clone()
-	b.subBuilder = b.subBuilder.Dump()
+	b.havings = b.havings.Or(cb)
 	return b
 }
