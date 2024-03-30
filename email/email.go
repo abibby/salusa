@@ -1,6 +1,8 @@
 package email
 
 import (
+	"time"
+
 	"github.com/go-mail/mail"
 )
 
@@ -22,8 +24,10 @@ type SMTPMailer struct {
 var _ Mailer = (*SMTPMailer)(nil)
 
 func NewSMTPMailer(host string, port int, username, password string) *SMTPMailer {
+	d := mail.NewDialer(host, port, username, password)
+	d.Timeout = time.Minute
 	return &SMTPMailer{
-		d: mail.NewDialer(host, port, username, password),
+		d: d,
 	}
 }
 

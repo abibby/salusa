@@ -134,19 +134,21 @@ func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequ
 			}
 
 			if v, ok := cast[EmailVerified](u); ok {
-				r.Logger.Info("email verification sent", "email", v.GetEmail())
-				err = o.sendEmails(&sendEmailOptions{
-					URL:          r.URL,
-					ViewTemplate: r.Template,
-					User:         v,
-					Mailer:       r.Mailer,
-					TemplateName: "verify_email.html",
-					Subject:      "Verify your email",
-				})
-				if err != nil {
-					return fmt.Errorf("could not send emails: %w", err)
-				}
-				r.Logger.Info("email verification sent", "email", v.GetEmail())
+				go func() {
+					err = o.sendEmails(&sendEmailOptions{
+						URL:          r.URL,
+						ViewTemplate: r.Template,
+						User:         v,
+						Mailer:       r.Mailer,
+						TemplateName: "verify_email.html",
+						Subject:      "Verify your email",
+					})
+					if err != nil {
+						r.Logger.Info("could not send verification email", "email", v.GetEmail(), "error", err)
+						return
+					}
+					r.Logger.Info("email verification sent", "email", v.GetEmail())
+				}()
 			}
 
 			return model.SaveContext(r.Ctx, tx, u)
@@ -310,7 +312,7 @@ func (o *RouteOptions[T, R]) resetPassword() *request.RequestHandler[ResetPasswo
 		}
 		zeroValidated, ok := cast[EmailVerified](u)
 		if !ok {
-			return nil, request.NewHTTPError(ErrNonEmailVerifiedUser, http.StatusUnauthorized)
+			return nil, ErrNonEmailVerifiedUser
 		}
 		err = r.Update(func(tx *sqlx.Tx) error {
 			u, err = builder.From[T]().
@@ -389,23 +391,26 @@ func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPass
 				return nil
 			}
 
-			err = o.sendEmails(&sendEmailOptions{
-				URL:          r.URL,
-				ViewTemplate: r.Template,
-				User:         mustCast[EmailVerified](u),
-				Mailer:       r.Mailer,
-				TemplateName: "reset_password.html",
-				Subject:      "Password reset",
-			})
-			if err != nil {
-				return err
-			}
+			go func() {
+				err = o.sendEmails(&sendEmailOptions{
+					URL:          r.URL,
+					ViewTemplate: r.Template,
+					User:         mustCast[EmailVerified](u),
+					Mailer:       r.Mailer,
+					TemplateName: "reset_password.html",
+					Subject:      "Password reset",
+				})
+				if err != nil {
+					r.Logger.Info("password failed to send", slog.String("email", r.Email), slog.Any("error", err))
+					return
+				}
+				r.Logger.Info("password reset sent", slog.String("email", r.Email))
+			}()
 			return model.SaveContext(r.Ctx, tx, u)
 		})
 		if err != nil {
 			return nil, err
 		}
-		r.Logger.Info("password reset attempt for unused email", slog.String("email", r.Email))
 		return &ForgotPasswordResponse{}, err
 	})
 }
