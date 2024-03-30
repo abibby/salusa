@@ -14,5 +14,5 @@ func drop(table model.Model) dropTable {
 }
 
 func (dt dropTable) GoString() string {
-	return fmt.Sprintf("schema.DropIfExists(%#v)", dt)
+	return fmt.Sprintf("schema.DropIfExists(%#v)", string(dt))
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/abibby/salusa/set"
 )
 
-// QueryBuilder is implemented by *Builder and *SubBuilder
+// QueryBuilder is implemented by *ModelBuilder and *Builder
 type QueryBuilder interface {
 	helpers.SQLStringer
 	imALittleQueryBuilderShortAndStout()

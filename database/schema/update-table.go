@@ -76,9 +76,9 @@ func (b *UpdateTableBuilder) SQLString(d dialects.Dialect) (string, []any, error
 
 func (b *UpdateTableBuilder) GoString() string {
 	return fmt.Sprintf(
-		"schema.Table(%#v, %s)",
+		"schema.Table(%#v, %#v)",
 		b.blueprint.name,
-		b.blueprint.GoString(),
+		b.blueprint,
 	)
 }
 

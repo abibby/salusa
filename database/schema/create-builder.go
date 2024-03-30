@@ -78,9 +78,9 @@ func (b *CreateTableBuilder) SQLString(d dialects.Dialect) (string, []any, error
 
 func (b *CreateTableBuilder) GoString() string {
 	return fmt.Sprintf(
-		"schema.Create(%#v, %s)",
+		"schema.Create(%#v, %#v)",
 		b.blueprint.name,
-		b.blueprint.GoString(),
+		b.blueprint,
 	)
 }
 func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {

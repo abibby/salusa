@@ -29,7 +29,7 @@ func (f *FunctionCall) GoString() string {
 		if i != 0 {
 			args += ", "
 		}
-		if goer, ok := arg.(GoStringer); ok {
+		if goer, ok := arg.(fmt.GoStringer); ok {
 			args += goer.GoString()
 		} else {
 			args += fmt.Sprintf("%#v", arg)

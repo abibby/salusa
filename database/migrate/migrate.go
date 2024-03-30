@@ -14,7 +14,7 @@ type Migration struct {
 	Down schema.Runner
 }
 
-func SrcFile(migrationName, packageName string, up, down GoStringer) (string, error) {
+func SrcFile(migrationName, packageName string, up, down fmt.GoStringer) (string, error) {
 	outFile := "migration.go"
 	initSrc := `package %s
 	
