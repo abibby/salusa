@@ -18,5 +18,5 @@ func (b *Builder) Context() context.Context {
 
 // Context returns the context value from the query.
 func (b *ModelBuilder[T]) Context() context.Context {
-	return b.subBuilder.Context()
+	return b.builder.Context()
 }

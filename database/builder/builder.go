@@ -11,7 +11,7 @@ import (
 
 // QueryBuilder is implemented by *Builder and *SubBuilder
 type QueryBuilder interface {
-	helpers.ToSQLer
+	helpers.SQLStringer
 	imALittleQueryBuilderShortAndStout()
 }
 
@@ -33,7 +33,7 @@ type Builder struct {
 //
 //go:generate go run ../../internal/build/build.go
 type ModelBuilder[T model.Model] struct {
-	subBuilder    *Builder
+	builder       *Builder
 	withs         []string
 	withoutScopes set.Set[string]
 }
@@ -53,19 +53,19 @@ func From[T model.Model]() *ModelBuilder[T] {
 // NewEmpty creates a new helpers without anything selected
 func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	var m T
-	sb := NewSubBuilder()
+	sb := NewBuilder()
 	sb.wheres.withParent(m)
 	sb.havings.withParent(m)
 	sb.scopes.withParent(m)
 	return &ModelBuilder[T]{
-		subBuilder:    sb,
+		builder:       sb,
 		withs:         []string{},
 		withoutScopes: set.New[string](),
 	}
 }
 
-// NewSubBuilder creates a new SubBuilder without anything selected
-func NewSubBuilder() *Builder {
+// NewBuilder creates a new SubBuilder without anything selected
+func NewBuilder() *Builder {
 	return &Builder{
 		selects:  NewSelects(),
 		from:     "",

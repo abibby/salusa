@@ -15,7 +15,7 @@ func (b *ForeignKeyBuilder) id() string {
 	return b.localKey + "-" + b.relatedTable + "-" + b.relatedKey
 }
 
-func (b *ForeignKeyBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (b *ForeignKeyBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
 	r := helpers.Result()
 
 	r.AddString("CONSTRAINT").
@@ -27,5 +27,5 @@ func (b *ForeignKeyBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
 			helpers.Identifier(b.relatedTable),
 			helpers.Group(helpers.Identifier(b.relatedKey)),
 		))
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }

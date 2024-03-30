@@ -29,7 +29,7 @@ var _ iHasOneOrMany = hasOneOrMany[model.Model]{}
 func (r hasOneOrMany[T]) Subquery() *Builder {
 	return From[T]().
 		WhereColumn(r.relatedKey, "=", database.GetTable(r.parent)+"."+r.parentKey).
-		subBuilder
+		builder
 }
 
 func (r hasOneOrMany[T]) parentKeyValue() (any, bool) {

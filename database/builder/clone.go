@@ -2,7 +2,7 @@ package builder
 
 func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 	return &ModelBuilder[T]{
-		subBuilder:    b.subBuilder.Clone(),
+		builder:       b.builder.Clone(),
 		withs:         cloneSlice(b.withs),
 		withoutScopes: b.withoutScopes.Clone(),
 	}

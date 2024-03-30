@@ -16,7 +16,7 @@ func (l *limit) Clone() *limit {
 		offset: l.offset,
 	}
 }
-func (l *limit) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (l *limit) SQLString(d dialects.Dialect) (string, []any, error) {
 	if l.limit == 0 && l.offset == 0 {
 		return "", nil, nil
 	}
@@ -27,7 +27,7 @@ func (l *limit) ToSQL(d dialects.Dialect) (string, []any, error) {
 		r.AddString("OFFSET")
 		r.Add(helpers.Literal(l.offset))
 	}
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
 
 // Limit set the maximum number of rows to return.

@@ -1,17 +1,17 @@
 package pkg
 
-type ToGoer interface {
-	ToGo() string
+type GoStringer interface {
+	GoString() string
 }
 
-type ToGoFunc func() string
+type GoStringFunc func() string
 
-func (f ToGoFunc) ToGo() string {
+func (f GoStringFunc) GoString() string {
 	return f()
 }
 
-func Raw(src string) ToGoer {
-	return ToGoFunc(func() string {
+func Raw(src string) GoStringer {
+	return GoStringFunc(func() string {
 		return src
 	})
 }

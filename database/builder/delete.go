@@ -10,18 +10,18 @@ type Deleter struct {
 	builder *Builder
 }
 
-func (d *Deleter) ToSQL(dialect dialects.Dialect) (string, []any, error) {
+func (d *Deleter) SQLString(dialect dialects.Dialect) (string, []any, error) {
 	return helpers.Concat(
 		helpers.Raw("DELETE "),
 		d.builder.Select(),
-	).ToSQL(dialect)
+	).SQLString(dialect)
 }
 
 func (b *ModelBuilder[T]) Delete(tx database.DB) error {
-	return b.subBuilder.Delete(tx)
+	return b.builder.Delete(tx)
 }
 func (b *Builder) Delete(tx database.DB) error {
-	q, bindings, err := b.Deleter().ToSQL(dialects.New())
+	q, bindings, err := b.Deleter().SQLString(dialects.New())
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (b *Builder) Delete(tx database.DB) error {
 }
 
 func (b *ModelBuilder[T]) Deleter() *Deleter {
-	return b.subBuilder.Deleter()
+	return b.builder.Deleter()
 }
 func (b *Builder) Deleter() *Deleter {
 	return &Deleter{

@@ -1,5 +1,5 @@
 package migrate
 
-type ToGoer interface {
-	ToGo() string
+type GoStringer interface {
+	GoString() string
 }

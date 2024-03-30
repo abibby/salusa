@@ -7,7 +7,7 @@ import (
 
 type join struct {
 	direction  string
-	table      helpers.ToSQLer
+	table      helpers.SQLStringer
 	conditions *Conditions
 }
 
@@ -80,15 +80,15 @@ func (j joins) joinOn(direction string, table string, cb func(q *Conditions)) jo
 		conditions: c,
 	})
 }
-func (j *join) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (j *join) SQLString(d dialects.Dialect) (string, []any, error) {
 	r := helpers.Result().
 		AddString(j.direction).
 		AddString("JOIN").
 		Add(j.table).
 		Add(j.conditions)
 
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
-func (j joins) ToSQL(d dialects.Dialect) (string, []any, error) {
-	return helpers.Join(j, " ").ToSQL(d)
+func (j joins) SQLString(d dialects.Dialect) (string, []any, error) {
+	return helpers.Join(j, " ").SQLString(d)
 }

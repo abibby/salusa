@@ -6,6 +6,6 @@ import (
 )
 
 func (b *Builder) Dump() *Builder {
-	spew.Dump(b.ToSQL(dialects.New()))
+	spew.Dump(b.SQLString(dialects.New()))
 	return b
 }

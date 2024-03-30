@@ -14,7 +14,7 @@ import (
 // Get executes the query as a select statement and returns the result.
 func (b *ModelBuilder[T]) Get(tx database.DB) ([]T, error) {
 	v := []T{}
-	err := b.subBuilder.Load(tx, &v)
+	err := b.builder.Load(tx, &v)
 	if err != nil {
 		return nil, err
 	}
@@ -59,12 +59,12 @@ func (b *ModelBuilder[T]) Find(tx database.DB, primaryKeyValue any) (T, error) {
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *ModelBuilder[T]) Load(tx database.DB, v any) error {
-	return b.subBuilder.Load(tx, v)
+	return b.builder.Load(tx, v)
 }
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *Builder) Load(tx database.DB, v any) error {
-	q, bindings, err := b.ToSQL(dialects.New())
+	q, bindings, err := b.SQLString(dialects.New())
 	if err != nil {
 		return err
 	}
@@ -88,14 +88,14 @@ func (b *Builder) Load(tx database.DB, v any) error {
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *ModelBuilder[T]) LoadOne(tx database.DB, v any) error {
-	return b.subBuilder.LoadOne(tx, v)
+	return b.builder.LoadOne(tx, v)
 }
 
 // Load executes the query as a select statement and sets v to the first record.
 func (b *Builder) LoadOne(tx database.DB, v any) error {
 	q, bindings, err := b.Clone().
 		Limit(1).
-		ToSQL(dialects.New())
+		SQLString(dialects.New())
 
 	if err != nil {
 		return err

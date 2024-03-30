@@ -10,12 +10,12 @@ import (
 
 type selects struct {
 	distinct bool
-	list     []helpers.ToSQLer
+	list     []helpers.SQLStringer
 }
 
 func NewSelects() *selects {
 	return &selects{
-		list: []helpers.ToSQLer{},
+		list: []helpers.SQLStringer{},
 	}
 }
 
@@ -25,7 +25,7 @@ func (s *selects) Clone() *selects {
 		list:     cloneSlice(s.list),
 	}
 }
-func (s *selects) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (s *selects) SQLString(d dialects.Dialect) (string, []any, error) {
 	if len(s.list) == 0 {
 		return "", nil, nil
 	}
@@ -35,12 +35,12 @@ func (s *selects) ToSQL(d dialects.Dialect) (string, []any, error) {
 		r.AddString("DISTINCT")
 	}
 	r.Add(helpers.Join(s.list, ", "))
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
 
 // Select sets the columns to be selected.
 func (s *selects) Select(columns ...string) *selects {
-	identifiers := make([]helpers.ToSQLer, len(columns))
+	identifiers := make([]helpers.SQLStringer, len(columns))
 	for i, c := range columns {
 		if c == "*" {
 			identifiers[i] = helpers.Raw("*")
@@ -83,14 +83,14 @@ func (s *selects) SelectFunction(function, column string) *selects {
 
 // SelectFunction adds a column to be selected with a function applied.
 func (s *selects) AddSelectFunction(function, column string) *selects {
-	s.list = append(s.list, helpers.ToSQLFunc(func(d dialects.Dialect) (string, []any, error) {
-		var c helpers.ToSQLer
+	s.list = append(s.list, helpers.SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
+		var c helpers.SQLStringer
 		if column == "*" {
 			c = helpers.Raw("*")
 		} else {
 			c = helpers.Identifier(column)
 		}
-		q, bindings, err := c.ToSQL(d)
+		q, bindings, err := c.SQLString(d)
 		if err != nil {
 			return "", nil, err
 		}

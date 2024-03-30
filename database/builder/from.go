@@ -9,7 +9,7 @@ type fromTable string
 func (f fromTable) Clone() fromTable {
 	return f
 }
-func (f fromTable) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (f fromTable) SQLString(d dialects.Dialect) (string, []any, error) {
 	if f == "" {
 		return "", nil, nil
 	}
@@ -29,5 +29,5 @@ func (b *Builder) GetTable() string {
 
 // GetTable returns the table the query is targeting
 func (b *ModelBuilder[T]) GetTable() string {
-	return b.subBuilder.GetTable()
+	return b.builder.GetTable()
 }

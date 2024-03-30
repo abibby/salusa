@@ -13,7 +13,7 @@ type UpdateTableBuilder struct {
 	blueprint *Blueprint
 }
 
-var _ helpers.ToSQLer = &UpdateTableBuilder{}
+var _ helpers.SQLStringer = &UpdateTableBuilder{}
 var _ Blueprinter = &UpdateTableBuilder{}
 
 func Table(name string, cb func(table *Blueprint)) *UpdateTableBuilder {
@@ -31,7 +31,7 @@ func (b *UpdateTableBuilder) Type() BlueprintType {
 	return BlueprintTypeUpdate
 }
 
-func (b *UpdateTableBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (b *UpdateTableBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
 	r := helpers.Result()
 	alterTable := helpers.Concat(helpers.Raw("ALTER TABLE "), helpers.Identifier(b.blueprint.name))
 	for _, column := range b.blueprint.dropColumns {
@@ -71,14 +71,14 @@ func (b *UpdateTableBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
 		r.Add(helpers.Concat(index, helpers.Raw(";")))
 	}
 
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
 
-func (b *UpdateTableBuilder) ToGo() string {
+func (b *UpdateTableBuilder) GoString() string {
 	return fmt.Sprintf(
 		"schema.Table(%#v, %s)",
 		b.blueprint.name,
-		b.blueprint.ToGo(),
+		b.blueprint.GoString(),
 	)
 }
 

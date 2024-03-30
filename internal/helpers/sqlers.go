@@ -4,39 +4,39 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-type ToSQLer interface {
-	ToSQL(d dialects.Dialect) (string, []any, error)
+type SQLStringer interface {
+	SQLString(d dialects.Dialect) (string, []any, error)
 }
 
-type ToSQLFunc func(d dialects.Dialect) (string, []any, error)
+type SQLStringFunc func(d dialects.Dialect) (string, []any, error)
 
-func (f ToSQLFunc) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (f SQLStringFunc) SQLString(d dialects.Dialect) (string, []any, error) {
 	return f(d)
 }
 
-func Identifier(i string) ToSQLer {
-	return ToSQLFunc(func(d dialects.Dialect) (string, []any, error) {
+func Identifier(i string) SQLStringer {
+	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
 		return d.Identifier(i), nil, nil
 	})
 }
 
-func IdentifierList(strs []string) []ToSQLer {
-	identifiers := make([]ToSQLer, len(strs))
+func IdentifierList(strs []string) []SQLStringer {
+	identifiers := make([]SQLStringer, len(strs))
 	for i, s := range strs {
 		identifiers[i] = Identifier(s)
 	}
 	return identifiers
 }
 
-func Join[T ToSQLer](sqlers []T, sep string) ToSQLer {
-	return ToSQLFunc(func(d dialects.Dialect) (string, []any, error) {
+func Join[T SQLStringer](sqlers []T, sep string) SQLStringer {
+	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
 		if sqlers == nil {
 			return "", []any{}, nil
 		}
 		sql := ""
 		bindings := []any{}
 		for i, sqler := range sqlers {
-			q, b, err := sqler.ToSQL(d)
+			q, b, err := sqler.SQLString(d)
 			if err != nil {
 				return "", nil, err
 			}
@@ -50,30 +50,30 @@ func Join[T ToSQLer](sqlers []T, sep string) ToSQLer {
 	})
 }
 
-func Raw(sql string, bindings ...any) ToSQLer {
-	return ToSQLFunc(func(d dialects.Dialect) (string, []any, error) {
+func Raw(sql string, bindings ...any) SQLStringer {
+	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
 		return sql, bindings, nil
 	})
 }
 
-func Group(sqler ToSQLer) ToSQLer {
-	return ToSQLFunc(func(d dialects.Dialect) (string, []any, error) {
-		q, bindings, err := sqler.ToSQL(d)
+func Group(sqler SQLStringer) SQLStringer {
+	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
+		q, bindings, err := sqler.SQLString(d)
 		return "(" + q + ")", bindings, err
 	})
 }
-func Concat(sqlers ...ToSQLer) ToSQLer {
+func Concat(sqlers ...SQLStringer) SQLStringer {
 	return Join(sqlers, "")
 }
 
-func Literal(v any) ToSQLer {
-	return ToSQLFunc(func(d dialects.Dialect) (string, []any, error) {
+func Literal(v any) SQLStringer {
+	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
 		return d.Binding(), []any{v}, nil
 	})
 }
 
-func LiteralList(values []any) []ToSQLer {
-	literals := make([]ToSQLer, len(values))
+func LiteralList(values []any) []SQLStringer {
+	literals := make([]SQLStringer, len(values))
 	for i, s := range values {
 		literals[i] = Literal(s)
 	}

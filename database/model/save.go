@@ -118,7 +118,7 @@ func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, colu
 			),
 		)
 
-	q, bindings, err := r.ToSQL(d)
+	q, bindings, err := r.SQLString(d)
 	if err != nil {
 		return fmt.Errorf("failed to generate sql: %w", err)
 	}
@@ -209,7 +209,7 @@ func update(ctx context.Context, tx database.DB, d dialects.Dialect, v any, colu
 			Add(helpers.Literal(pKeyValue))
 	}
 
-	q, bindings, err := r.ToSQL(d)
+	q, bindings, err := r.SQLString(d)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, 
 		AddString("VALUES").
 		Add(
 			helpers.Join(
-				slices.Map(values, func(v []any) helpers.ToSQLer {
+				slices.Map(values, func(v []any) helpers.SQLStringer {
 					newValues := make([]any, 0, len(columns))
 					for i, val := range v {
 						if i != pKeyIndex {
@@ -305,7 +305,7 @@ func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, 
 			),
 		)
 
-	q, bindings, err := r.ToSQL(d)
+	q, bindings, err := r.SQLString(d)
 	if err != nil {
 		return fmt.Errorf("failed to generate sql: %w", err)
 	}

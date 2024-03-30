@@ -10,7 +10,7 @@ import (
 )
 
 type where struct {
-	Column   helpers.ToSQLer
+	Column   helpers.SQLStringer
 	Operator string
 	Value    any
 	Or       bool
@@ -46,7 +46,7 @@ func (c *Conditions) Clone() *Conditions {
 		ctx:    c.ctx,
 	}
 }
-func (c *Conditions) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (c *Conditions) SQLString(d dialects.Dialect) (string, []any, error) {
 	if len(c.list) == 0 {
 		return "", nil, nil
 	}
@@ -88,7 +88,7 @@ func (c *Conditions) ToSQL(d dialects.Dialect) (string, []any, error) {
 				r.Add(helpers.Group(sb))
 			} else if sb, ok := c.Value.(*Conditions); ok {
 				r.Add(helpers.Group(sb))
-			} else if sb, ok := c.Value.(helpers.ToSQLer); ok {
+			} else if sb, ok := c.Value.(helpers.SQLStringer); ok {
 				r.Add(sb)
 			} else {
 				r.Add(helpers.Literal(c.Value))
@@ -96,7 +96,7 @@ func (c *Conditions) ToSQL(d dialects.Dialect) (string, []any, error) {
 		}
 	}
 
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
 
 // Where adds a basic where clause to the query.
@@ -145,7 +145,7 @@ func (c *Conditions) OrWhereExists(query QueryBuilder) *Conditions {
 
 func (c *Conditions) whereExists(query QueryBuilder, or bool) *Conditions {
 	return c.addWhere(&where{
-		Value: helpers.Join([]helpers.ToSQLer{
+		Value: helpers.Join([]helpers.SQLStringer{
 			helpers.Raw("EXISTS"),
 			helpers.Group(query),
 		}, " "),

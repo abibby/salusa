@@ -40,7 +40,7 @@ func (p *Package) Run() error {
 	return nil
 }
 
-func (p *Package) ToGo() string {
+func (p *Package) GoString() string {
 	src := "package main\n\nimport (\n"
 	for alias, path := range p.imports {
 		if alias == path {
@@ -52,7 +52,7 @@ func (p *Package) ToGo() string {
 	src += ")\n\nfunc main() {\n"
 
 	for _, functionCall := range p.functionCalls {
-		src += functionCall.ToGo()
+		src += functionCall.GoString()
 	}
 	return src + "}\n"
 }

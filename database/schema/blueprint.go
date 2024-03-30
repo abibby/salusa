@@ -159,7 +159,7 @@ func (t *Blueprint) DropColumn(column string) {
 	t.dropColumns = append(t.dropColumns, column)
 }
 
-func (b *Blueprint) ToGo() string {
+func (b *Blueprint) GoString() string {
 	src := "func(table *schema.Blueprint) {\n"
 	for _, c := range b.columns {
 		m := map[dialects.DataType]string{
@@ -180,11 +180,11 @@ func (b *Blueprint) ToGo() string {
 			dialects.DataTypeUInt32:   "UInt",
 			dialects.DataTypeUInt64:   "UInt64",
 		}
-		src += fmt.Sprintf("\ttable.%s(%#v)%s\n", m[c.datatype], c.name, c.ToGo())
+		src += fmt.Sprintf("\ttable.%s(%#v)%s\n", m[c.datatype], c.name, c.GoString())
 	}
 
 	for _, index := range b.indexes {
-		src += fmt.Sprintf("\ttable.Index(%#v)%s\n", index.name, index.ToGo())
+		src += fmt.Sprintf("\ttable.Index(%#v)%s\n", index.name, index.GoString())
 	}
 
 	for _, c := range b.dropColumns {

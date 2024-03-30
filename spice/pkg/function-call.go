@@ -22,15 +22,15 @@ func (f *FunctionCall) ReturnVariable(index int, name string) *FunctionCall {
 	f.returnVariables[index] = name
 	return f
 }
-func (f *FunctionCall) ToGo() string {
+func (f *FunctionCall) GoString() string {
 	src := ""
 	args := ""
 	for i, arg := range f.args {
 		if i != 0 {
 			args += ", "
 		}
-		if goer, ok := arg.(ToGoer); ok {
-			args += goer.ToGo()
+		if goer, ok := arg.(GoStringer); ok {
+			args += goer.GoString()
 		} else {
 			args += fmt.Sprintf("%#v", arg)
 		}

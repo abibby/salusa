@@ -18,7 +18,7 @@ import (
 
 type Case struct {
 	Name             string
-	Builder          helpers.ToSQLer
+	Builder          helpers.SQLStringer
 	ExpectedSQL      string
 	ExpectedBindings []any
 }
@@ -26,7 +26,7 @@ type Case struct {
 func QueryTest(t *testing.T, testCases []Case) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			q, bindings, err := tc.Builder.ToSQL(dialects.New())
+			q, bindings, err := tc.Builder.SQLString(dialects.New())
 			assert.NoError(t, err)
 
 			assert.Equal(t, tc.ExpectedSQL, q)

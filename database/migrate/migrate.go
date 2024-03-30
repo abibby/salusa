@@ -14,7 +14,7 @@ type Migration struct {
 	Down schema.Runner
 }
 
-func SrcFile(migrationName, packageName string, up, down ToGoer) (string, error) {
+func SrcFile(migrationName, packageName string, up, down GoStringer) (string, error) {
 	outFile := "migration.go"
 	initSrc := `package %s
 	
@@ -32,7 +32,7 @@ func init() {
 	})
 }`
 
-	src := []byte(fmt.Sprintf(initSrc, packageName, migrationName, up.ToGo(), down.ToGo()))
+	src := []byte(fmt.Sprintf(initSrc, packageName, migrationName, up.GoString(), down.GoString()))
 	// fmt.Printf("%s\n", src)
 	src, err := imports.Process(outFile, src, nil)
 	if err != nil {

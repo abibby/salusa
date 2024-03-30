@@ -22,8 +22,8 @@ func Run(f RunnerFunc) Runner {
 	return f
 }
 
-func runQuery(ctx context.Context, tx database.DB, sqler helpers.ToSQLer) error {
-	sql, bindings, err := sqler.ToSQL(dialects.New())
+func runQuery(ctx context.Context, tx database.DB, sqler helpers.SQLStringer) error {
+	sql, bindings, err := sqler.SQLString(dialects.New())
 	if err != nil {
 		return err
 	}

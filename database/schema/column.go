@@ -29,7 +29,7 @@ func NewColumn(name string, datatype dialects.DataType) *ColumnBuilder {
 	}
 }
 
-var _ helpers.ToSQLer = &ColumnBuilder{}
+var _ helpers.SQLStringer = &ColumnBuilder{}
 
 func (b *ColumnBuilder) Equals(newB *ColumnBuilder) bool {
 	return b.datatype == newB.datatype &&
@@ -88,7 +88,7 @@ func (b *ColumnBuilder) Index() *ColumnBuilder {
 	b.index = true
 	return b
 }
-func (b *ColumnBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (b *ColumnBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
 	r := helpers.Result()
 	r.Add(helpers.Identifier(b.name))
 	r.AddString(d.DataType(b.datatype))
@@ -112,10 +112,10 @@ func (b *ColumnBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
 		r.AddString("DEFAULT").
 			AddString(d.CurrentTime())
 	}
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
 
-func (b *ColumnBuilder) ToGo() string {
+func (b *ColumnBuilder) GoString() string {
 	src := ""
 	if b.primary {
 		src += ".Primary()"

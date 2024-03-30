@@ -14,7 +14,7 @@ type CreateTableBuilder struct {
 	ifNotExists bool
 }
 
-var _ helpers.ToSQLer = &CreateTableBuilder{}
+var _ helpers.SQLStringer = &CreateTableBuilder{}
 var _ Blueprinter = &CreateTableBuilder{}
 
 func Create(name string, cb func(b *Blueprint)) *CreateTableBuilder {
@@ -31,7 +31,7 @@ func (b *CreateTableBuilder) GetBlueprint() *Blueprint {
 func (b *CreateTableBuilder) Type() BlueprintType {
 	return BlueprintTypeCreate
 }
-func (b *CreateTableBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (b *CreateTableBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
 	r := helpers.Result()
 	r.AddString("CREATE TABLE")
 	if b.ifNotExists {
@@ -45,7 +45,7 @@ func (b *CreateTableBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
 	// primaryKeys := slices.Map(primaryKeyColumns, func(column *ColumnBuilder) string {
 	// 	return column.name
 	// })
-	columns := make([]helpers.ToSQLer, len(b.blueprint.columns))
+	columns := make([]helpers.SQLStringer, len(b.blueprint.columns))
 	for i, c := range b.blueprint.columns {
 		columns[i] = c
 	}
@@ -73,14 +73,14 @@ func (b *CreateTableBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
 	for _, index := range b.blueprint.indexes {
 		r.Add(helpers.Concat(index, helpers.Raw(";")))
 	}
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
 
-func (b *CreateTableBuilder) ToGo() string {
+func (b *CreateTableBuilder) GoString() string {
 	return fmt.Sprintf(
 		"schema.Create(%#v, %s)",
 		b.blueprint.name,
-		b.blueprint.ToGo(),
+		b.blueprint.GoString(),
 	)
 }
 func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {

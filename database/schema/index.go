@@ -30,7 +30,7 @@ func (b *IndexBuilder) Unique() *IndexBuilder {
 	b.unique = true
 	return b
 }
-func (b *IndexBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (b *IndexBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
 	r := helpers.Result().AddString("CREATE")
 	if b.unique {
 		r.AddString("UNIQUE")
@@ -41,10 +41,10 @@ func (b *IndexBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
 		Add(helpers.Identifier(b.table)).
 		Add(helpers.Group(helpers.Join(helpers.IdentifierList(b.columns), ", ")))
 
-	return r.ToSQL(d)
+	return r.SQLString(d)
 }
 
-func (b *IndexBuilder) ToGo() string {
+func (b *IndexBuilder) GoString() string {
 	src := ""
 	for _, c := range b.columns {
 		src += fmt.Sprintf(".AddColumn(%#v)", c)

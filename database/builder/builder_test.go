@@ -12,7 +12,7 @@ func ExampleBuilder() {
 	query, bindings, err := builder.
 		From[*test.Foo]().
 		Where("column", "=", "value").
-		ToSQL(dialects.New())
+		SQLString(dialects.New())
 	if err != nil {
 		panic(err)
 	}
@@ -30,7 +30,7 @@ func ExampleBuilder_WhereHas() {
 		WhereHas("Bar", func(q *builder.Builder) *builder.Builder {
 			return q.Where("id", "=", 7)
 		}).
-		ToSQL(dialects.New())
+		SQLString(dialects.New())
 	if err != nil {
 		panic(err)
 	}
