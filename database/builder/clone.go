@@ -1,14 +1,14 @@
 package builder
 
-func (b *Builder[T]) Clone() *Builder[T] {
-	return &Builder[T]{
+func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
+	return &ModelBuilder[T]{
 		subBuilder:    b.subBuilder.Clone(),
 		withs:         cloneSlice(b.withs),
 		withoutScopes: b.withoutScopes.Clone(),
 	}
 }
-func (b *SubBuilder) Clone() *SubBuilder {
-	return &SubBuilder{
+func (b *Builder) Clone() *Builder {
+	return &Builder{
 		selects:  b.selects.Clone(),
 		from:     b.from.Clone(),
 		joins:    b.joins.Clone(),

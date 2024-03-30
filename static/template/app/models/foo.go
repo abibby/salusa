@@ -20,6 +20,6 @@ func init() {
 	providers.Add(modeldi.Register[*Foo])
 }
 
-func FooQuery(ctx context.Context) *builder.Builder[*Foo] {
+func FooQuery(ctx context.Context) *builder.ModelBuilder[*Foo] {
 	return builder.From[*Foo]().WithContext(ctx)
 }

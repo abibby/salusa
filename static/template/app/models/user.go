@@ -19,7 +19,7 @@ type User struct {
 
 // var _ hooks.BeforeSaver = (*User)(nil)
 
-func UserQuery(ctx context.Context) *builder.Builder[*User] {
+func UserQuery(ctx context.Context) *builder.ModelBuilder[*User] {
 	return builder.From[*User]().WithContext(ctx)
 }
 

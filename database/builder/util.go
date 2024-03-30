@@ -5,7 +5,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-func (b *SubBuilder) Dump() *SubBuilder {
+func (b *Builder) Dump() *Builder {
 	spew.Dump(b.ToSQL(dialects.New()))
 	return b
 }

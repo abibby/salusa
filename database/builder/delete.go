@@ -7,7 +7,7 @@ import (
 )
 
 type Deleter struct {
-	builder *SubBuilder
+	builder *Builder
 }
 
 func (d *Deleter) ToSQL(dialect dialects.Dialect) (string, []any, error) {
@@ -17,10 +17,10 @@ func (d *Deleter) ToSQL(dialect dialects.Dialect) (string, []any, error) {
 	).ToSQL(dialect)
 }
 
-func (b *Builder[T]) Delete(tx database.DB) error {
+func (b *ModelBuilder[T]) Delete(tx database.DB) error {
 	return b.subBuilder.Delete(tx)
 }
-func (b *SubBuilder) Delete(tx database.DB) error {
+func (b *Builder) Delete(tx database.DB) error {
 	q, bindings, err := b.Deleter().ToSQL(dialects.New())
 	if err != nil {
 		return err
@@ -33,10 +33,10 @@ func (b *SubBuilder) Delete(tx database.DB) error {
 	return nil
 }
 
-func (b *Builder[T]) Deleter() *Deleter {
+func (b *ModelBuilder[T]) Deleter() *Deleter {
 	return b.subBuilder.Deleter()
 }
-func (b *SubBuilder) Deleter() *Deleter {
+func (b *Builder) Deleter() *Deleter {
 	return &Deleter{
 		builder: b,
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func NewTestBuilder() *builder.Builder[*test.Foo] {
+func NewTestBuilder() *builder.ModelBuilder[*test.Foo] {
 	return builder.From[*test.Foo]()
 }
 

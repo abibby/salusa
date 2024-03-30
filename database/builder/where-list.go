@@ -182,15 +182,15 @@ func (c *Conditions) where(column, operator string, value any, or bool) *Conditi
 }
 
 // WhereHas adds a relationship exists condition to the query with where clauses.
-func (c *Conditions) WhereHas(relation string, cb func(q *SubBuilder) *SubBuilder) *Conditions {
+func (c *Conditions) WhereHas(relation string, cb func(q *Builder) *Builder) *Conditions {
 	return c.whereHas(relation, cb, false)
 }
 
 // OrWhereHas adds a relationship exists condition to the query with where clauses and an or.
-func (c *Conditions) OrWhereHas(relation string, cb func(q *SubBuilder) *SubBuilder) *Conditions {
+func (c *Conditions) OrWhereHas(relation string, cb func(q *Builder) *Builder) *Conditions {
 	return c.whereHas(relation, cb, true)
 }
-func (c *Conditions) whereHas(relation string, cb func(q *SubBuilder) *SubBuilder, or bool) *Conditions {
+func (c *Conditions) whereHas(relation string, cb func(q *Builder) *Builder, or bool) *Conditions {
 	r, ok := getRelation(reflect.ValueOf(c.parent), relation)
 	if !ok {
 		return c

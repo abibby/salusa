@@ -26,13 +26,13 @@ type ScopeBar struct {
 func TestScope(t *testing.T) {
 	scopeA := &builder.Scope{
 		Name: "with-a",
-		Apply: func(b *builder.SubBuilder) *builder.SubBuilder {
+		Apply: func(b *builder.Builder) *builder.Builder {
 			return b.Where("a", "=", "b")
 		},
 	}
 	scopeCtx := &builder.Scope{
 		Name: "ctx",
-		Apply: func(b *builder.SubBuilder) *builder.SubBuilder {
+		Apply: func(b *builder.Builder) *builder.Builder {
 			foo := b.Context().Value("foo")
 			return b.Where("a", "=", foo)
 		},
@@ -64,7 +64,7 @@ func TestScope(t *testing.T) {
 		},
 		{
 			Name: "global scope whereHas",
-			Builder: builder.From[*ScopeBar]().WhereHas("ScopeFoo", func(q *builder.SubBuilder) *builder.SubBuilder {
+			Builder: builder.From[*ScopeBar]().WhereHas("ScopeFoo", func(q *builder.Builder) *builder.Builder {
 				return q
 			}),
 			ExpectedSQL:      `SELECT "bars".* FROM "bars" WHERE EXISTS (SELECT "foos".* FROM "foos" WHERE "id" = "bars"."foo_id" AND "foos"."deleted_at" IS NULL)`,

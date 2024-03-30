@@ -5,10 +5,10 @@ import (
 	"github.com/abibby/salusa/internal/helpers"
 )
 
-func (b *Builder[T]) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (b *ModelBuilder[T]) ToSQL(d dialects.Dialect) (string, []any, error) {
 	return b.subBuilder.ToSQL(d)
 }
-func (b *SubBuilder) ToSQL(d dialects.Dialect) (string, []any, error) {
+func (b *Builder) ToSQL(d dialects.Dialect) (string, []any, error) {
 	b = b.Clone()
 	for _, scope := range b.scopes.allScopes() {
 		b = scope.Apply(b)

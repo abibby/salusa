@@ -31,7 +31,7 @@ func (f *WithBar) Scopes() []*builder.Scope {
 	return []*builder.Scope{
 		{
 			Name: "test",
-			Apply: func(b *builder.SubBuilder) *builder.SubBuilder {
+			Apply: func(b *builder.Builder) *builder.Builder {
 				return b.Where("id", "=", b.Context().Value("id"))
 			},
 		},

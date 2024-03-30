@@ -16,7 +16,7 @@ type QueryBuilder interface {
 }
 
 //go:generate go run ../../internal/build/build.go
-type SubBuilder struct {
+type Builder struct {
 	selects  *selects
 	from     fromTable
 	joins    joins
@@ -29,35 +29,35 @@ type SubBuilder struct {
 	ctx      context.Context
 }
 
-// Builder represents an sql query and any bindings needed to run it.
+// ModelBuilder represents an sql query and any bindings needed to run it.
 //
 //go:generate go run ../../internal/build/build.go
-type Builder[T model.Model] struct {
-	subBuilder    *SubBuilder
+type ModelBuilder[T model.Model] struct {
+	subBuilder    *Builder
 	withs         []string
 	withoutScopes set.Set[string]
 }
 
 // New creates a new Builder with * selected
-func New[T model.Model]() *Builder[T] {
+func New[T model.Model]() *ModelBuilder[T] {
 	return NewEmpty[T]().Select("*")
 }
 
 // From creates a new query from the models table and with table.* selected
-func From[T model.Model]() *Builder[T] {
+func From[T model.Model]() *ModelBuilder[T] {
 	var m T
 	table := database.GetTable(m)
 	return NewEmpty[T]().Select(table + ".*").From(table)
 }
 
 // NewEmpty creates a new helpers without anything selected
-func NewEmpty[T model.Model]() *Builder[T] {
+func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	var m T
 	sb := NewSubBuilder()
 	sb.wheres.withParent(m)
 	sb.havings.withParent(m)
 	sb.scopes.withParent(m)
-	return &Builder[T]{
+	return &ModelBuilder[T]{
 		subBuilder:    sb,
 		withs:         []string{},
 		withoutScopes: set.New[string](),
@@ -65,8 +65,8 @@ func NewEmpty[T model.Model]() *Builder[T] {
 }
 
 // NewSubBuilder creates a new SubBuilder without anything selected
-func NewSubBuilder() *SubBuilder {
-	return &SubBuilder{
+func NewSubBuilder() *Builder {
+	return &Builder{
 		selects:  NewSelects(),
 		from:     "",
 		wheres:   newConditions().withPrefix("WHERE"),
@@ -78,5 +78,5 @@ func NewSubBuilder() *SubBuilder {
 	}
 }
 
-func (*Builder[T]) imALittleQueryBuilderShortAndStout() {}
-func (*SubBuilder) imALittleQueryBuilderShortAndStout() {}
+func (*ModelBuilder[T]) imALittleQueryBuilderShortAndStout() {}
+func (*Builder) imALittleQueryBuilderShortAndStout()         {}

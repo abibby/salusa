@@ -23,11 +23,11 @@ func (f fromTable) From(table string) fromTable {
 }
 
 // GetTable returns the table the query is targeting
-func (b *SubBuilder) GetTable() string {
+func (b *Builder) GetTable() string {
 	return string(b.from)
 }
 
 // GetTable returns the table the query is targeting
-func (b *Builder[T]) GetTable() string {
+func (b *ModelBuilder[T]) GetTable() string {
 	return b.subBuilder.GetTable()
 }

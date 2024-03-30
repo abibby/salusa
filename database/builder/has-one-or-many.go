@@ -26,7 +26,7 @@ type hasOneOrMany[T model.Model] struct {
 var _ iHasOneOrMany = hasOneOrMany[model.Model]{}
 
 // Subquery returns a SubBuilder scoped to the relationship.
-func (r hasOneOrMany[T]) Subquery() *SubBuilder {
+func (r hasOneOrMany[T]) Subquery() *Builder {
 	return From[T]().
 		WhereColumn(r.relatedKey, "=", database.GetTable(r.parent)+"."+r.parentKey).
 		subBuilder

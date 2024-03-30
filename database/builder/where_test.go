@@ -91,7 +91,7 @@ func TestWhere(t *testing.T) {
 		},
 		{
 			Name: "whereHas HasOne",
-			Builder: NewTestBuilder().WhereHas("Bar", func(q *builder.SubBuilder) *builder.SubBuilder {
+			Builder: NewTestBuilder().WhereHas("Bar", func(q *builder.Builder) *builder.Builder {
 				return q.Where("id", "=", "b")
 			}),
 			ExpectedSQL:      `SELECT "foos".* FROM "foos" WHERE EXISTS (SELECT "bars".* FROM "bars" WHERE "foo_id" = "foos"."id" AND "id" = ?)`,
@@ -99,7 +99,7 @@ func TestWhere(t *testing.T) {
 		},
 		{
 			Name: "whereHas HasMany",
-			Builder: NewTestBuilder().WhereHas("Bars", func(q *builder.SubBuilder) *builder.SubBuilder {
+			Builder: NewTestBuilder().WhereHas("Bars", func(q *builder.Builder) *builder.Builder {
 				return q.Where("id", "=", "b")
 			}),
 			ExpectedSQL:      `SELECT "foos".* FROM "foos" WHERE EXISTS (SELECT "bars".* FROM "bars" WHERE "foo_id" = "foos"."id" AND "id" = ?)`,
@@ -107,7 +107,7 @@ func TestWhere(t *testing.T) {
 		},
 		{
 			Name: "whereHas BelongsTo",
-			Builder: builder.From[*test.Bar]().WhereHas("Foo", func(q *builder.SubBuilder) *builder.SubBuilder {
+			Builder: builder.From[*test.Bar]().WhereHas("Foo", func(q *builder.Builder) *builder.Builder {
 				return q.Where("id", "=", "b")
 			}),
 			ExpectedSQL:      `SELECT "bars".* FROM "bars" WHERE EXISTS (SELECT "foos".* FROM "foos" WHERE "id" = "bars"."foo_id" AND "id" = ?)`,

@@ -13,7 +13,7 @@ type Scope struct {
 	Name  string
 	Apply ScopeFunc
 }
-type ScopeFunc func(b *SubBuilder) *SubBuilder
+type ScopeFunc func(b *Builder) *Builder
 type scopes struct {
 	parent              any
 	scopes              []*Scope

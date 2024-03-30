@@ -27,7 +27,7 @@ func ExampleBuilder() {
 func ExampleBuilder_WhereHas() {
 	query, bindings, err := builder.
 		From[*test.Foo]().
-		WhereHas("Bar", func(q *builder.SubBuilder) *builder.SubBuilder {
+		WhereHas("Bar", func(q *builder.Builder) *builder.Builder {
 			return q.Where("id", "=", 7)
 		}).
 		ToSQL(dialects.New())

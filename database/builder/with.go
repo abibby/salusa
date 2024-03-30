@@ -1,6 +1,6 @@
 package builder
 
-func (b *Builder[T]) With(withs ...string) *Builder[T] {
+func (b *ModelBuilder[T]) With(withs ...string) *ModelBuilder[T] {
 	b.withs = append(b.withs, withs...)
 	return b
 }

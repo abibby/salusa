@@ -26,7 +26,7 @@ func TestContext_sub_builder(t *testing.T) {
 
 	q = q.WithContext(context.WithValue(context.Background(), "foo", "bar")).Where("1", "=", 2)
 
-	q.WhereHas("Bar", func(q *builder.SubBuilder) *builder.SubBuilder {
+	q.WhereHas("Bar", func(q *builder.Builder) *builder.Builder {
 		assert.NotEqual(t, context.Background(), q.Context())
 		assert.NotNil(t, q.Context())
 		return q
