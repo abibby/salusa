@@ -11,7 +11,7 @@ type KernelConfig interface {
 
 type Kernel struct {
 	bootstrap     []func(context.Context) error
-	postBootstrap []func()
+	postBootstrap []func(context.Context) error
 	rootHandler   func(ctx context.Context) http.Handler
 	services      []Service
 
@@ -23,7 +23,7 @@ type Kernel struct {
 func New[T KernelConfig](options ...KernelOption) *Kernel {
 	k := &Kernel{
 		bootstrap:     []func(context.Context) error{},
-		postBootstrap: []func(){},
+		postBootstrap: []func(context.Context) error{},
 		rootHandler: func(ctx context.Context) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 		},

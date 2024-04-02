@@ -8,6 +8,7 @@ import (
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/env"
+	"github.com/abibby/salusa/event"
 	"github.com/joho/godotenv"
 )
 
@@ -16,6 +17,7 @@ type Config struct {
 	DBPath   string
 	Database dialects.Config
 	Mail     email.Config
+	Queue    event.Config
 }
 
 func Load() *Config {
@@ -29,6 +31,7 @@ func Load() *Config {
 	return &Config{
 		Port:     env.Int("PORT", 2303),
 		Database: sqlite.NewConfig(env.String("DATABASE_PATH", "./db.sqlite")),
+		Queue:    event.NewChannelQueueConfig(),
 		Mail: &email.SMTPConfig{
 			From:     env.String("MAIL_FROM", "salusa@example.com"),
 			Host:     env.String("MAIL_HOST", "sandbox.smtp.mailtrap.io"),
@@ -45,4 +48,10 @@ func (c *Config) GetHTTPPort() int {
 
 func (c *Config) DBConfig() dialects.Config {
 	return c.Database
+}
+func (c *Config) MailConfig() email.Config {
+	return c.Mail
+}
+func (c *Config) QueueConfig() event.Config {
+	return c.Queue
 }

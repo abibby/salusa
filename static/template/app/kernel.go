@@ -10,7 +10,7 @@ import (
 	"github.com/abibby/salusa/static/template/app/models"
 	"github.com/abibby/salusa/static/template/app/providers"
 	"github.com/abibby/salusa/static/template/config"
-	"github.com/abibby/salusa/static/template/database"
+	"github.com/abibby/salusa/static/template/migrations"
 	"github.com/abibby/salusa/static/template/resources"
 	"github.com/abibby/salusa/static/template/routes"
 	"github.com/abibby/salusa/view"
@@ -19,11 +19,9 @@ import (
 var Kernel = kernel.New[*config.Config](
 	kernel.Config(config.Load),
 	kernel.Bootstrap(
-		salusadi.Register[*models.User],
-		event.RegisterChannelQueue,
-		providers.Register,
-		database.Init,
+		salusadi.Register[*config.Config, *models.User](migrations.Use()),
 		view.Register(resources.Content, "**/*.html"),
+		providers.Register,
 	),
 	kernel.Services(
 		cron.Service().

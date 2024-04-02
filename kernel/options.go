@@ -21,12 +21,13 @@ func Config[T KernelConfig](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
 		cfg := cb()
 		k.cfg = cfg
-		return Bootstrap(func(ctx context.Context) error {
+		k.postBootstrap = append(k.postBootstrap, func(ctx context.Context) error {
 			di.RegisterSingleton(ctx, func() T {
 				return cfg
 			})
 			return nil
-		})(k)
+		})
+		return k
 	}
 }
 

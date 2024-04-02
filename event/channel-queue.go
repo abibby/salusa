@@ -7,6 +7,18 @@ import (
 	"github.com/abibby/salusa/di"
 )
 
+type ChannelQueueConfig struct{}
+
+var _ (Config) = (*ChannelQueueConfig)(nil)
+
+func NewChannelQueueConfig() *ChannelQueueConfig {
+	return &ChannelQueueConfig{}
+}
+
+func (c *ChannelQueueConfig) Queue() Queue {
+	return NewChannelQueue()
+}
+
 type ChannelQueue struct {
 	channel chan []byte
 }

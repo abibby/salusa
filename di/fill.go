@@ -80,7 +80,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 			if tag.Optional {
 				return nil
 			} else {
-				return fmt.Errorf("unable to fill field %s.%s: %w", v.Type().String(), sf.Name, errNotRegistered(sf.Type))
+				return fmt.Errorf("unable to fill field %s.%s: %w", v.Type().String(), sf.Name, err)
 			}
 		} else if err != nil {
 			return fmt.Errorf("failed to fill: %w", err)

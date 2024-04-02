@@ -3,6 +3,7 @@ package databasedi_test
 import (
 	"testing"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/di"
 	"github.com/jmoiron/sqlx"
@@ -28,7 +29,7 @@ func TestRegister(t *testing.T) {
 		defer db.Close()
 		databasedi.Register(ctx, db)
 
-		read, err := di.Resolve[databasedi.Read](ctx)
+		read, err := di.Resolve[database.Read](ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, read)
 	})
@@ -39,7 +40,7 @@ func TestRegister(t *testing.T) {
 		defer db.Close()
 		databasedi.Register(ctx, db)
 
-		update, err := di.Resolve[databasedi.Update](ctx)
+		update, err := di.Resolve[database.Update](ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, update)
 	})
@@ -50,7 +51,7 @@ func TestRegister(t *testing.T) {
 		defer db.Close()
 		databasedi.Register(ctx, db)
 
-		update, err := di.Resolve[databasedi.Update](ctx)
+		update, err := di.Resolve[database.Update](ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, update)
 

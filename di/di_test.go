@@ -126,9 +126,9 @@ func TestRegisterLazySingleton(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
 		type Struct struct{ V int }
 		runs := 0
-		di.RegisterLazySingleton(ctx, func() *Struct {
+		di.RegisterLazySingleton(ctx, func() (*Struct, error) {
 			runs++
-			return &Struct{}
+			return &Struct{}, nil
 		})
 
 		assert.Equal(t, 0, runs)

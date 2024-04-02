@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
@@ -35,8 +35,8 @@ var list = request.Handler(func(r *ListRequest) ([]*Foo, error) {
 })
 
 type AddRequest struct {
-	Name   string            `query:"name"`
-	Update databasedi.Update `inject:""`
+	Name   string          `query:"name"`
+	Update database.Update `inject:""`
 }
 
 var add = request.Handler(func(r *AddRequest) (*Foo, error) {

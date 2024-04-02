@@ -40,15 +40,27 @@ func RegisterSingleton[T any](ctx context.Context, factory func() T) {
 	})
 }
 
-func RegisterLazySingleton[T any](ctx context.Context, factory func() T) {
+func RegisterLazySingletonWith[T, W any](ctx context.Context, factory func(with W) (T, error)) {
+	RegisterLazySingleton(ctx, func() (T, error) {
+		with, err := ResolveFill[W](ctx)
+		if err != nil {
+			var zero T
+			return zero, err
+		}
+		return factory(with)
+	})
+}
+
+func RegisterLazySingleton[T any](ctx context.Context, factory func() (T, error)) {
 	dp := GetDependencyProvider(ctx)
 	var v T
+	var err error
 	initialize := sync.OnceFunc(func() {
-		v = factory()
+		v, err = factory()
 	})
 	dp.Register(func(ctx context.Context, tag string) (T, error) {
 		initialize()
-		return v, nil
+		return v, err
 	})
 }
 

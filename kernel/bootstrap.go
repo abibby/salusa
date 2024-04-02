@@ -20,11 +20,14 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 	for i, b := range k.bootstrap {
 		err = b(ctx)
 		if err != nil {
-			return fmt.Errorf("error %d: %w", i, err)
+			return fmt.Errorf("Kernel.Bootstrap: step %d: %w", i, err)
 		}
 	}
 	for _, b := range k.postBootstrap {
-		b()
+		err = b(ctx)
+		if err != nil {
+			return fmt.Errorf("Kernel.Bootstrap: postBootstrap: %w", err)
+		}
 	}
 	return nil
 }

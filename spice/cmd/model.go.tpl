@@ -14,6 +14,10 @@ type {{ .Name }} struct {
 	ID int `json:"id" db:"id,primary,autoincrement"`
 }
 
+func init() {
+	providers.Add(modeldi.Register[*{{ .Name }}])
+}
+
 func {{ .Name }}Query(ctx context.Context) *builder.Builder[*{{ .Name }}] {
 	return builder.From[*{{ .Name }}]().WithContext(ctx)
 }

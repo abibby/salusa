@@ -5,50 +5,40 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sync"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/kernel"
 	"github.com/jmoiron/sqlx"
 )
 
-type Update func(func(tx *sqlx.Tx) error) error
-type Read func(func(tx *sqlx.Tx) error) error
+func RegisterFromConfig[T kernel.KernelConfig](migrations *migrate.Migrations) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		di.RegisterLazySingletonWith(ctx, func(cfg T) (*sqlx.DB, error) {
+			var cfgAny any = cfg
+			cfger, ok := cfgAny.(dialects.DBConfiger)
+			if !ok {
+				return nil, fmt.Errorf("config not instance of dialects.DBConfiger")
+			}
+			dbcfg := cfger.DBConfig()
 
-func RegisterFromConfig[T dialects.DBConfiger](ctx context.Context, migrations *migrate.Migrations) error {
+			dbcfg.SetDialect()
+			db, err := sqlx.Open(dbcfg.DriverName(), dbcfg.DataSourceName())
+			if err != nil {
+				return nil, fmt.Errorf("databasedi.RegisterFromConfig: open database: %w", err)
+			}
 
-	var dbResult *sqlx.DB
-	var errResult error
-	initialize := sync.OnceFunc(func() {
-		cfger, err := di.Resolve[T](ctx)
-		if err != nil {
-			errResult = fmt.Errorf("databasedi.RegisterFromConfig: resolve config: %w", err)
-			return
-		}
-
-		cfg := cfger.DBConfig()
-
-		cfg.SetDialect()
-		db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
-		if err != nil {
-			errResult = fmt.Errorf("databasedi.RegisterFromConfig: open database: %w", err)
-			return
-		}
-
-		err = migrations.Up(ctx, db)
-		if err != nil {
-			errResult = fmt.Errorf("databasedi.RegisterFromConfig: migrate database: %w", err)
-			return
-		}
-		dbResult = db
-	})
-	di.Register(ctx, func(ctx context.Context, tag string) (*sqlx.DB, error) {
-		initialize()
-		return dbResult, errResult
-	})
-	registerTransactions(ctx)
-	return nil
+			err = migrations.Up(ctx, db)
+			if err != nil {
+				return nil, fmt.Errorf("databasedi.RegisterFromConfig: migrate database: %w", err)
+			}
+			return db, nil
+		})
+		registerTransactions(ctx)
+		return nil
+	}
 }
 
 func Register(ctx context.Context, db *sqlx.DB) {
@@ -59,12 +49,12 @@ func Register(ctx context.Context, db *sqlx.DB) {
 }
 
 func registerTransactions(ctx context.Context) {
-	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (Read, error) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Read, error) {
 		return func(f func(tx *sqlx.Tx) error) error {
 			return runTx(ctx, db, f, true)
 		}, nil
 	})
-	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (Update, error) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Update, error) {
 		return func(f func(tx *sqlx.Tx) error) error {
 			return runTx(ctx, db, f, false)
 		}, nil

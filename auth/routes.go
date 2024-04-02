@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/databasedi"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/internal/helpers"
@@ -89,7 +89,7 @@ type UserCreateRequest struct {
 	Password string `json:"password"`
 
 	Mailer   email.Mailer       `inject:""`
-	Update   databasedi.Update  `inject:""`
+	Update   database.Update    `inject:""`
 	Ctx      context.Context    `inject:""`
 	Logger   *slog.Logger       `inject:""`
 	Request  *http.Request      `inject:""`
@@ -162,7 +162,7 @@ type LoginRequest struct {
 	Password string `json:"password"`
 
 	Ctx  context.Context `inject:""`
-	Read databasedi.Read `inject:""`
+	Read database.Read   `inject:""`
 }
 type LoginResponse struct {
 	AccessToken  string `json:"token"`
@@ -241,7 +241,7 @@ func (o *RouteOptions[T, R]) login() *request.RequestHandler[LoginRequest, *Logi
 
 type VerifyEmailRequest struct {
 	Token  string             `query:"token"`
-	Update databasedi.Update  `inject:""`
+	Update database.Update    `inject:""`
 	Ctx    context.Context    `inject:""`
 	URL    router.URLResolver `inject:""`
 }
@@ -290,7 +290,7 @@ func (o *RouteOptions[T, R]) verifyEmail() *request.RequestHandler[VerifyEmailRe
 type ResetPasswordRequest struct {
 	Token    string             `json:"token" validate:"required|min:1"`
 	Password string             `json:"password" validate:"required"`
-	Update   databasedi.Update  `inject:""`
+	Update   database.Update    `inject:""`
 	Ctx      context.Context    `inject:""`
 	URL      router.URLResolver `inject:""`
 }
@@ -346,7 +346,7 @@ func (o *RouteOptions[T, R]) resetPassword() *request.RequestHandler[ResetPasswo
 
 type ForgotPasswordRequest struct {
 	Email    string             `json:"email" validate:"required|email"`
-	Update   databasedi.Update  `inject:""`
+	Update   database.Update    `inject:""`
 	Ctx      context.Context    `inject:""`
 	Mailer   email.Mailer       `inject:""`
 	Logger   *slog.Logger       `inject:""`
@@ -404,11 +404,11 @@ func (o *RouteOptions[T, R]) forgotPassword() *request.RequestHandler[ForgotPass
 }
 
 type ChangePasswordRequest[T User] struct {
-	OldPassword string            `json:"old_password"`
-	NewPassword string            `json:"new_password"`
-	User        T                 `inject:""`
-	Update      databasedi.Update `inject:""`
-	Ctx         context.Context   `inject:""`
+	OldPassword string          `json:"old_password"`
+	NewPassword string          `json:"new_password"`
+	User        T               `inject:""`
+	Update      database.Update `inject:""`
+	Ctx         context.Context `inject:""`
 }
 type ChangePasswordResponse[T User] struct {
 	User T `json:"user"`
@@ -444,7 +444,7 @@ func (o *RouteOptions[T, R]) changePassword() *request.RequestHandler[ChangePass
 type RefreshRequest[T User] struct {
 	RefreshToken string          `json:"refresh"`
 	User         T               `inject:""`
-	Read         databasedi.Read `inject:""`
+	Read         database.Read   `inject:""`
 	Ctx          context.Context `inject:""`
 }
 

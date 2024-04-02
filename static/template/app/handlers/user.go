@@ -3,14 +3,14 @@ package handlers
 import (
 	"context"
 
-	"github.com/abibby/salusa/database/databasedi"
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/static/template/app/models"
 	"github.com/jmoiron/sqlx"
 )
 
 type ListUserRequest struct {
-	Read databasedi.Read `inject:""`
+	Read database.Read   `inject:""`
 	Ctx  context.Context `inject:""`
 }
 type ListUserResponse struct {
