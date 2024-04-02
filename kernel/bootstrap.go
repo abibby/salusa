@@ -3,6 +3,7 @@ package kernel
 import (
 	"context"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -16,13 +17,10 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 	k.bootstrapped = true
 
 	var err error
-	for _, p := range k.providers {
-		p(k.dp)
-	}
-	for _, b := range k.bootstrap {
+	for i, b := range k.bootstrap {
 		err = b(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("error %d: %w", i, err)
 		}
 	}
 	for _, b := range k.postBootstrap {

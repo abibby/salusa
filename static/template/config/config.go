@@ -42,3 +42,7 @@ func Load() *Config {
 func (c *Config) GetHTTPPort() int {
 	return c.Port
 }
+
+func (c *Config) DBConfig() dialects.Config {
+	return c.Database
+}

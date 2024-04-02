@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/clog"
+	"github.com/abibby/salusa/di"
 )
 
 func (k *Kernel) Run(ctx context.Context) error {
@@ -18,7 +19,7 @@ func (k *Kernel) Run(ctx context.Context) error {
 }
 
 func (k *Kernel) RunHttpServer(ctx context.Context) error {
-	slog.Info(fmt.Sprintf("http://localhost:%d", k.cfg.GetHTTPPort()))
+	k.Logger(ctx).Info(fmt.Sprintf("listening at http://localhost:%d", k.cfg.GetHTTPPort()))
 
 	handler := k.rootHandler(ctx)
 
@@ -37,17 +38,21 @@ func (k *Kernel) RunServices(ctx context.Context) {
 		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
 			for {
-				err := k.dp.Fill(ctx, s)
+				err := di.Fill(ctx, s)
 				if err != nil {
 					k.Logger(ctx).Error("service dependency injection failed", slog.Any("error", err))
-				}
-				err = s.Run(ctx)
-				if err != nil {
-					k.Logger(ctx).Error("service failed", slog.Any("error", err))
-				}
-				if _, ok := s.(Restarter); !ok {
 					return
 				}
+				err = s.Run(ctx)
+				if err == nil {
+					return
+				}
+				k.Logger(ctx).Error("service failed", slog.Any("error", err))
+				r, ok := s.(Restarter)
+				if !ok {
+					return
+				}
+				r.Restart()
 			}
 		}(ctx, s)
 	}

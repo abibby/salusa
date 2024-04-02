@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/router"
 )
 
@@ -19,11 +20,13 @@ func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
 func Config[T KernelConfig](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
 		cfg := cb()
-		k.dp.Register(func(ctx context.Context, tag string) (T, error) {
-			return cfg, nil
-		})
 		k.cfg = cfg
-		return k
+		return Bootstrap(func(ctx context.Context) error {
+			di.RegisterSingleton(ctx, func() T {
+				return cfg
+			})
+			return nil
+		})(k)
 	}
 }
 
@@ -38,7 +41,6 @@ func InitRoutes(cb func(r *router.Router)) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.rootHandler = func(ctx context.Context) http.Handler {
 			r := router.New()
-			r.WithDependencyProvider(k.dp)
 			cb(r)
 			r.Register(ctx)
 			return r

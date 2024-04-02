@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"reflect"
+	"strings"
 )
 
 type EventType string
@@ -38,7 +39,7 @@ var (
 )
 
 func encodeEvent(e Event) ([]byte, error) {
-	buff := bytes.NewBufferString(string(e.Type()) + "|")
+	buff := bytes.NewBufferString(strings.ReplaceAll(string(e.Type()), "|", "🔥") + "|")
 	err := gob.NewEncoder(buff).Encode(e)
 	if err != nil {
 		return nil, err

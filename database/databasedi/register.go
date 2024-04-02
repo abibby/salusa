@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/migrate"
@@ -15,19 +16,38 @@ import (
 type Update func(func(tx *sqlx.Tx) error) error
 type Read func(func(tx *sqlx.Tx) error) error
 
-func RegisterFromConfig(ctx context.Context, cfg dialects.Config, migrations *migrate.Migrations) error {
-	cfg.SetDialect()
-	db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
-	if err != nil {
-		return err
-	}
+func RegisterFromConfig[T dialects.DBConfiger](ctx context.Context, migrations *migrate.Migrations) error {
 
-	err = migrations.Up(ctx, db)
-	if err != nil {
-		return err
-	}
+	var dbResult *sqlx.DB
+	var errResult error
+	initialize := sync.OnceFunc(func() {
+		cfger, err := di.Resolve[T](ctx)
+		if err != nil {
+			errResult = fmt.Errorf("databasedi.RegisterFromConfig: resolve config: %w", err)
+			return
+		}
 
-	Register(ctx, db)
+		cfg := cfger.DBConfig()
+
+		cfg.SetDialect()
+		db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
+		if err != nil {
+			errResult = fmt.Errorf("databasedi.RegisterFromConfig: open database: %w", err)
+			return
+		}
+
+		err = migrations.Up(ctx, db)
+		if err != nil {
+			errResult = fmt.Errorf("databasedi.RegisterFromConfig: migrate database: %w", err)
+			return
+		}
+		dbResult = db
+	})
+	di.Register(ctx, func(ctx context.Context, tag string) (*sqlx.DB, error) {
+		initialize()
+		return dbResult, errResult
+	})
+	registerTransactions(ctx)
 	return nil
 }
 
@@ -35,12 +55,16 @@ func Register(ctx context.Context, db *sqlx.DB) {
 	di.RegisterSingleton(ctx, func() *sqlx.DB {
 		return db
 	})
-	di.Register(ctx, func(ctx context.Context, tag string) (Read, error) {
+	registerTransactions(ctx)
+}
+
+func registerTransactions(ctx context.Context) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (Read, error) {
 		return func(f func(tx *sqlx.Tx) error) error {
 			return runTx(ctx, db, f, true)
 		}, nil
 	})
-	di.Register(ctx, func(ctx context.Context, tag string) (Update, error) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (Update, error) {
 		return func(f func(tx *sqlx.Tx) error) error {
 			return runTx(ctx, db, f, false)
 		}, nil

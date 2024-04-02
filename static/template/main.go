@@ -4,11 +4,15 @@ import (
 	"context"
 	"os"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/static/template/app"
 )
 
 func main() {
-	ctx := context.Background()
+	ctx := di.ContextWithDependencyProvider(
+		context.Background(),
+		di.NewDependencyProvider(),
+	)
 
 	err := app.Kernel.Bootstrap(ctx)
 	if err != nil {
