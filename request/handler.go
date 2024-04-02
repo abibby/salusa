@@ -102,3 +102,12 @@ func (h *RequestHandler[TRequest, TResponse]) respond(w http.ResponseWriter, req
 		logger.Error("request failed", "error", err)
 	}
 }
+
+func (h *RequestHandler[TRequest, TResponse]) GetRequest() any {
+	var v *TRequest
+	return v
+}
+func (h *RequestHandler[TRequest, TResponse]) GetResponse() any {
+	var v TResponse
+	return v
+}
