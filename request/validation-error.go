@@ -2,12 +2,9 @@ package request
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 
-	"github.com/gorilla/schema"
 	"golang.org/x/exp/slices"
 )
 
@@ -62,33 +59,33 @@ func (e ValidationError) Merge(vErr ValidationError) {
 	}
 }
 
-func fromSchemaMultiError(err schema.MultiError) ValidationError {
-	validationErr := ValidationError{}
-	for key, subErr := range err {
-		if err, ok := subErr.(schema.ConversionError); ok {
-			validationErr[key] = []string{
-				fmt.Sprintf("should be of type %s", err.Type.String()),
-			}
-		} else {
-			validationErr[key] = []string{subErr.Error()}
-		}
-	}
-	return validationErr
-}
+// func fromSchemaMultiError(err schema.MultiError) ValidationError {
+// 	validationErr := ValidationError{}
+// 	for key, subErr := range err {
+// 		if err, ok := subErr.(schema.ConversionError); ok {
+// 			validationErr[key] = []string{
+// 				fmt.Sprintf("should be of type %s", err.Type.String()),
+// 			}
+// 		} else {
+// 			validationErr[key] = []string{subErr.Error()}
+// 		}
+// 	}
+// 	return validationErr
+// }
 
-func fromJsonUnmarshalTypeError(err *json.UnmarshalTypeError, requestStruct any) ValidationError {
-	validationErr := ValidationError{}
-	t := reflect.TypeOf(requestStruct)
-	key := err.Field
-	f, ok := t.Elem().FieldByName(err.Field)
-	if ok {
-		jsonKey := f.Tag.Get("json")
-		if jsonKey != "" {
-			key = jsonKey
-		}
-	}
-	validationErr[key] = []string{
-		fmt.Sprintf("should be of type %s", err.Type.String()),
-	}
-	return validationErr
-}
+// func fromJsonUnmarshalTypeError(err *json.UnmarshalTypeError, requestStruct any) ValidationError {
+// 	validationErr := ValidationError{}
+// 	t := reflect.TypeOf(requestStruct)
+// 	key := err.Field
+// 	f, ok := t.Elem().FieldByName(err.Field)
+// 	if ok {
+// 		jsonKey := f.Tag.Get("json")
+// 		if jsonKey != "" {
+// 			key = jsonKey
+// 		}
+// 	}
+// 	validationErr[key] = []string{
+// 		fmt.Sprintf("should be of type %s", err.Type.String()),
+// 	}
+// 	return validationErr
+// }

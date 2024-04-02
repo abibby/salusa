@@ -85,8 +85,8 @@ func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, err
 func (h *RequestHandler[TRequest, TResponse]) respond(w http.ResponseWriter, req *http.Request, r Responder) {
 	err := r.Respond(w, req)
 	if err != nil {
-		logger, err := di.Resolve[*slog.Logger](req.Context())
-		if err != nil {
+		logger, resolveErr := di.Resolve[*slog.Logger](req.Context())
+		if resolveErr != nil {
 			logger = slog.Default()
 		}
 		logger.Error("request failed", "error", err)

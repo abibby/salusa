@@ -118,3 +118,20 @@ func TestRun_works_multiple_times(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 10, structRequest.Foo)
 }
+
+func TestRun_query_string_only_tagged_fields(t *testing.T) {
+	type Request struct {
+		Foo string `query:"foo"`
+		Bar string
+	}
+
+	httpRequest := httptest.NewRequest("GET", "http://0.0.0.0/?foo=foo&Bar=bar", http.NoBody)
+	structRequest := &Request{}
+
+	err := Run(httpRequest, structRequest)
+
+	assert.NoError(t, err)
+	assert.Equal(t, &Request{
+		Foo: "foo",
+	}, structRequest)
+}

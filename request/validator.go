@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/request/rules"
 )
 
@@ -23,21 +24,21 @@ func Validate(request *http.Request, v any) error {
 	if err != nil {
 		return fmt.Errorf("Validate mast take a struct or pointer to a struct: %w", err)
 	}
-	t := s.Type()
 
 	vErr := ValidationError{}
-
-	for i := 0; i < s.NumField(); i++ {
-		ft := t.Field(i)
-		fv := s.Field(i)
-		name := getName(ft)
-		newVErr, err := validateField(ctx, name, request, ft, fv)
+	err = helpers.EachField(s, func(sf reflect.StructField, fv reflect.Value) error {
+		name := getName(sf)
+		newVErr, err := validateField(ctx, name, request, sf, fv)
 		if err != nil {
 			return err
 		}
 		if newVErr != nil {
 			vErr.Merge(newVErr)
 		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	if vErr.HasErrors() {
