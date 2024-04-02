@@ -76,6 +76,16 @@ func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error
 
 // Handler is a helper to create http handlers with built in input validation
 // and error handling.
+//
+//	type Request struct {
+//		Foo string `path:"foo" validate:"required"`
+//		Bar string `query:"bar"`
+//		Baz string `json:"baz"`
+//	}
+//	type Response struct{}
+//	request.Handler(func(r *Request) (*Response, error) {
+//		return nil, nil
+//	})
 func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) *RequestHandler[TRequest, TResponse] {
 	return &RequestHandler[TRequest, TResponse]{
 		handler: callback,
