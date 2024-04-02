@@ -63,7 +63,7 @@ func ExampleHandler_error() {
 	// Output: 422
 }
 
-func ExampleHandler_PathParams() {
+func ExampleHandler_pathParams() {
 	type ExampleRequest struct {
 		A string `path:"a"`
 		B string `path:"b"`
