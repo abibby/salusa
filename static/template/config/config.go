@@ -14,7 +14,8 @@ import (
 
 type Config struct {
 	Port     int
-	DBPath   string
+	BasePath string
+
 	Database dialects.Config
 	Mail     email.Config
 	Queue    event.Config
@@ -30,6 +31,7 @@ func Load() *Config {
 
 	return &Config{
 		Port:     env.Int("PORT", 2303),
+		BasePath: env.String("BASE_PATH", ""),
 		Database: sqlite.NewConfig(env.String("DATABASE_PATH", "./db.sqlite")),
 		Queue:    event.NewChannelQueueConfig(),
 		Mail: &email.SMTPConfig{
@@ -44,6 +46,9 @@ func Load() *Config {
 
 func (c *Config) GetHTTPPort() int {
 	return c.Port
+}
+func (c *Config) GetBaseURL() string {
+	return c.BasePath
 }
 
 func (c *Config) DBConfig() dialects.Config {

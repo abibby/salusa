@@ -6,7 +6,6 @@ import (
 	"github.com/abibby/salusa/auth"
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/database/databasedi"
-	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/event"
@@ -14,12 +13,7 @@ import (
 	"github.com/abibby/salusa/request"
 )
 
-type Config interface {
-	dialects.DBConfiger
-	kernel.KernelConfig
-}
-
-func Register[TConfig Config, TUser auth.User](migrations *migrate.Migrations) func(ctx context.Context) error {
+func Register[TUser auth.User](migrations *migrate.Migrations) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 		clog.Register(ctx, nil)
 		err := request.Register(ctx)
@@ -30,15 +24,15 @@ func Register[TConfig Config, TUser auth.User](migrations *migrate.Migrations) f
 		if err != nil {
 			return err
 		}
-		err = databasedi.RegisterFromConfig[TConfig](migrations)(ctx)
+		err = databasedi.RegisterFromConfig[kernel.KernelConfig](migrations)(ctx)
 		if err != nil {
 			return err
 		}
-		err = email.RegisterMailer[TConfig](ctx)
+		err = email.RegisterMailer[kernel.KernelConfig](ctx)
 		if err != nil {
 			return err
 		}
-		err = event.Register[TConfig](ctx)
+		err = event.Register[kernel.KernelConfig](ctx)
 		if err != nil {
 			return err
 		}

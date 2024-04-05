@@ -1,11 +1,13 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"path"
 
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/kernel"
 	"github.com/gorilla/mux"
 )
 
@@ -119,4 +121,13 @@ func (r *Router) PrintRoutes() {
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.router.ServeHTTP(w, req)
+}
+
+func InitRoutes(cb func(r *Router)) kernel.KernelOption {
+	return kernel.RootHandler(func(ctx context.Context) http.Handler {
+		r := New()
+		cb(r)
+		r.Register(ctx)
+		return r
+	})
 }
