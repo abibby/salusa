@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/router"
 )
 
 type KernelOption func(*Kernel) *Kernel
@@ -25,6 +24,9 @@ func Config[T KernelConfig](cb func() T) KernelOption {
 			di.RegisterSingleton(ctx, func() T {
 				return cfg
 			})
+			di.RegisterSingleton(ctx, func() KernelConfig {
+				return cfg
+			})
 			return nil
 		})
 		return k
@@ -34,18 +36,6 @@ func Config[T KernelConfig](cb func() T) KernelOption {
 func RootHandler(rootHandler func(ctx context.Context) http.Handler) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.rootHandler = rootHandler
-		return k
-	}
-}
-
-func InitRoutes(cb func(r *router.Router)) KernelOption {
-	return func(k *Kernel) *Kernel {
-		k.rootHandler = func(ctx context.Context) http.Handler {
-			r := router.New()
-			cb(r)
-			r.Register(ctx)
-			return r
-		}
 		return k
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/event/cron"
 	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/router"
 	"github.com/abibby/salusa/salusadi"
 	"github.com/abibby/salusa/static/template/app/events"
 	"github.com/abibby/salusa/static/template/app/jobs"
@@ -19,7 +20,7 @@ import (
 var Kernel = kernel.New[*config.Config](
 	kernel.Config(config.Load),
 	kernel.Bootstrap(
-		salusadi.Register[*config.Config, *models.User](migrations.Use()),
+		salusadi.Register[*models.User](migrations.Use()),
 		view.Register(resources.Content, "**/*.html"),
 		providers.Register,
 	),
@@ -30,5 +31,5 @@ var Kernel = kernel.New[*config.Config](
 			event.NewListener[*jobs.LogJob](),
 		),
 	),
-	kernel.InitRoutes(routes.InitRoutes),
+	router.InitRoutes(routes.InitRoutes),
 )

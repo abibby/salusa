@@ -11,6 +11,7 @@ import (
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/kernel"
 )
 
 type URLResolver interface {
@@ -19,13 +20,16 @@ type URLResolver interface {
 }
 
 func (r *Router) Register(ctx context.Context) {
-	di.Register(ctx, func(ctx context.Context, tag string) (URLResolver, error) {
-		origin := ""
-		req, err := di.Resolve[*http.Request](ctx)
-		if err != nil {
-			origin = "/"
-		} else {
-			origin = req.Header.Get("Origin")
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, cfg kernel.KernelConfig) (URLResolver, error) {
+		origin := cfg.GetBaseURL()
+
+		if origin != "" {
+			req, err := di.Resolve[*http.Request](ctx)
+			if err != nil {
+				origin = "/"
+			} else {
+				origin = req.Header.Get("Origin")
+			}
 		}
 
 		return &SalusaResolver{

@@ -7,6 +7,7 @@ import (
 
 type KernelConfig interface {
 	GetHTTPPort() int
+	GetBaseURL() string
 }
 
 type Kernel struct {
