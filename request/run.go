@@ -17,17 +17,6 @@ import (
 var textUnmarshalerType = helpers.GetType[encoding.TextUnmarshaler]()
 
 func Run(requestHttp *http.Request, requestStruct any) error {
-	// decoder := schema.NewDecoder()
-	// decoder.IgnoreUnknownKeys(true)
-	// decoder.SetAliasTag("query")
-
-	// err := decoder.Decode(requestStruct, requestHttp.URL.Query())
-	// if multiErr, ok := err.(schema.MultiError); ok {
-	// 	return fromSchemaMultiError(multiErr)
-	// } else if err != nil {
-	// 	return fmt.Errorf("could not decode query string: %w", err)
-	// }
-
 	urlArgs := map[string]map[string][]string{
 		"query": requestHttp.URL.Query(),
 		"path":  pathArgs(requestHttp),

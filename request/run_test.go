@@ -135,3 +135,20 @@ func TestRun_query_string_only_tagged_fields(t *testing.T) {
 		Foo: "foo",
 	}, structRequest)
 }
+
+func TestRun_query_url_body(t *testing.T) {
+	type Request struct {
+		Foo string `json:"foo"`
+	}
+
+	httpRequest := httptest.NewRequest("GET", "http://0.0.0.0/?foo=foo&Bar=bar", bytes.NewBuffer([]byte(`foo=bar`)))
+	httpRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	structRequest := &Request{}
+
+	err := Run(httpRequest, structRequest)
+
+	assert.NoError(t, err)
+	assert.Equal(t, &Request{
+		Foo: "bar",
+	}, structRequest)
+}
