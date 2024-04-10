@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"slices"
 
 	"github.com/abibby/salusa/kernel"
-	"github.com/gorilla/mux"
 )
 
-type MiddlewareFunc = mux.MiddlewareFunc
+type MiddlewareFunc func(http.Handler) http.Handler
 
 type Route struct {
 	Path    string
@@ -35,16 +35,18 @@ type routeList struct {
 }
 
 type Router struct {
-	prefix string
-	router *mux.Router
-	routes *routeList
+	prefix     string
+	middleware []MiddlewareFunc
+	router     *http.ServeMux
+	routes     *routeList
 }
 
 func New() *Router {
 	return &Router{
-		prefix: "",
-		router: mux.NewRouter(),
-		routes: &routeList{Routes: []*Route{}},
+		prefix:     "",
+		router:     http.NewServeMux(),
+		routes:     &routeList{Routes: []*Route{}},
+		middleware: []MiddlewareFunc{},
 	}
 }
 
@@ -64,24 +66,41 @@ func (r *Router) Delete(path string, handler http.Handler) *Route {
 	return r.handleMethod(http.MethodDelete, path, handler)
 }
 
-func (r *Router) handleMethod(method, path string, handler http.Handler) *Route {
-	r.router.Handle(path, handler).Methods(method)
-	return r.addRoute(handler, path, method)
+func (r *Router) handleMethod(method, pattern string, handler http.Handler) *Route {
+	r.handle(pattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		handler.ServeHTTP(w, r)
+	}))
+
+	return r.addRoute(handler, pattern, method)
 }
-func (r *Router) Handle(p string, handler http.Handler) *Route {
-	r.router.PathPrefix(p).Handler(handler)
-	return r.addRoute(handler, path.Join(p, "*"), "ALL")
+func (r *Router) Handle(pattern string, handler http.Handler) *Route {
+	r.handle(pattern, handler)
+	return r.addRoute(handler, pattern, "ALL")
+}
+func (r *Router) handle(pattern string, handler http.Handler) {
+	// r.router.Handle(pattern, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	// 	h := handler
+	// 	for _, m := range r.middleware {
+	// 		h = m(h)
+	// 	}
+	// 	h.ServeHTTP(w, req)
+	// }))
 }
 
 func (r *Router) Use(middleware MiddlewareFunc) {
-	r.router.Use(middleware)
+	r.middleware = append(r.middleware, middleware)
 }
 
 func (r *Router) Group(prefix string, cb func(r *Router)) {
 	cb(&Router{
-		prefix: path.Join(r.prefix, prefix),
-		router: r.router.PathPrefix(prefix).Subrouter(),
-		routes: r.routes,
+		prefix:     path.Join(r.prefix, prefix),
+		router:     r.router,
+		routes:     r.routes,
+		middleware: slices.Clone(r.middleware),
 	})
 }
 

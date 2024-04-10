@@ -8,9 +8,11 @@ import (
 
 func toTsType(w io.Writer, t reflect.Type, overrides map[reflect.Type]string) error {
 
-	if o, ok := overrides[t]; ok {
-		_, err := w.Write([]byte(o))
-		return err
+	if overrides != nil {
+		if o, ok := overrides[t]; ok {
+			_, err := w.Write([]byte(o))
+			return err
+		}
 	}
 
 	switch t.Kind() {
@@ -26,7 +28,11 @@ func toTsType(w io.Writer, t reflect.Type, overrides map[reflect.Type]string) er
 	case reflect.Map:
 		return fmt.Errorf("map not supported")
 	case reflect.Pointer:
-		err := toTsType(w, t.Elem())
+		if t.Elem().Kind() == reflect.Struct {
+			return toTsTypeStruct(w, t.Elem(), "json", overrides)
+		}
+
+		err := toTsType(w, t.Elem(), overrides)
 		if err != nil {
 			return err
 		}
@@ -37,7 +43,7 @@ func toTsType(w io.Writer, t reflect.Type, overrides map[reflect.Type]string) er
 		if err != nil {
 			return err
 		}
-		err = toTsType(w, t.Elem())
+		err = toTsType(w, t.Elem(), overrides)
 		if err != nil {
 			return err
 		}
@@ -47,27 +53,34 @@ func toTsType(w io.Writer, t reflect.Type, overrides map[reflect.Type]string) er
 		_, err := fmt.Fprint(w, "string")
 		return err
 	case reflect.Struct:
-		return toTsTypeStruct(w, t)
+		return toTsTypeStruct(w, t, "json", overrides)
 	default:
 		return fmt.Errorf("unsupported type %s", t)
 	}
 }
-func toTsTypeStruct(w io.Writer, t reflect.Type) error {
+
+func toTsTypeStruct(w io.Writer, t reflect.Type, tag string, overrides map[reflect.Type]string) error {
 	_, err := w.Write([]byte{'{'})
 	if err != nil {
 		return err
 	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
-		name := f.Tag.Get("json")
-		if name == "" {
-			name = f.Name
+		name, ok := f.Tag.Lookup(tag)
+		if !ok {
+			continue
+		}
+		if i > 0 {
+			_, err = w.Write([]byte(","))
+			if err != nil {
+				return err
+			}
 		}
 		_, err = w.Write([]byte(name + ":"))
 		if err != nil {
 			return err
 		}
-		err = toTsType(w, f.Type)
+		err = toTsType(w, f.Type, overrides)
 		if err != nil {
 			return err
 		}

@@ -1,9 +1,13 @@
 package routes
 
 import (
+	"log"
+	"os"
+
 	"github.com/abibby/salusa/auth"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
+	"github.com/abibby/salusa/router/generateclient"
 	"github.com/abibby/salusa/static/template/app/handlers"
 	"github.com/abibby/salusa/static/template/app/models"
 	"github.com/abibby/salusa/view"
@@ -28,5 +32,9 @@ func InitRoutes(r *router.Router) {
 
 	// r.Handle("/", fileserver.WithFallback(resources.Content, "dist", "index.html", nil))
 
-	r.PrintRoutes()
+	err := generateclient.GenerateClient(os.Stdout, r)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// r.PrintRoutes()
 }

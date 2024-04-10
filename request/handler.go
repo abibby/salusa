@@ -4,8 +4,10 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"reflect"
 
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 func init() {
@@ -103,11 +105,9 @@ func (h *RequestHandler[TRequest, TResponse]) respond(w http.ResponseWriter, req
 	}
 }
 
-func (h *RequestHandler[TRequest, TResponse]) GetRequest() any {
-	var v *TRequest
-	return v
+func (h *RequestHandler[TRequest, TResponse]) RequestType() reflect.Type {
+	return helpers.GetType[*TRequest]()
 }
-func (h *RequestHandler[TRequest, TResponse]) GetResponse() any {
-	var v TResponse
-	return v
+func (h *RequestHandler[TRequest, TResponse]) ResponseType() reflect.Type {
+	return helpers.GetType[TResponse]()
 }

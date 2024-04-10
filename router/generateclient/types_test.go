@@ -62,12 +62,27 @@ func TestToTsType(t *testing.T) {
 			}](),
 			Expected: "{foo:{bar:string}}",
 		},
+		{
+			Name: "struct pointer",
+			Type: helpers.GetType[*struct {
+				Foo string `json:"foo"`
+			}](),
+			Expected: "{foo:string}",
+		},
+		{
+			Name: "struct multiple fields",
+			Type: helpers.GetType[struct {
+				Foo string `json:"foo"`
+				Bar string `json:"bar"`
+			}](),
+			Expected: "{foo:string,bar:string}",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			b := &bytes.Buffer{}
-			err := toTsType(tc.Type, b)
+			err := toTsType(b, tc.Type, map[reflect.Type]string{})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.Expected, b.String())
 		})
