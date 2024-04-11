@@ -27,8 +27,8 @@ func (c *SMTPConfig) Mailer() Mailer {
 	return NewSMTPMailer(c.Host, c.Port, c.Username, c.Password, c.From)
 }
 
-func RegisterMailer[T kernel.KernelConfig](ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(cfg T) (Mailer, error) {
+func Register(ctx context.Context) error {
+	di.RegisterLazySingletonWith(ctx, func(cfg kernel.KernelConfig) (Mailer, error) {
 		var cfgAny any = cfg
 		cfger, ok := cfgAny.(MailConfiger)
 		if !ok {

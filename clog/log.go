@@ -14,20 +14,25 @@ const (
 	withKey key = iota
 )
 
-func Register(ctx context.Context, h slog.Handler) {
-	di.Register(ctx, func(ctx context.Context, tag string) (*slog.Logger, error) {
-		if h == nil {
-			h = slog.NewTextHandler(os.Stderr, nil)
-		}
-		logger := slog.New(h)
+func Register(h slog.Handler) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		di.Register(ctx, func(ctx context.Context, tag string) (*slog.Logger, error) {
+			if h == nil {
+				h = slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+					AddSource: true,
+				})
+			}
+			logger := slog.New(h)
 
-		with := ctx.Value(withKey)
-		if with != nil {
-			logger = logger.With(with.([]any)...)
-		}
+			with := ctx.Value(withKey)
+			if with != nil {
+				logger = logger.With(with.([]any)...)
+			}
 
-		return logger, nil
-	})
+			return logger, nil
+		})
+		return nil
+	}
 }
 
 func With(ctx context.Context, attrs ...slog.Attr) context.Context {

@@ -14,9 +14,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func RegisterFromConfig[T kernel.KernelConfig](migrations *migrate.Migrations) func(ctx context.Context) error {
+func RegisterFromConfig(migrations *migrate.Migrations) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
-		di.RegisterLazySingletonWith(ctx, func(cfg T) (*sqlx.DB, error) {
+		di.RegisterLazySingletonWith(ctx, func(cfg kernel.KernelConfig) (*sqlx.DB, error) {
 			var cfgAny any = cfg
 			cfger, ok := cfgAny.(dialects.DBConfiger)
 			if !ok {
@@ -36,7 +36,7 @@ func RegisterFromConfig[T kernel.KernelConfig](migrations *migrate.Migrations) f
 			}
 			return db, nil
 		})
-		registerTransactions(ctx)
+		RegisterTransactions(ctx)
 		return nil
 	}
 }
@@ -45,10 +45,10 @@ func Register(ctx context.Context, db *sqlx.DB) {
 	di.RegisterSingleton(ctx, func() *sqlx.DB {
 		return db
 	})
-	registerTransactions(ctx)
+	RegisterTransactions(ctx)
 }
 
-func registerTransactions(ctx context.Context) {
+func RegisterTransactions(ctx context.Context) {
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Read, error) {
 		return func(f func(tx *sqlx.Tx) error) error {
 			return runTx(ctx, db, f, true)

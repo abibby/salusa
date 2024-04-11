@@ -25,8 +25,4 @@ func InitRoutes(r *router.Router) {
 
 	r.Get("/user", handlers.UserList)
 	r.Get("/user/{id}", handlers.UserGet)
-
-	// r.Handle("/", fileserver.WithFallback(resources.Content, "dist", "index.html", nil))
-
-	r.PrintRoutes()
 }
