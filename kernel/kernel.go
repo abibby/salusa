@@ -11,10 +11,10 @@ type KernelConfig interface {
 }
 
 type Kernel struct {
-	bootstrap     []func(context.Context) error
-	postBootstrap []func(context.Context) error
-	rootHandler   func(ctx context.Context) http.Handler
-	services      []Service
+	bootstrap      []func(context.Context) error
+	registerConfig func(context.Context) error
+	rootHandler    func(ctx context.Context) http.Handler
+	services       []Service
 
 	cfg KernelConfig
 
@@ -23,8 +23,8 @@ type Kernel struct {
 
 func New[T KernelConfig](options ...KernelOption) *Kernel {
 	k := &Kernel{
-		bootstrap:     []func(context.Context) error{},
-		postBootstrap: []func(context.Context) error{},
+		bootstrap:      []func(context.Context) error{},
+		registerConfig: func(context.Context) error { return nil },
 		rootHandler: func(ctx context.Context) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 		},
@@ -37,4 +37,12 @@ func New[T KernelConfig](options ...KernelOption) *Kernel {
 	}
 
 	return k
+}
+
+func (k *Kernel) RootHandler(ctx context.Context) http.Handler {
+	return k.rootHandler(ctx)
+}
+
+func (k *Kernel) Config() KernelConfig {
+	return k.cfg
 }

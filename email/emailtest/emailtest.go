@@ -23,3 +23,14 @@ func (m *TestMailer) Mail(msg *email.Message) error {
 func (m *TestMailer) EmailsSent() []*email.Message {
 	return m.messages
 }
+
+type TestMailerConfig struct {
+}
+
+func NewTestMailerConfig() *TestMailerConfig {
+	return &TestMailerConfig{}
+}
+
+func (c *TestMailerConfig) Mailer() email.Mailer {
+	return NewTestMailer()
+}

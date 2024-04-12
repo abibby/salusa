@@ -16,18 +16,17 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 	}
 	k.bootstrapped = true
 
-	var err error
+	err := k.registerConfig(ctx)
+	if err != nil {
+		return fmt.Errorf("Kernel.Bootstrap: registerConfig: %w", err)
+	}
+
 	for i, b := range k.bootstrap {
 		err = b(ctx)
 		if err != nil {
 			return fmt.Errorf("Kernel.Bootstrap: step %d: %w", i, err)
 		}
 	}
-	for _, b := range k.postBootstrap {
-		err = b(ctx)
-		if err != nil {
-			return fmt.Errorf("Kernel.Bootstrap: postBootstrap: %w", err)
-		}
-	}
+
 	return nil
 }
