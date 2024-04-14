@@ -102,3 +102,11 @@ func (h *RequestHandler[TRequest, TResponse]) respond(w http.ResponseWriter, req
 		logger.Error("request failed", "error", err)
 	}
 }
+func (r *RequestHandler[TRequest, TResponse]) Validate(ctx context.Context) error {
+	var req TRequest
+	return di.Validate(ctx, &req,
+		di.AutoResolve[context.Context](),
+		di.AutoResolve[*http.Request](),
+		di.AutoResolve[http.ResponseWriter](),
+	)
+}

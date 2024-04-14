@@ -6,12 +6,28 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
+	"github.com/spf13/pflag"
 )
 
 func (k *Kernel) Run(ctx context.Context) error {
+	validate := pflag.BoolP("validate", "v", false, "")
+
+	pflag.Parse()
+
+	err := k.Validate(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+	}
+	if *validate {
+		if err != nil {
+			os.Exit(1)
+		}
+		return nil
+	}
 
 	go k.RunServices(ctx)
 
