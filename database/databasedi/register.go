@@ -30,9 +30,11 @@ func RegisterFromConfig(migrations *migrate.Migrations) func(ctx context.Context
 				return nil, fmt.Errorf("databasedi.RegisterFromConfig: open database: %w", err)
 			}
 
-			err = migrations.Up(ctx, db)
-			if err != nil {
-				return nil, fmt.Errorf("databasedi.RegisterFromConfig: migrate database: %w", err)
+			if migrations != nil {
+				err = migrations.Up(ctx, db)
+				if err != nil {
+					return nil, fmt.Errorf("databasedi.RegisterFromConfig: migrate database: %w", err)
+				}
 			}
 			return db, nil
 		})

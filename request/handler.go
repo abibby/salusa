@@ -20,14 +20,26 @@ type RequestHandler[TRequest, TResponse any] struct {
 }
 
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	err, status := h.serveHTTP(w, r)
+	if err == nil {
+		return
+	}
+	if responder, ok := getResponder(err); ok {
+		h.respond(w, r, responder)
+	} else if handler, ok := err.(http.Handler); ok {
+		handler.ServeHTTP(w, r)
+	} else {
+		h.respond(w, r, errorResponse(err, status, r))
+	}
+	addError(r, err)
+}
+func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) (error, int) {
 	var req TRequest
 	err := Run(r, &req)
 	if validationErr, ok := err.(ValidationError); ok {
-		h.respond(w, r, errorResponse(validationErr, http.StatusUnprocessableEntity, r))
-		return
+		return validationErr, http.StatusUnprocessableEntity
 	} else if err != nil {
-		h.respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
-		return
+		return err, http.StatusInternalServerError
 	}
 
 	ctx := r.Context()
@@ -40,24 +52,12 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 		di.AutoResolve[http.ResponseWriter](),
 	)
 	if err != nil {
-		if responder, ok := getResponder(err); ok {
-			h.respond(w, r, responder)
-		} else {
-			h.respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
-		}
-		return
+		return err, http.StatusInternalServerError
 	}
 
 	resp, err := h.handler(&req)
 	if err != nil {
-		if responder, ok := err.(Responder); ok {
-			h.respond(w, r, responder)
-		} else if handler, ok := err.(http.Handler); ok {
-			handler.ServeHTTP(w, r)
-		} else {
-			h.respond(w, r, errorResponse(err, http.StatusInternalServerError, r))
-		}
-		return
+		return err, http.StatusInternalServerError
 	}
 
 	var anyResp any = resp
@@ -69,6 +69,8 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	default:
 		h.respond(w, r, NewJSONResponse(resp))
 	}
+
+	return nil, http.StatusOK
 }
 func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {
 	return h.handler(r)

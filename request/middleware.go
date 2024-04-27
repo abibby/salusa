@@ -1,6 +1,8 @@
 package request
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,6 +10,33 @@ import (
 
 	"github.com/abibby/salusa/router"
 )
+
+type errorContextKey struct{}
+
+type errorsContainer struct {
+	errors []error
+}
+
+func (e *errorsContainer) add(err error) {
+	e.errors = append(e.errors, err)
+}
+func (w *errorsContainer) joinedError() error {
+	if len(w.errors) == 0 {
+		return nil
+	}
+	if len(w.errors) == 1 {
+		return w.errors[0]
+	}
+	return errors.Join(w.errors...)
+}
+
+func addError(r *http.Request, err error) {
+	e := r.Context().Value(errorContextKey{})
+	if e == nil {
+		return
+	}
+	e.(*errorsContainer).add(err)
+}
 
 func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
@@ -38,7 +67,16 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 				}
 			}()
 
-			next.ServeHTTP(w, r)
+			e := &errorsContainer{errors: []error{}}
+
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), errorContextKey{}, e)))
+
+			err := e.joinedError()
+			if err != nil {
+				for _, handler := range handlers {
+					handler(err)
+				}
+			}
 		})
 	}
 }

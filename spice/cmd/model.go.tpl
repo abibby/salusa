@@ -18,6 +18,6 @@ func init() {
 	providers.Add(modeldi.Register[*{{ .Name }}])
 }
 
-func {{ .Name }}Query(ctx context.Context) *builder.Builder[*{{ .Name }}] {
+func {{ .Name }}Query(ctx context.Context) *builder.ModelBuilder[*{{ .Name }}] {
 	return builder.From[*{{ .Name }}]().WithContext(ctx)
 }

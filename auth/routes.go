@@ -443,7 +443,6 @@ func (o *RouteOptions[T, R]) changePassword() *request.RequestHandler[ChangePass
 
 type RefreshRequest[T User] struct {
 	RefreshToken string          `json:"refresh"`
-	User         T               `inject:""`
 	Read         database.Read   `inject:""`
 	Ctx          context.Context `inject:""`
 }
