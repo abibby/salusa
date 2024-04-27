@@ -330,7 +330,6 @@ func TestAuthRoutesRefresh(t *testing.T) {
 
 		resp, err := usernameRoutes.Refresh.Run(&auth.RefreshRequest[*auth.UsernameUser]{
 			RefreshToken: token,
-			User:         createdUser,
 			Ctx:          ctx,
 			Read:         dbtest.Read(tx),
 		})

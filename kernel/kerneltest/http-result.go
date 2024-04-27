@@ -32,14 +32,9 @@ func (r *HttpResult) AssertStatus(status int) *HttpResult {
 	return r
 }
 
-func (r *HttpResult) AssertJSON(body any) *HttpResult {
-	expectedJSON, err := json.Marshal(body)
-	if err != nil {
-		panic(err)
-	}
-
+func (r *HttpResult) AssertJSONString(jsonBody string) *HttpResult {
 	var expected any
-	err = json.Unmarshal(expectedJSON, &expected)
+	err := json.Unmarshal([]byte(jsonBody), &expected)
 	if err != nil {
 		panic(err)
 	}
@@ -51,4 +46,12 @@ func (r *HttpResult) AssertJSON(body any) *HttpResult {
 	}
 	assert.Equal(r.t, expected, actual, "Statuses do not match")
 	return r
+}
+func (r *HttpResult) AssertJSON(body any) *HttpResult {
+	expectedJSON, err := json.Marshal(body)
+	if err != nil {
+		panic(err)
+	}
+
+	return r.AssertJSONString(string(expectedJSON))
 }

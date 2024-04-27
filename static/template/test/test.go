@@ -38,8 +38,10 @@ var Run = runner.Run
 var RunBenchmark = runner.RunBenchmark
 
 var Kernel = kerneltest.NewTestKernelFactory(app.Kernel, &config.Config{
+	Port:     443,
+	BasePath: "https://example.test",
+
 	Database: sqlite.NewConfig(":memory:"),
 	Mail:     emailtest.NewTestMailerConfig(),
 	Queue:    event.NewChannelQueueConfig(),
-	BasePath: "https://example.test",
 })
