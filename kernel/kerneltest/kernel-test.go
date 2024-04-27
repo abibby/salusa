@@ -46,6 +46,9 @@ func (k *TestKernel[T]) url(target string) string {
 func (k *TestKernel[T]) WithHeader(key, value string) *RequestBuilder {
 	return NewRequestBuilder(k).WithHeader(key, value)
 }
+func (k *TestKernel[T]) WithJSONHeaders() *RequestBuilder {
+	return NewRequestBuilder(k).WithJSONHeaders()
+}
 
 func (k *TestKernel[T]) Get(target string) *HttpResult {
 	return NewRequestBuilder(k).Get(target)
@@ -58,6 +61,24 @@ func (k *TestKernel[T]) Post(target string, body io.Reader) *HttpResult {
 }
 func (k *TestKernel[T]) PostJSON(target string, body any) *HttpResult {
 	return NewRequestBuilder(k).PostJSON(target, body)
+}
+func (k *TestKernel[T]) Put(target string, body io.Reader) *HttpResult {
+	return NewRequestBuilder(k).Put(target, body)
+}
+func (k *TestKernel[T]) PutJSON(target string, body any) *HttpResult {
+	return NewRequestBuilder(k).PutJSON(target, body)
+}
+func (k *TestKernel[T]) Patch(target string, body io.Reader) *HttpResult {
+	return NewRequestBuilder(k).Patch(target, body)
+}
+func (k *TestKernel[T]) PatchJSON(target string, body any) *HttpResult {
+	return NewRequestBuilder(k).PatchJSON(target, body)
+}
+func (k *TestKernel[T]) Delete(target string, body io.Reader) *HttpResult {
+	return NewRequestBuilder(k).Delete(target, body)
+}
+func (k *TestKernel[T]) DeleteJSON(target string, body any) *HttpResult {
+	return NewRequestBuilder(k).DeleteJSON(target, body)
 }
 
 func (k *TestKernel[T]) HandleRequest(r *http.Request) *HttpResult {

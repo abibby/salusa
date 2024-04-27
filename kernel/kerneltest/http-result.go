@@ -2,6 +2,7 @@ package kerneltest
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -30,6 +31,27 @@ func (r *HttpResult) Body() []byte {
 func (r *HttpResult) AssertStatus(status int) *HttpResult {
 	assert.Equal(r.t, status, r.response.StatusCode, "Statuses do not match")
 	return r
+}
+func (r *HttpResult) AssertStatusRange(min, max int) *HttpResult {
+	msg := fmt.Sprintf("Statuses must be between %d and %d", min, max)
+	assert.GreaterOrEqual(r.t, r.response.StatusCode, min, msg)
+	assert.LessOrEqual(r.t, r.response.StatusCode, max, msg)
+	return r
+}
+func (r *HttpResult) AssertStatusOK() *HttpResult {
+	return r.AssertStatusRange(200, 399)
+}
+func (r *HttpResult) AssertStatus2XX() *HttpResult {
+	return r.AssertStatusRange(200, 299)
+}
+func (r *HttpResult) AssertStatus3XX() *HttpResult {
+	return r.AssertStatusRange(300, 399)
+}
+func (r *HttpResult) AssertStatus4XX() *HttpResult {
+	return r.AssertStatusRange(400, 499)
+}
+func (r *HttpResult) AssertStatus5XX() *HttpResult {
+	return r.AssertStatusRange(500, 599)
 }
 
 func (r *HttpResult) AssertJSONString(jsonBody string) *HttpResult {
