@@ -2,6 +2,9 @@ package request
 
 import (
 	"bytes"
+	"io"
+	"io/fs"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -151,4 +154,39 @@ func TestRun_query_url_body(t *testing.T) {
 	assert.Equal(t, &Request{
 		Foo: "bar",
 	}, structRequest)
+}
+
+func TestRun_multipart_file(t *testing.T) {
+	type Request struct {
+		Foo fs.File `json:"foo"`
+	}
+
+	buff := &bytes.Buffer{}
+	writer := multipart.NewWriter(buff)
+
+	part, err := writer.CreateFormFile("foo", "foo.txt")
+	assert.NoError(t, err)
+	_, err = part.Write([]byte("foo content"))
+	assert.NoError(t, err)
+
+	writer.Close()
+
+	httpRequest := httptest.NewRequest("POST", "http://0.0.0.0/", buff)
+	httpRequest.Header.Add("Content-Type", writer.FormDataContentType())
+
+	structRequest := &Request{}
+
+	err = Run(httpRequest, structRequest)
+	assert.NoError(t, err)
+
+	if !assert.NotNil(t, structRequest.Foo) {
+		return
+	}
+
+	fooContent, err := io.ReadAll(structRequest.Foo)
+	assert.NoError(t, err)
+
+	defer structRequest.Foo.Close()
+
+	assert.Equal(t, "foo content", string(fooContent))
 }

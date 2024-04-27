@@ -6,21 +6,101 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
+	"time"
 
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/gorilla/mux"
 )
 
-var textUnmarshalerType = helpers.GetType[encoding.TextUnmarshaler]()
+const (
+	// Decimal
+
+	KB = 1000
+	MB = 1000 * KB
+	GB = 1000 * MB
+	TB = 1000 * GB
+	PB = 1000 * TB
+
+	// Binary
+
+	KiB = 1024
+	MiB = 1024 * KiB
+	GiB = 1024 * MiB
+	TiB = 1024 * GiB
+	PiB = 1024 * TiB
+)
+
+var (
+	textUnmarshalerType = helpers.GetType[encoding.TextUnmarshaler]()
+	fsFileType          = helpers.GetType[fs.File]()
+)
+
+type File struct {
+	file   multipart.File
+	handle *FileInfo
+}
+
+// Close implements fs.File.
+func (f *File) Close() error {
+	return f.file.Close()
+}
+
+// Read implements fs.File.
+func (f *File) Read(b []byte) (int, error) {
+	return f.file.Read(b)
+}
+
+// Stat implements fs.File.
+func (f *File) Stat() (fs.FileInfo, error) {
+	return f.handle, nil
+}
+
+type FileInfo struct{ header *multipart.FileHeader }
+
+// IsDir implements fs.FileInfo.
+func (f *FileInfo) IsDir() bool {
+	return false
+}
+
+// ModTime implements fs.FileInfo.
+func (f *FileInfo) ModTime() time.Time {
+	return time.Now()
+}
+
+// Mode implements fs.FileInfo.
+func (f *FileInfo) Mode() fs.FileMode {
+	return 0o644
+}
+
+// Name implements fs.FileInfo.
+func (f *FileInfo) Name() string {
+	return f.header.Filename
+}
+
+// Size implements fs.FileInfo.
+func (f *FileInfo) Size() int64 {
+	return f.header.Size
+}
+
+// Sys implements fs.FileInfo.
+func (f *FileInfo) Sys() any {
+	return nil
+}
+
+var _ fs.FileInfo = (*FileInfo)(nil)
 
 func Run(requestHttp *http.Request, requestStruct any) error {
 	urlArgs := map[string]map[string][]string{
 		"query": requestHttp.URL.Query(),
 		"path":  pathArgs(requestHttp),
 	}
+
 	var jsonBody map[string]json.RawMessage
 
 	if requestHttp.Body != http.NoBody {
@@ -32,7 +112,7 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 
 		requestHttp.Body = io.NopCloser(bytes.NewBuffer(body))
 
-		contentType := requestHttp.Header.Get("Content-Type")
+		contentType := strings.Split(requestHttp.Header.Get("Content-Type"), ";")[0]
 		switch contentType {
 		case "application/x-www-form-urlencoded":
 			bodyQuery, err := url.ParseQuery(string(body))
@@ -40,6 +120,12 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 				return err
 			}
 			urlArgs["json"] = bodyQuery
+		case "multipart/form-data":
+			err := requestHttp.ParseMultipartForm(100 * MB)
+			if err != nil {
+				return err
+			}
+			urlArgs["json"] = requestHttp.MultipartForm.Value
 		default:
 			jsonBody = map[string]json.RawMessage{}
 			err := json.Unmarshal(body, &jsonBody)
@@ -57,10 +143,17 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 				verr.AddError(sf.Tag.Get(tag), err.Error())
 			}
 		}
+
+		err := setFile(sf, fv, requestHttp)
+		if err != nil {
+			verr.AddError(sf.Tag.Get("json"), err.Error())
+		}
+
 		if jsonBody == nil {
 			return nil
 		}
-		err := setJSON(sf, fv, jsonBody)
+
+		err = setJSON(sf, fv, jsonBody)
 		if err != nil {
 			verr.AddError(sf.Tag.Get("json"), err.Error())
 		}
@@ -105,6 +198,28 @@ func setQuery(sf reflect.StructField, fv reflect.Value, tag string, args map[str
 	}
 	fv.Set(rv)
 
+	return nil
+}
+
+func setFile(sf reflect.StructField, fv reflect.Value, requestHttp *http.Request) error {
+	tagValue, ok := sf.Tag.Lookup("json")
+	if !ok {
+		return nil
+	}
+
+	if sf.Type != fsFileType {
+		return nil
+	}
+
+	file, handle, err := requestHttp.FormFile(tagValue)
+	if err != nil {
+		return err
+	}
+
+	fv.Set(reflect.ValueOf(&File{
+		file:   file,
+		handle: &FileInfo{header: handle},
+	}))
 	return nil
 }
 
