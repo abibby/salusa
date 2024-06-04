@@ -5,10 +5,12 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/abibby/salusa/static"
 	"github.com/spf13/cobra"
@@ -21,6 +23,11 @@ var initCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		module := args[0]
+
+		parts := strings.SplitN(module, "/", 2)
+		gitURL := fmt.Sprintf("ssh://git@%s:%s", parts[0], parts[1])
+
 		err := copyDir(static.Content, "template", ".", args[0])
 		if err != nil {
 			return err
@@ -31,12 +38,20 @@ var initCmd = &cobra.Command{
 			return err
 		}
 
-		err = exec.Command("go", "mod", "init", args[0]).Run()
+		err = exec.Command("git", "remote", "add", "origin", gitURL).Run()
 		if err != nil {
 			return err
 		}
 
-		// TODO: set git origin
+		err = exec.Command("go", "mod", "init", module).Run()
+		if err != nil {
+			return err
+		}
+
+		err = exec.Command("go", "mod", "tidy").Run()
+		if err != nil {
+			return err
+		}
 
 		return nil
 	},

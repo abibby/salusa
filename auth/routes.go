@@ -469,6 +469,10 @@ func (o *RouteOptions[T, R]) refresh() *request.RequestHandler[RefreshRequest[T]
 			return nil, request.NewHTTPError(fmt.Errorf("failed to verify: %w", err), http.StatusUnauthorized)
 		}
 
+		if reflect.ValueOf(u).IsNil() {
+			return nil, request.NewHTTPError(fmt.Errorf("no user found"), http.StatusUnauthorized)
+		}
+
 		expires := time.Hour
 
 		access, err := GenerateToken(
