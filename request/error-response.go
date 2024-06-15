@@ -40,7 +40,7 @@ func errorResponse(rootErr error, status int, r *http.Request) Responder {
 		if err, ok := rootErr.(HTMLError); ok {
 			response.Error = err.HTMLError()
 		} else {
-			response.Error = "<p>" + rootErr.Error() + "</p>"
+			response.Error = "<pre>" + rootErr.Error() + "</pre>"
 		}
 
 		reader, writer := io.Pipe()

@@ -524,23 +524,15 @@ func (o *RouteOptions[T, R]) sendEmails(opt *sendEmailOptions) {
 			opt.ViewTemplate = defaultViewTemplate
 		}
 
-		viewResponse, err := view.View(opt.TemplateName, map[string]any{
+		b, err := view.View(opt.TemplateName, map[string]any{
 			"ResetPasswordName": o.ResetPasswordName,
 			"Token":             token,
-		}).Run(&view.ViewRequest{
+		}).Bytes(&view.ViewData{
 			URL:      opt.URL,
 			Template: opt.ViewTemplate,
 		})
 		if err != nil {
 			opt.Logger.Warn("failed to generate auth email body",
-				"template", opt.TemplateName,
-				"error", err,
-			)
-			return
-		}
-		b, err := viewResponse.Bytes()
-		if err != nil {
-			opt.Logger.Warn("failed to read auth email body",
 				"template", opt.TemplateName,
 				"error", err,
 			)

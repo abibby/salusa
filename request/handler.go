@@ -35,23 +35,10 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 }
 func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) (error, int) {
 	var req TRequest
-	err := Run(r, &req)
+	err := RunRW(r, w, &req)
 	if validationErr, ok := err.(ValidationError); ok {
 		return validationErr, http.StatusUnprocessableEntity
 	} else if err != nil {
-		return err, http.StatusInternalServerError
-	}
-
-	ctx := r.Context()
-	ctx = context.WithValue(ctx, requestKey, r)
-	ctx = context.WithValue(ctx, responseKey, w)
-
-	err = di.Fill(ctx, &req,
-		di.AutoResolve[context.Context](),
-		di.AutoResolve[*http.Request](),
-		di.AutoResolve[http.ResponseWriter](),
-	)
-	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 
@@ -72,22 +59,11 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 
 	return nil, http.StatusOK
 }
+
 func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {
 	return h.handler(r)
 }
 
-// Handler is a helper to create http handlers with built in input validation
-// and error handling.
-//
-//	type Request struct {
-//		Foo string `path:"foo" validate:"required"`
-//		Bar string `query:"bar"`
-//		Baz string `json:"baz"`
-//	}
-//	type Response struct{}
-//	request.Handler(func(r *Request) (*Response, error) {
-//		return nil, nil
-//	})
 func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, error)) *RequestHandler[TRequest, TResponse] {
 	return &RequestHandler[TRequest, TResponse]{
 		handler: callback,

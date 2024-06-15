@@ -2,6 +2,7 @@ package request
 
 import (
 	"bytes"
+	"context"
 	"encoding"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/gorilla/mux"
 )
@@ -96,6 +98,9 @@ func (f *FileInfo) Sys() any {
 var _ fs.FileInfo = (*FileInfo)(nil)
 
 func Run(requestHttp *http.Request, requestStruct any) error {
+	return RunRW(requestHttp, nil, requestStruct)
+}
+func RunRW(requestHttp *http.Request, responseHttp http.ResponseWriter, requestStruct any) error {
 	urlArgs := map[string]map[string][]string{
 		"query": requestHttp.URL.Query(),
 		"path":  pathArgs(requestHttp),
@@ -171,6 +176,19 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	if err != nil {
 		return err
 	}
+
+	ctx := requestHttp.Context()
+	ctx = context.WithValue(ctx, requestKey, requestHttp)
+	ctx = context.WithValue(ctx, responseKey, responseHttp)
+	err = di.Fill(ctx, requestStruct,
+		di.AutoResolve[context.Context](),
+		di.AutoResolve[*http.Request](),
+		di.AutoResolve[http.ResponseWriter](),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to di.Fill request: %w", err)
+	}
+
 	return nil
 }
 

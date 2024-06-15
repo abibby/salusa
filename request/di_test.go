@@ -12,7 +12,7 @@ import (
 
 func TestInjectRequest(t *testing.T) {
 	type Request struct {
-		Request *http.Request
+		Request *http.Request `inject:""`
 	}
 	ctx := di.TestDependencyProviderContext()
 	err := request.Register(ctx)
