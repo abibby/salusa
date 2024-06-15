@@ -5,9 +5,31 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ .Status }} Error</title>
+    <style>
+      .stack-frame[data-is-local="true"] {
+        background-color: lightblue;
+      }
+      .stack-frame .file {
+        margin-left: 2ch;
+      }
+    </style>
   </head>
   <body>
     <h1>Error: {{ .Status }} {{ .StatusText }}</h1>
-    {{ .Error }}
+    {{ .Error }} {{ if ne .StackTrace nil }}
+    <div id="stack">
+      <h3>{{ .StackTrace.GoRoutine }}</h3>
+      <ul>
+        {{range $val := .StackTrace.Stack}}
+        <li class="stack-frame" data-is-local="{{ isLocal $val.File }}">
+          <div class="call">{{$val.Call}}</div>
+          <div class="file">{{$val.File}}:{{$val.Line}}</div>
+        </li>
+        {{end}}
+      </ul>
+    </div>
+    {{end}}
+
+    <script></script>
   </body>
 </html>

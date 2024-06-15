@@ -20,7 +20,7 @@ type RequestHandler[TRequest, TResponse any] struct {
 }
 
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err, status := h.serveHTTP(w, r)
+	status, err := h.serveHTTP(w, r)
 	if err == nil {
 		return
 	}
@@ -29,17 +29,17 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	} else if handler, ok := err.(http.Handler); ok {
 		handler.ServeHTTP(w, r)
 	} else {
-		h.respond(w, r, errorResponse(err, status, r))
+		h.respond(w, r, NewHTTPError(err, status))
 	}
 	addError(r, err)
 }
-func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) (error, int) {
+func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	var req TRequest
 	err := Run(r, &req)
 	if validationErr, ok := err.(ValidationError); ok {
-		return validationErr, http.StatusUnprocessableEntity
+		return http.StatusUnprocessableEntity, validationErr
 	} else if err != nil {
-		return err, http.StatusInternalServerError
+		return http.StatusInternalServerError, err
 	}
 
 	ctx := r.Context()
@@ -52,12 +52,12 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 		di.AutoResolve[http.ResponseWriter](),
 	)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return http.StatusInternalServerError, err
 	}
 
 	resp, err := h.handler(&req)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return http.StatusInternalServerError, err
 	}
 
 	var anyResp any = resp
@@ -70,7 +70,7 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 		h.respond(w, r, NewJSONResponse(resp))
 	}
 
-	return nil, http.StatusOK
+	return http.StatusOK, nil
 }
 func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {
 	return h.handler(r)
