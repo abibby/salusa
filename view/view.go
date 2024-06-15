@@ -3,9 +3,11 @@ package view
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
+	"log/slog"
 	"net/http"
 
 	"github.com/abibby/salusa/di"
@@ -18,52 +20,67 @@ type ViewTemplate struct {
 	patterns []string
 }
 
-type ViewRequest struct {
+type ViewData struct {
 	URL      router.URLResolver `inject:""`
 	Template *ViewTemplate      `inject:""`
 }
-type ViewResponse struct {
-	req  *ViewRequest
+type ViewHandler struct {
 	file string
 	data any
 }
 
-var _ request.Responder = (*ViewResponse)(nil)
+var _ request.Responder = (*ViewHandler)(nil)
 
-func (vr *ViewResponse) Execute(w io.Writer) error {
+func (vh *ViewHandler) Execute(ctx context.Context, w io.Writer) error {
+	d, err := di.ResolveFill[*ViewData](ctx)
+	if err != nil {
+		return fmt.Errorf("ViewHandler.Execute: %w", err)
+	}
+	return vh.ExecuteData(d, w)
+}
+
+func (vh *ViewHandler) ExecuteData(d *ViewData, w io.Writer) error {
 	tpl, err := template.New("").
 		Funcs(template.FuncMap{
-			"route": vr.req.URL.Resolve,
+			"route": d.URL.Resolve,
 		}).
-		ParseFS(vr.req.Template.fsys, vr.req.Template.patterns...)
+		ParseFS(d.Template.fsys, d.Template.patterns...)
 	if err != nil {
 		return err
 	}
-	return tpl.ExecuteTemplate(w, vr.file, vr.data)
+	return tpl.ExecuteTemplate(w, vh.file, vh.data)
 }
 
-func (vr *ViewResponse) Respond(w http.ResponseWriter, r *http.Request) error {
+func (vh *ViewHandler) Respond(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Add("Content-Type", "text/html")
-	return vr.Execute(w)
+	return vh.Execute(r.Context(), w)
+}
+func (vh *ViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	err := vh.Respond(w, r)
+	if err != nil {
+		logger, resolveErr := di.Resolve[*slog.Logger](r.Context())
+		if resolveErr != nil {
+			logger = slog.Default()
+		}
+		logger.Error("failed to serve view", "error", err)
+	}
 }
 
-func (vr *ViewResponse) Bytes() ([]byte, error) {
+func (vh *ViewHandler) Bytes(d *ViewData) ([]byte, error) {
 	b := &bytes.Buffer{}
-	err := vr.Execute(b)
+	err := vh.ExecuteData(d, b)
 	if err != nil {
 		return nil, err
 	}
 	return b.Bytes(), nil
 }
 
-func View(file string, data any) *request.RequestHandler[ViewRequest, *ViewResponse] {
-	return request.Handler(func(r *ViewRequest) (*ViewResponse, error) {
-		return &ViewResponse{
-			req:  r,
-			file: file,
-			data: data,
-		}, nil
-	})
+func View(file string, data any) *ViewHandler {
+	return &ViewHandler{
+		file: file,
+		data: data,
+	}
+
 }
 func NewViewTemplate(fsys fs.FS, patterns ...string) *ViewTemplate {
 	if len(patterns) == 0 {
