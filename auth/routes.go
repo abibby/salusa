@@ -85,9 +85,10 @@ func RegisterRoutes[T User, R any](r *router.Router, newUser func(request R) T, 
 	})
 }
 
+type UserCreatePasswordRequest struct {
+	Password string `json:"password" validate:"required"`
+}
 type UserCreateRequest struct {
-	Password string `json:"password"`
-
 	Mailer   email.Mailer       `inject:""`
 	Update   database.Update    `inject:""`
 	Ctx      context.Context    `inject:""`
@@ -100,13 +101,35 @@ type UserCreateResponse[T User] struct {
 	User T `json:"user"`
 }
 
+func runMany(r *http.Request, requests ...any) error {
+	validationErrs := request.ValidationError{}
+	for _, req := range requests {
+		err := request.Run(r, req)
+		verr := request.ValidationError{}
+		if errors.As(err, &verr) {
+			validationErrs.Merge(verr)
+		} else if err != nil {
+			return err
+		}
+	}
+
+	if validationErrs.HasErrors() {
+		return validationErrs
+	}
+
+	return nil
+}
+
 func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequest, *UserCreateResponse[T]] {
 	return request.Handler(func(r *UserCreateRequest) (*UserCreateResponse[T], error) {
+		passReq := &UserCreatePasswordRequest{}
+
 		req, err := helpers.NewOf[R]()
 		if err != nil {
 			return nil, err
 		}
-		err = request.Run(r.Request, req)
+
+		err = runMany(r.Request, req, passReq)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +151,7 @@ func (o *RouteOptions[T, R]) userCreate() *request.RequestHandler[UserCreateRequ
 				return err
 			}
 
-			err = updatePassword(u, r.Password)
+			err = updatePassword(u, passReq.Password)
 			if err != nil {
 				return err
 			}

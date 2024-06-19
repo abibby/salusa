@@ -43,7 +43,9 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 	}
 
 	resp, err := h.handler(&req)
-	if err != nil {
+	if validationErr, ok := err.(ValidationError); ok {
+		return http.StatusUnprocessableEntity, validationErr
+	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
