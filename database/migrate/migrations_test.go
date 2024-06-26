@@ -14,7 +14,7 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
-	test.Run(t, "dont rerun migraitons", func(t *testing.T, tx *sqlx.Tx) {
+	test.RunNoTx(t, "dont rerun migraitons", func(t *testing.T, tx *sqlx.DB) {
 		m := migrate.New()
 		m.Add(&migrate.Migration{
 			Name: "1",
@@ -35,7 +35,7 @@ func TestMigrations(t *testing.T) {
 		err = m.Up(context.Background(), tx)
 		assert.NoError(t, err)
 	})
-	test.Run(t, "failed migrations", func(t *testing.T, tx *sqlx.Tx) {
+	test.RunNoTx(t, "failed migrations", func(t *testing.T, tx *sqlx.DB) {
 		m := migrate.New()
 		m1 := &migrate.Migration{
 			Name: "1",

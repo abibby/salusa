@@ -50,6 +50,7 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 })
 
 var Run = runner.Run
+var RunNoTx = runner.RunNoTx
 var RunBenchmark = runner.RunBenchmark
 
 type Foo struct {
