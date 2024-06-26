@@ -42,11 +42,10 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
 		resp, err := usernameRoutes.UserCreate.Run(&auth.UserCreateRequest{
-			Password: "pass",
-			Update:   dbtest.Update(tx),
-			Ctx:      ctx,
-			Logger:   nullLogger,
-			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user"}`)),
+			Update:  dbtest.Update(tx),
+			Ctx:     ctx,
+			Logger:  nullLogger,
+			Request: httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user","password":"pass"}`)),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
@@ -62,11 +61,10 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 	Run(t, "force lowercase usernames", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
 		resp, err := usernameRoutes.UserCreate.Run(&auth.UserCreateRequest{
-			Password: "pass",
-			Update:   dbtest.Update(tx),
-			Ctx:      ctx,
-			Logger:   nullLogger,
-			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"USER"}`)),
+			Update:  dbtest.Update(tx),
+			Ctx:     ctx,
+			Logger:  nullLogger,
+			Request: httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"USER","password":"pass"}`)),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
@@ -84,12 +82,11 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 		urlResolver := routertest.NewTestResolver()
 		m := emailtest.NewTestMailer()
 		resp, err := emailRoutes.UserCreate.Run(&auth.UserCreateRequest{
-			Password: "pass",
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
 			Mailer:   m,
 			Logger:   nullLogger,
-			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user@example.com"}`)),
+			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user@example.com","password":"pass"}`)),
 			URL:      urlResolver,
 			Template: emailTemplates,
 		})

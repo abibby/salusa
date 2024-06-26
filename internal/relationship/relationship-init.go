@@ -27,6 +27,10 @@ func initializeRelationships(v reflect.Value, pointer bool) error {
 
 		if ft.Type.Implements(RelationType) {
 			fv := v.Field(i)
+			if !fv.IsZero() {
+				continue
+			}
+
 			if ft.Type.Kind() == reflect.Ptr {
 				fv.Set(reflect.New(ft.Type.Elem()))
 			} else {

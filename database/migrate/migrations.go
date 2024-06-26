@@ -10,6 +10,7 @@ import (
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
 	"github.com/abibby/salusa/set"
+	"github.com/jmoiron/sqlx"
 )
 
 type DBMigration struct {
@@ -101,7 +102,7 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = db.ExecContext(ctx, sql, bindings...)
+	_, err = database.Exec(ctx, db, sql, bindings)
 	if err != nil {
 		return err
 	}
@@ -124,26 +125,32 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 	}
 
 	for _, migration := range m.migrations {
-		if runMigrations.Has(migration.Name) {
-			continue
-		}
+		err = database.NewRead(ctx, db)(func(tx *sqlx.Tx) error {
+			if runMigrations.Has(migration.Name) {
+				return nil
+			}
 
-		m := &DBMigration{
-			Name:  migration.Name,
-			Run:   false,
-			table: m.table,
-		}
-		err = model.SaveContext(ctx, db, m)
-		if err != nil {
-			return err
-		}
-		err := migration.Up.Run(ctx, db)
-		if err != nil {
-			return fmt.Errorf("failed to prepare migration %s: %w", migration.Name, err)
-		}
+			m := &DBMigration{
+				Name:  migration.Name,
+				Run:   false,
+				table: m.table,
+			}
+			err = model.SaveContext(ctx, tx, m)
+			if err != nil {
+				return err
+			}
+			err := migration.Up.Run(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("failed to prepare migration %s: %w", migration.Name, err)
+			}
 
-		m.Run = true
-		err = model.SaveContext(ctx, db, m)
+			m.Run = true
+			err = model.SaveContext(ctx, tx, m)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		if err != nil {
 			return err
 		}

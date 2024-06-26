@@ -2,8 +2,6 @@ package databasedi
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/abibby/salusa/database"
@@ -52,35 +50,9 @@ func Register(ctx context.Context, db *sqlx.DB) {
 
 func RegisterTransactions(ctx context.Context) {
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Read, error) {
-		return func(f func(tx *sqlx.Tx) error) error {
-			return runTx(ctx, db, f, true)
-		}, nil
+		return database.NewRead(ctx, db), nil
 	})
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Update, error) {
-		return func(f func(tx *sqlx.Tx) error) error {
-			return runTx(ctx, db, f, false)
-		}, nil
+		return database.NewUpdate(ctx, db), nil
 	})
-}
-
-func runTx(ctx context.Context, db *sqlx.DB, f func(*sqlx.Tx) error, readOnly bool) error {
-	tx, err := db.BeginTxx(ctx, &sql.TxOptions{
-		ReadOnly: readOnly,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
-	}
-	err = f(tx)
-	if err == nil {
-		txErr := tx.Commit()
-		if txErr != nil {
-			return txErr
-		}
-	} else {
-		txErr := tx.Rollback()
-		if txErr != nil {
-			return errors.Join(err, txErr)
-		}
-	}
-	return err
 }

@@ -22,11 +22,11 @@ func Run(f RunnerFunc) Runner {
 	return f
 }
 
-func runQuery(ctx context.Context, tx database.DB, sqler helpers.SQLStringer) error {
+func runQuery(ctx context.Context, db database.DB, sqler helpers.SQLStringer) error {
 	sql, bindings, err := sqler.SQLString(dialects.New())
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, sql, bindings...)
+	_, err = database.Exec(ctx, db, sql, bindings)
 	return err
 }
