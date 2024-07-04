@@ -65,13 +65,13 @@ func runTx(ctx context.Context, db DB, f func(*sqlx.Tx) error, readOnly bool) er
 	}
 	return err
 }
-func NewRead(ctx context.Context, db DB) Read {
-	return func(f func(tx *sqlx.Tx) error) error {
-		return runTx(ctx, db, f, true)
-	}
-}
 func NewUpdate(ctx context.Context, db DB) Update {
 	return func(f func(tx *sqlx.Tx) error) (err error) {
 		return runTx(ctx, db, f, false)
+	}
+}
+func NewRead(ctx context.Context, db DB) Read {
+	return func(f func(tx *sqlx.Tx) error) error {
+		return runTx(ctx, db, f, true)
 	}
 }

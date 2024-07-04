@@ -20,7 +20,7 @@ type RequestHandler[TRequest, TResponse any] struct {
 }
 
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	status, err := h.serveHTTP(w, r)
+	err := h.serveHTTP(w, r)
 	if err == nil {
 		return
 	}
@@ -29,24 +29,24 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	} else if handler, ok := err.(http.Handler); ok {
 		handler.ServeHTTP(w, r)
 	} else {
-		h.respond(w, r, NewHTTPError(err, status))
+		h.respond(w, r, NewHTTPError(err, http.StatusInternalServerError))
 	}
 	addError(r, err)
 }
-func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	var req TRequest
 	err := RunRW(r, w, &req)
 	if validationErr, ok := err.(ValidationError); ok {
-		return http.StatusUnprocessableEntity, validationErr
+		return NewHTTPError(validationErr, http.StatusUnprocessableEntity)
 	} else if err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
 
 	resp, err := h.handler(&req)
 	if validationErr, ok := err.(ValidationError); ok {
-		return http.StatusUnprocessableEntity, validationErr
+		return NewHTTPError(validationErr, http.StatusUnprocessableEntity)
 	} else if err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
 
 	var anyResp any = resp
@@ -59,7 +59,7 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 		h.respond(w, r, NewJSONResponse(resp))
 	}
 
-	return http.StatusOK, nil
+	return nil
 }
 
 func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {

@@ -42,13 +42,7 @@ func (s *selects) SQLString(d dialects.Dialect) (string, []any, error) {
 func (s *selects) Select(columns ...string) *selects {
 	identifiers := make([]helpers.SQLStringer, len(columns))
 	for i, c := range columns {
-		if c == "*" {
-			identifiers[i] = helpers.Raw("*")
-		} else if strings.HasSuffix(c, ".*") {
-			identifiers[i] = helpers.Concat(helpers.Identifier(c[:len(c)-2]), helpers.Raw(".*"))
-		} else {
-			identifiers[i] = helpers.Identifier(c)
-		}
+		identifiers[i] = columnIdentifier(c)
 	}
 	s.list = identifiers
 	return s
@@ -56,7 +50,9 @@ func (s *selects) Select(columns ...string) *selects {
 
 // AddSelect adds new columns to be selected.
 func (s *selects) AddSelect(columns ...string) *selects {
-	s.list = append(s.list, helpers.IdentifierList(columns)...)
+	for _, c := range columns {
+		s.list = append(s.list, columnIdentifier(c))
+	}
 	return s
 }
 
@@ -104,4 +100,25 @@ func (s *selects) AddSelectFunction(function, column string) *selects {
 func (s *selects) Distinct() *selects {
 	s.distinct = true
 	return s
+}
+
+func columnIdentifier(column string) helpers.SQLStringer {
+	var identifier helpers.SQLStringer
+	parts := strings.SplitN(column, " as ", 2)
+	c := parts[0]
+	if c == "*" {
+		identifier = helpers.Raw("*")
+	} else if strings.HasSuffix(c, ".*") {
+		identifier = helpers.Concat(helpers.Identifier(c[:len(c)-2]), helpers.Raw(".*"))
+	} else {
+		identifier = helpers.Identifier(c)
+	}
+	if len(parts) > 1 {
+		identifier = helpers.Concat(
+			identifier,
+			helpers.Raw(" as "),
+			helpers.Identifier(parts[1]),
+		)
+	}
+	return identifier
 }

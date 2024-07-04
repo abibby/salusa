@@ -245,4 +245,15 @@ func TestGenerateMigration(t *testing.T) {
 		assert.NoError(t, err)
 		cupaloy.SnapshotT(t, src)
 	})
+
+	t.Run("readonly", func(t *testing.T) {
+		type TestModel struct {
+			model.BaseModel
+			ID       int    `db:"id,primary"`
+			Readonly string `db:"readonly,readonly"`
+		}
+		src, err := migrate.New().GenerateMigration("2023-01-01T00:00:00Z create test model", "packageName", &TestModel{})
+		assert.NoError(t, err)
+		cupaloy.SnapshotT(t, src)
+	})
 }

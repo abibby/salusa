@@ -13,6 +13,7 @@ func TestName(t *testing.T) {
 	type Foo struct {
 		ID  int
 		Foo string `db:"foo,autoincrement,primary,type:date"`
+		Bar string `db:"bar,readonly"`
 	}
 
 	rt := reflect.TypeOf(Foo{})
@@ -38,5 +39,16 @@ func TestName(t *testing.T) {
 			Type:          dialects.DataType("date"),
 		},
 		helpers.DBTag(rt.Field(1)),
+	)
+	assert.Equal(
+		t,
+		&helpers.Tag{
+			Name:          "bar",
+			Primary:       false,
+			AutoIncrement: false,
+			Readonly:      true,
+			Index:         false,
+		},
+		helpers.DBTag(rt.Field(2)),
 	)
 }

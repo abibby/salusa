@@ -43,6 +43,9 @@ func blueprintFromFields(tableName string, fields []*field) *schema.Blueprint {
 				table.ForeignKey(foreignKey.LocalKey, foreignKey.RelatedTable, foreignKey.RelatedKey)
 			}
 		} else {
+			if f.tag.Readonly {
+				continue
+			}
 			b := table.OfType(f.dataType, f.tag.Name)
 			if f.nullable {
 				b.Nullable()
