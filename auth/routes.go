@@ -186,6 +186,7 @@ type LoginRequest struct {
 
 	Ctx  context.Context `inject:""`
 	Read database.Read   `inject:""`
+	Log  *slog.Logger    `inject:""`
 }
 type LoginResponse struct {
 	AccessToken  string `json:"token"`
@@ -218,6 +219,7 @@ func (o *RouteOptions[T, R]) login() *request.RequestHandler[LoginRequest, *Logi
 			return nil, fmt.Errorf("failed to log in: %w", err)
 		}
 		if reflect.ValueOf(u).IsNil() {
+			r.Log.Info("login attempt with unknown username", "username", r.Username)
 			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
 		}
 
@@ -229,6 +231,7 @@ func (o *RouteOptions[T, R]) login() *request.RequestHandler[LoginRequest, *Logi
 
 		err = bcrypt.CompareHashAndPassword(u.GetPasswordHash(), u.SaltedPassword(r.Password))
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			r.Log.Info("login attempt with incorrect password", "user_id", u.GetID(), "password", r.Password)
 			return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
 		} else if err != nil {
 			return nil, fmt.Errorf("could not check password hash: %w", err)

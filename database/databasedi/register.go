@@ -3,6 +3,8 @@ package databasedi
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"sync"
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
@@ -12,10 +14,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type dbDeps struct {
+	Cfg kernel.KernelConfig `inject:""`
+	Log *slog.Logger        `inject:""`
+}
+
 func RegisterFromConfig(migrations *migrate.Migrations) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
-		di.RegisterLazySingletonWith(ctx, func(cfg kernel.KernelConfig) (*sqlx.DB, error) {
-			var cfgAny any = cfg
+		di.RegisterLazySingletonWith(ctx, func(deps *dbDeps) (*sqlx.DB, error) {
+			var cfgAny any = deps.Cfg
 			cfger, ok := cfgAny.(dialects.DBConfiger)
 			if !ok {
 				return nil, fmt.Errorf("config not instance of dialects.DBConfiger")
@@ -34,9 +41,10 @@ func RegisterFromConfig(migrations *migrate.Migrations) func(ctx context.Context
 					return nil, fmt.Errorf("databasedi.RegisterFromConfig: migrate database: %w", err)
 				}
 			}
+			deps.Log.Info("database ready")
 			return db, nil
 		})
-		RegisterTransactions(ctx)
+		RegisterTransactions(ctx, nil)
 		return nil
 	}
 }
@@ -45,14 +53,14 @@ func Register(ctx context.Context, db *sqlx.DB) {
 	di.RegisterSingleton(ctx, func() *sqlx.DB {
 		return db
 	})
-	RegisterTransactions(ctx)
+	RegisterTransactions(ctx, nil)
 }
 
-func RegisterTransactions(ctx context.Context) {
+func RegisterTransactions(ctx context.Context, mtx *sync.Mutex) {
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Read, error) {
-		return database.NewRead(ctx, db), nil
+		return database.NewRead(ctx, mtx, db), nil
 	})
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Update, error) {
-		return database.NewUpdate(ctx, db), nil
+		return database.NewUpdate(ctx, mtx, db), nil
 	})
 }

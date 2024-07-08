@@ -19,6 +19,7 @@ func SrcFile(migrationName, packageName string, up, down fmt.GoStringer) (string
 	initSrc := `package %s
 	
 import (
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/schema"

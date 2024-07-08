@@ -3,12 +3,14 @@ package migrate
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/set"
 	"github.com/jmoiron/sqlx"
 )
@@ -123,12 +125,18 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 			runMigrations.Add(migration.Name)
 		}
 	}
-
+	update := database.NewUpdate(ctx, nil, db)
+	logger, err := di.Resolve[*slog.Logger](ctx)
+	if err != nil {
+		logger = slog.Default()
+	}
 	for _, migration := range m.migrations {
-		err = database.NewRead(ctx, db)(func(tx *sqlx.Tx) error {
+		err = update(func(tx *sqlx.Tx) error {
 			if runMigrations.Has(migration.Name) {
 				return nil
 			}
+
+			logger.Info("starting migration", "name", migration.Name)
 
 			m := &DBMigration{
 				Name:  migration.Name,
@@ -149,6 +157,7 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 			if err != nil {
 				return err
 			}
+			logger.Info("finished migration", "name", migration.Name)
 			return nil
 		})
 		if err != nil {

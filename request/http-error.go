@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -50,6 +51,12 @@ type StackFrame struct {
 var _ error = &HTTPError{}
 var _ Responder = &HTTPError{}
 
+func NewDefaultHTTPError(status int) *HTTPError {
+	return &HTTPError{
+		err:    errors.New(http.StatusText(status)),
+		status: status,
+	}
+}
 func NewHTTPError(err error, status int) *HTTPError {
 	return &HTTPError{
 		err:    err,
@@ -63,9 +70,8 @@ func (e *HTTPError) Unwrap() error {
 	return e.err
 }
 
-func (e *HTTPError) WithStack() *HTTPError {
+func (e *HTTPError) AddStack() {
 	e.stack = debug.Stack()
-	return e
 }
 
 func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {

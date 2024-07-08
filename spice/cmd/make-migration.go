@@ -31,7 +31,7 @@ var makeMigrationCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		run := "schema.Run(func(ctx context.Context, tx schema.DB) error {\n" +
+		run := "schema.Run(func(ctx context.Context, tx database.DB) error {\n" +
 			"return nil\n" +
 			"})"
 		src, err := migrate.SrcFile(name, c.Migration.Pkg, pkg.Raw(run), pkg.Raw(run))

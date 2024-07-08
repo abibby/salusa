@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -65,13 +66,21 @@ func runTx(ctx context.Context, db DB, f func(*sqlx.Tx) error, readOnly bool) er
 	}
 	return err
 }
-func NewUpdate(ctx context.Context, db DB) Update {
+func NewUpdate(ctx context.Context, mtx *sync.Mutex, db DB) Update {
 	return func(f func(tx *sqlx.Tx) error) (err error) {
+		if mtx != nil {
+			mtx.Lock()
+			defer mtx.Unlock()
+		}
 		return runTx(ctx, db, f, false)
 	}
 }
-func NewRead(ctx context.Context, db DB) Read {
+func NewRead(ctx context.Context, mtx *sync.Mutex, db DB) Read {
 	return func(f func(tx *sqlx.Tx) error) error {
+		if mtx != nil {
+			mtx.Lock()
+			defer mtx.Unlock()
+		}
 		return runTx(ctx, db, f, true)
 	}
 }

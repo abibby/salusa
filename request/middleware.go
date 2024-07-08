@@ -49,7 +49,7 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 				if e, ok := e.(error); ok {
 					err = e
 				} else {
-					err = fmt.Errorf("internal server error")
+					err = fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 				}
 				for _, handler := range handlers {
 					handler(err)
@@ -58,7 +58,10 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 				// err = fmt.Errorf("%w\n%s", err, debug.Stack())
 				responder, ok := getResponder(err)
 				if !ok {
-					responder = NewHTTPError(err, http.StatusInternalServerError).WithStack()
+					responder = NewHTTPError(err, http.StatusInternalServerError)
+				}
+				if httpErr, ok := responder.(*HTTPError); ok {
+					httpErr.AddStack()
 				}
 				err = responder.Respond(w, r)
 				if err != nil {
