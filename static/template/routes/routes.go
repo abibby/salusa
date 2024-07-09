@@ -13,11 +13,14 @@ func InitRoutes(r *router.Router) {
 	r.Use(request.HandleErrors())
 	r.Use(auth.AttachUser())
 
-	auth.RegisterRoutes(r, func(r *auth.EmailVerifiedUserCreateRequest) *models.User {
-		return &models.User{
-			EmailVerifiedUser: *auth.NewEmailVerifiedUser(r),
-		}
-	}, "/reset-password")
+	auth.RegisterRoutes(r, auth.NewBasicAuthController[*models.User](
+		auth.NewUser(func(r *auth.EmailVerifiedUserCreateRequest) *models.User {
+			return &models.User{
+				EmailVerifiedUser: *auth.NewEmailVerifiedUser(r),
+			}
+		}),
+		auth.ResetPasswordName("reset-password"),
+	))
 
 	r.Get("/", view.View("index.html", nil)).Name("home")
 	r.Get("/login", view.View("login.html", nil)).Name("login")

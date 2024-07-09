@@ -34,14 +34,14 @@ func (d *DevNull) Write(p []byte) (n int, err error) {
 var emails embed.FS
 
 var nullLogger = slog.New(slog.NewTextHandler(&DevNull{}, nil))
-var usernameRoutes = auth.Routes(auth.NewUsernameUser, "reset-password")
-var emailRoutes = auth.Routes(auth.NewEmailVerifiedUser, "reset-password")
+var usernameRoutes = auth.NewBasicAuthController[*auth.UsernameUser](auth.NewUser(auth.NewUsernameUser))
+var emailRoutes = auth.NewBasicAuthController[*auth.EmailVerifiedUser](auth.NewUser(auth.NewEmailVerifiedUser))
 var emailTemplates = view.NewViewTemplate(emails)
 
 func TestAuthRoutesUserCreate(t *testing.T) {
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		resp, err := usernameRoutes.UserCreate.Run(&auth.UserCreateRequest{
+		resp, err := usernameRoutes.RunUserCreate(&auth.UserCreateRequest{
 			Update:  dbtest.Update(tx),
 			Ctx:     ctx,
 			Logger:  nullLogger,
@@ -60,7 +60,7 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 
 	Run(t, "force lowercase usernames", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		resp, err := usernameRoutes.UserCreate.Run(&auth.UserCreateRequest{
+		resp, err := usernameRoutes.RunUserCreate(&auth.UserCreateRequest{
 			Update:  dbtest.Update(tx),
 			Ctx:     ctx,
 			Logger:  nullLogger,
@@ -81,7 +81,7 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 		ctx := context.Background()
 		urlResolver := routertest.NewTestResolver()
 		m := emailtest.NewTestMailer()
-		resp, err := emailRoutes.UserCreate.Run(&auth.UserCreateRequest{
+		resp, err := emailRoutes.RunUserCreate(&auth.UserCreateRequest{
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
 			Mailer:   m,
@@ -134,11 +134,12 @@ func TestAuthRoutesLogin(t *testing.T) {
 		err := model.Save(tx, u)
 		assert.NoError(t, err)
 
-		resp, err := usernameRoutes.Login.Run(&auth.LoginRequest{
+		resp, err := usernameRoutes.RunLogin(&auth.LoginRequest{
 			Username: "user",
 			Password: password,
 			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
+			Log:      nullLogger,
 		})
 		assert.NoError(t, err)
 		assert.NotZero(t, resp.AccessToken)
@@ -157,11 +158,12 @@ func TestAuthRoutesLogin(t *testing.T) {
 		err := model.Save(tx, u)
 		assert.NoError(t, err)
 
-		_, err = usernameRoutes.Login.Run(&auth.LoginRequest{
+		_, err = usernameRoutes.RunLogin(&auth.LoginRequest{
 			Username: "user",
 			Password: password,
 			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
+			Log:      nullLogger,
 		})
 		assert.ErrorIs(t, err, auth.ErrInvalidUserPass)
 	})
@@ -175,11 +177,12 @@ func TestAuthRoutesLogin(t *testing.T) {
 		err := model.Save(tx, u)
 		assert.NoError(t, err)
 
-		_, err = usernameRoutes.Login.Run(&auth.LoginRequest{
+		_, err = usernameRoutes.RunLogin(&auth.LoginRequest{
 			Username: "not user",
 			Password: password,
 			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
+			Log:      nullLogger,
 		})
 		assert.ErrorIs(t, err, auth.ErrInvalidUserPass)
 	})
@@ -193,11 +196,12 @@ func TestAuthRoutesLogin(t *testing.T) {
 		err := model.Save(tx, u)
 		assert.NoError(t, err)
 
-		_, err = usernameRoutes.Login.Run(&auth.LoginRequest{
+		_, err = usernameRoutes.RunLogin(&auth.LoginRequest{
 			Username: "user",
 			Password: "not pass",
 			Read:     dbtest.Read(tx),
 			Ctx:      ctx,
+			Log:      nullLogger,
 		})
 		assert.ErrorIs(t, err, auth.ErrInvalidUserPass)
 	})
@@ -218,7 +222,7 @@ func TestAuthRoutesVerifyEmail(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		resp, err := emailRoutes.VerifyEmail.Run(&auth.VerifyEmailRequest{
+		resp, err := emailRoutes.RunVerifyEmail(&auth.VerifyEmailRequest{
 			Token:  token,
 			Ctx:    ctx,
 			Update: dbtest.Update(tx),
@@ -253,7 +257,7 @@ func TestAuthRoutesResetPassword(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		resp, err := emailRoutes.ResetPassword.Run(&auth.ResetPasswordRequest{
+		resp, err := emailRoutes.RunResetPassword(&auth.ResetPasswordRequest{
 			Token:    token,
 			Password: "new password",
 			Ctx:      ctx,
@@ -291,7 +295,7 @@ func TestAuthRoutesChangePassword(t *testing.T) {
 		err := model.Save(tx, createdUser)
 		assert.NoError(t, err)
 
-		resp, err := usernameRoutes.ChangePassword.Run(&auth.ChangePasswordRequest[*auth.UsernameUser]{
+		resp, err := usernameRoutes.RunChangePassword(&auth.ChangePasswordRequest[*auth.UsernameUser]{
 			OldPassword: oldPassword,
 			NewPassword: "new password",
 			User:        createdUser,
@@ -317,15 +321,15 @@ func TestAuthRoutesRefresh(t *testing.T) {
 		err := model.Save(tx, createdUser)
 		assert.NoError(t, err)
 
-		token, err := auth.GenerateTokenFrom(&auth.Claims{
+		token, err := auth.GenerateToken(&auth.Claims{
 			RegisteredClaims: jwt.RegisteredClaims{
 				Subject: createdUser.GetID(),
 			},
-			Type: auth.TypeRefresh,
+			Scope: []string{auth.ScopeRefresh},
 		})
 		assert.NoError(t, err)
 
-		resp, err := usernameRoutes.Refresh.Run(&auth.RefreshRequest[*auth.UsernameUser]{
+		resp, err := usernameRoutes.RunRefresh(&auth.RefreshRequest[*auth.UsernameUser]{
 			RefreshToken: token,
 			Ctx:          ctx,
 			Read:         dbtest.Read(tx),
@@ -339,7 +343,7 @@ func TestAuthRoutesRefresh(t *testing.T) {
 		claims, err := auth.Parse(resp.AccessToken)
 		assert.NoError(t, err)
 		assert.Equal(t, createdUser.GetID(), claims.Subject)
-		assert.Equal(t, auth.TypeAccess, claims.Type)
+		assert.Equal(t, auth.ScopeStrings{auth.ScopeAccess}, claims.Scope)
 	})
 }
 
@@ -358,7 +362,7 @@ func TestAuthRoutesForgotPassword(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		_, err = emailRoutes.ForgotPassword.Run(&auth.ForgotPasswordRequest{
+		_, err = emailRoutes.RunForgotPassword(&auth.ForgotPasswordRequest{
 			Email:    "user@example.com",
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,

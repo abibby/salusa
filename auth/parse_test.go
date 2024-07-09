@@ -28,13 +28,13 @@ func TestParse(t *testing.T) {
 		{
 			Name: "type",
 			Claims: &auth.Claims{
-				Type: "type",
+				Scope: []string{"type"},
 			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			token, err := auth.GenerateTokenFrom(tc.Claims)
+			token, err := auth.GenerateToken(tc.Claims)
 			assert.NoError(t, err)
 			newClaims, err := auth.Parse(token)
 			assert.NoError(t, err)

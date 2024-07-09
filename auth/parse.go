@@ -9,18 +9,6 @@ import (
 
 var ErrInvalidToken = fmt.Errorf("invalid token")
 
-type ClaimType string
-
-var (
-	TypeAccess  = ClaimType("access")
-	TypeRefresh = ClaimType("refresh")
-)
-
-type Claims struct {
-	jwt.RegisteredClaims
-	Type ClaimType `json:"type,omitempty"`
-}
-
 func ParseOf[T jwt.Claims](token string) (T, error) {
 	claims, err := helpers.NewOf[T]()
 	if err != nil {
