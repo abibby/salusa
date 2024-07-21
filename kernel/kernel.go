@@ -3,6 +3,8 @@ package kernel
 import (
 	"context"
 	"net/http"
+
+	"github.com/go-openapi/spec"
 )
 
 type KernelConfig interface {
@@ -16,12 +18,14 @@ type Kernel struct {
 	rootHandler    func(ctx context.Context) http.Handler
 	services       []Service
 
+	docs *spec.Swagger
+
 	cfg KernelConfig
 
 	bootstrapped bool
 }
 
-func New[T KernelConfig](options ...KernelOption) *Kernel {
+func New(options ...KernelOption) *Kernel {
 	k := &Kernel{
 		bootstrap:      []func(context.Context) error{},
 		registerConfig: func(context.Context) error { return nil },

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/abibby/salusa/di"
 )
 
 var (
@@ -15,6 +17,10 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 		return ErrAlreadyBootstrapped
 	}
 	k.bootstrapped = true
+
+	di.RegisterSingleton(ctx, func() *Kernel {
+		return k
+	})
 
 	err := k.registerConfig(ctx)
 	if err != nil {
