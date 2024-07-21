@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/di"
+	"github.com/go-openapi/spec"
 )
 
 type KernelOption func(*Kernel) *Kernel
@@ -43,6 +44,18 @@ func RootHandler(rootHandler func(ctx context.Context) http.Handler) KernelOptio
 func Services(services ...Service) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.services = services
+		return k
+	}
+}
+
+func APIDocumentationInfo(info spec.InfoProps) KernelOption {
+	return func(k *Kernel) *Kernel {
+		if k.docs == nil {
+			k.docs = &spec.Swagger{}
+		}
+		k.docs.Info = &spec.Info{
+			InfoProps: info,
+		}
 		return k
 	}
 }

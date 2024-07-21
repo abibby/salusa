@@ -139,14 +139,18 @@ func parseStack(stack []byte) *StackTrace {
 
 	frames := []*StackFrame{}
 
+	os.Stderr.Write(stack)
+
 	for i := 1; i < len(lines); i += 2 {
 		if len(lines) <= i+1 {
 			break
 		}
 		call := string(lines[i])
-		pathLine := strings.SplitN(string(lines[i+1]), ":", 2)
-		file := strings.TrimSpace(pathLine[0])
-		pathLineEnd := strings.SplitN(pathLine[1], " ", 2)
+		pathLine := string(lines[i+1])
+		i := strings.LastIndex(pathLine, ":")
+		// pathLine := strings.SplitN(string(lines[i+1]), ":", 2)
+		file := strings.TrimSpace(pathLine[:i])
+		pathLineEnd := strings.SplitN(pathLine[i+1:], " ", 2)
 
 		line, err := strconv.Atoi(pathLineEnd[0])
 		if err != nil {

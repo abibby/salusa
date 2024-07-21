@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/abibby/salusa/auth"
+	"github.com/abibby/salusa/openapidoc"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/abibby/salusa/static/template/app/handlers"
@@ -28,4 +31,8 @@ func InitRoutes(r *router.Router) {
 
 	r.Get("/user", handlers.UserList)
 	r.Get("/user/{id}", handlers.UserGet)
+
+	r.Get("/swagger.json", handlers.Docs)
+
+	r.Handle("/docs", http.StripPrefix("/docs", openapidoc.SwaggerUI("/swagger.json")))
 }
