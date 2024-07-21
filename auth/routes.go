@@ -602,7 +602,7 @@ func (o *BasicAuthController[T]) sendEmails(opt *sendEmailOptions) {
 		b, err := view.View(opt.TemplateName, map[string]any{
 			"ResetPasswordName": o.resetPasswordName,
 			"Token":             token,
-		}).Bytes(&view.ViewData{
+		}).BytesData(&view.ViewData{
 			URL:      opt.URL,
 			Template: opt.ViewTemplate,
 		})

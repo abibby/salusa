@@ -13,6 +13,7 @@ import (
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type ViewTemplate struct {
@@ -38,11 +39,13 @@ func (vh *ViewHandler) Execute(ctx context.Context, w io.Writer) error {
 	}
 	return vh.ExecuteData(d, w)
 }
-
 func (vh *ViewHandler) ExecuteData(d *ViewData, w io.Writer) error {
 	tpl, err := template.New("").
 		Funcs(template.FuncMap{
 			"route": d.URL.Resolve,
+			"dd": func(v any) template.HTML {
+				return template.HTML("<pre>" + template.HTMLEscapeString(spew.Sdump(v)) + "</pre>")
+			},
 		}).
 		ParseFS(d.Template.fsys, d.Template.patterns...)
 	if err != nil {
@@ -66,7 +69,15 @@ func (vh *ViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (vh *ViewHandler) Bytes(d *ViewData) ([]byte, error) {
+func (vh *ViewHandler) Bytes(ctx context.Context) ([]byte, error) {
+	b := &bytes.Buffer{}
+	err := vh.Execute(ctx, b)
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+func (vh *ViewHandler) BytesData(d *ViewData) ([]byte, error) {
 	b := &bytes.Buffer{}
 	err := vh.ExecuteData(d, b)
 	if err != nil {

@@ -61,7 +61,7 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 					responder = NewHTTPError(err, http.StatusInternalServerError)
 				}
 				if httpErr, ok := responder.(*HTTPError); ok {
-					httpErr.AddStack()
+					httpErr.WithStack()
 				}
 				err = responder.Respond(w, r)
 				if err != nil {

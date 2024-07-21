@@ -57,6 +57,7 @@ func NewDefaultHTTPError(status int) *HTTPError {
 		status: status,
 	}
 }
+
 func NewHTTPError(err error, status int) *HTTPError {
 	return &HTTPError{
 		err:    err,
@@ -70,8 +71,9 @@ func (e *HTTPError) Unwrap() error {
 	return e.err
 }
 
-func (e *HTTPError) AddStack() {
+func (e *HTTPError) WithStack() *HTTPError {
 	e.stack = debug.Stack()
+	return e
 }
 
 func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
@@ -85,52 +87,46 @@ func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
 		response.Fields = validationErr
 	}
 
-	if e.status == 500 {
+	if e.status == 500 && e.stack != nil {
 		response.StackTrace = parseStack(e.stack)
 	}
 
-	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		t := template.New("error").Funcs(template.FuncMap{
-			"jsonEncode": func(v any) string {
-				b, err := json.Marshal(v)
-				if err != nil {
-					return err.Error()
-				}
-				return string(b)
-			},
-			"isLocal": func(s string) bool {
-				return strings.HasPrefix(s, cwd)
-			},
-		})
-		t, err = t.Parse(errorTemplate)
-		if err != nil {
-			panic(err)
-		}
-
-		if err, ok := e.err.(HTMLError); ok {
-			response.Error = template.HTML(err.HTMLError())
-		} else {
-			response.Error = template.HTML("<h2>" + e.err.Error() + "</h2>")
-		}
-
-		reader, writer := io.Pipe()
-		go func() {
-			err := t.Execute(writer, response)
-			if err != nil {
-				panic(err)
-			}
-			err = writer.Close()
-			if err != nil {
-				panic(err)
-			}
-		}()
-		return NewResponse(reader).SetStatus(e.status).AddHeader("Content-Type", "text/html").Respond(w, r)
+	if strings.HasPrefix(r.Header.Get("Accept"), "application/json") {
+		return NewJSONResponse(response).SetStatus(e.status).Respond(w, r)
 	}
-	return NewJSONResponse(response).SetStatus(e.status).Respond(w, r)
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	t := template.New("error").Funcs(template.FuncMap{
+		"jsonEncode": func(v any) string {
+			b, err := json.Marshal(v)
+			if err != nil {
+				return err.Error()
+			}
+			return string(b)
+		},
+		"isLocal": func(s string) bool {
+			return strings.HasPrefix(s, cwd)
+		},
+	})
+	t, err = t.Parse(errorTemplate)
+	if err != nil {
+		return err
+	}
+
+	if err, ok := e.err.(HTMLError); ok {
+		response.Error = template.HTML(err.HTMLError())
+	} else {
+		response.Error = template.HTML("<h2>" + e.err.Error() + "</h2>")
+	}
+
+	reader, writer := io.Pipe()
+	go func() {
+		err := t.Execute(writer, response)
+		_ = writer.CloseWithError(err)
+	}()
+	return NewResponse(reader).SetStatus(e.status).AddHeader("Content-Type", "text/html").Respond(w, r)
 }
 
 func parseStack(stack []byte) *StackTrace {

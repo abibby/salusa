@@ -19,7 +19,7 @@ func Register(h slog.Handler) func(ctx context.Context) error {
 		di.Register(ctx, func(ctx context.Context, tag string) (*slog.Logger, error) {
 			if h == nil {
 				h = slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-					AddSource: true,
+					AddSource: false,
 				})
 			}
 			logger := slog.New(h)
