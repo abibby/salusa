@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/router"
 	"github.com/go-openapi/spec"
 )
 
@@ -17,7 +19,7 @@ func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
 	}
 }
 
-func Config[T KernelConfig](cb func() T) KernelOption {
+func Config[T config.Config](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
 		cfg := cb()
 		k.cfg = cfg
@@ -25,7 +27,7 @@ func Config[T KernelConfig](cb func() T) KernelOption {
 			di.RegisterSingleton(ctx, func() T {
 				return cfg
 			})
-			di.RegisterSingleton(ctx, func() KernelConfig {
+			di.RegisterSingleton(ctx, func() config.Config {
 				return cfg
 			})
 			return nil
@@ -36,7 +38,21 @@ func Config[T KernelConfig](cb func() T) KernelOption {
 
 func RootHandler(rootHandler func(ctx context.Context) http.Handler) KernelOption {
 	return func(k *Kernel) *Kernel {
-		k.rootHandler = rootHandler
+		k.rootHandlerFactory = rootHandler
+		return k
+	}
+}
+func InitRoutes(cb func(r *router.Router)) KernelOption {
+	return RootHandler(func(ctx context.Context) http.Handler {
+		r := router.New()
+		cb(r)
+		r.Register(ctx)
+		return r
+	})
+}
+func Middleware(globalMiddleware []router.MiddlewareFunc) KernelOption {
+	return func(k *Kernel) *Kernel {
+		k.globalMiddleware = globalMiddleware
 		return k
 	}
 }
@@ -49,13 +65,28 @@ func Services(services ...Service) KernelOption {
 }
 
 func APIDocumentationInfo(info spec.InfoProps) KernelOption {
+	return swagger(func(s *spec.Swagger) *spec.Swagger {
+		s.Info = &spec.Info{
+			InfoProps: info,
+		}
+		return s
+	})
+}
+
+func APIDocumentationBasePath(basePath string) KernelOption {
+	return swagger(func(s *spec.Swagger) *spec.Swagger {
+		s.BasePath = basePath
+		return s
+	})
+}
+
+func swagger(opt func(*spec.Swagger) *spec.Swagger) KernelOption {
 	return func(k *Kernel) *Kernel {
 		if k.docs == nil {
 			k.docs = &spec.Swagger{}
+			// k.docs.Schemes = []string{"http", "https"}
 		}
-		k.docs.Info = &spec.Info{
-			InfoProps: info,
-		}
+		k.docs = opt(k.docs)
 		return k
 	}
 }

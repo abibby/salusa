@@ -4,23 +4,24 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/abibby/salusa/config"
+	"github.com/abibby/salusa/request"
+	"github.com/abibby/salusa/router"
 	"github.com/go-openapi/spec"
 )
 
-type KernelConfig interface {
-	GetHTTPPort() int
-	GetBaseURL() string
-}
-
 type Kernel struct {
-	bootstrap      []func(context.Context) error
-	registerConfig func(context.Context) error
-	rootHandler    func(ctx context.Context) http.Handler
-	services       []Service
+	bootstrap          []func(context.Context) error
+	registerConfig     func(context.Context) error
+	rootHandlerFactory func(ctx context.Context) http.Handler
+	rootHandler        http.Handler
+	services           []Service
+
+	globalMiddleware []router.MiddlewareFunc
 
 	docs *spec.Swagger
 
-	cfg KernelConfig
+	cfg config.Config
 
 	bootstrapped bool
 }
@@ -29,8 +30,9 @@ func New(options ...KernelOption) *Kernel {
 	k := &Kernel{
 		bootstrap:      []func(context.Context) error{},
 		registerConfig: func(context.Context) error { return nil },
-		rootHandler: func(ctx context.Context) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		rootHandler:    http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
+		globalMiddleware: []router.MiddlewareFunc{
+			request.DIMiddleware(),
 		},
 		services:     []Service{},
 		bootstrapped: false,
@@ -43,10 +45,13 @@ func New(options ...KernelOption) *Kernel {
 	return k
 }
 
-func (k *Kernel) RootHandler(ctx context.Context) http.Handler {
-	return k.rootHandler(ctx)
+func (k *Kernel) RootHandler() http.Handler {
+	if !k.bootstrapped {
+		panic("cannot access root handler before the kernel is bootstrapped")
+	}
+	return k.rootHandler
 }
 
-func (k *Kernel) Config() KernelConfig {
+func (k *Kernel) Config() config.Config {
 	return k.cfg
 }

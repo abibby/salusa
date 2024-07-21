@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/router"
 )
 
 type contextKey uint8
@@ -31,4 +32,15 @@ func Register(ctx context.Context) error {
 		return resp, nil
 	})
 	return nil
+}
+
+func DIMiddleware() router.MiddlewareFunc {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, requestKey, r)
+			ctx = context.WithValue(ctx, responseKey, w)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }

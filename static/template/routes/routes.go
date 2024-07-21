@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/abibby/salusa/auth"
 	"github.com/abibby/salusa/openapidoc"
 	"github.com/abibby/salusa/request"
@@ -16,23 +14,23 @@ func InitRoutes(r *router.Router) {
 	r.Use(request.HandleErrors())
 	r.Use(auth.AttachUser())
 
-	auth.RegisterRoutes(r, auth.NewBasicAuthController[*models.User](
-		auth.NewUser(func(r *auth.EmailVerifiedUserCreateRequest) *models.User {
-			return &models.User{
-				EmailVerifiedUser: *auth.NewEmailVerifiedUser(r),
-			}
-		}),
-		auth.ResetPasswordName("reset-password"),
-	))
-
 	r.Get("/", view.View("index.html", nil)).Name("home")
 	r.Get("/login", view.View("login.html", nil)).Name("login")
 	r.Get("/user/create", view.View("create_user.html", nil)).Name("user.create")
 
-	r.Get("/user", handlers.UserList)
-	r.Get("/user/{id}", handlers.UserGet)
+	r.Handle("/docs", openapidoc.SwaggerUI("/docs"))
 
-	r.Get("/swagger.json", handlers.Docs)
+	r.Group("/api", func(r *router.Router) {
+		auth.RegisterRoutes(r, auth.NewBasicAuthController[*models.User](
+			auth.NewUser(func(r *auth.EmailVerifiedUserCreateRequest) *models.User {
+				return &models.User{
+					EmailVerifiedUser: *auth.NewEmailVerifiedUser(r),
+				}
+			}),
+			auth.ResetPasswordName("reset-password"),
+		))
 
-	r.Handle("/docs", http.StripPrefix("/docs", openapidoc.SwaggerUI("/swagger.json")))
+		r.Get("/user", handlers.UserList)
+		r.Get("/user/{id}", handlers.UserGet)
+	})
 }

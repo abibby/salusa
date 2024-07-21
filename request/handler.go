@@ -35,7 +35,7 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 }
 func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	var req TRequest
-	err := RunRW(r, w, &req)
+	err := Run(r, &req)
 	if validationErr, ok := err.(ValidationError); ok {
 		return NewHTTPError(validationErr, http.StatusUnprocessableEntity)
 	} else if err != nil {

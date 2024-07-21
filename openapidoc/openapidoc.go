@@ -1,46 +1,68 @@
 package openapidoc
 
 import (
+	"context"
 	"embed"
+	"encoding/json"
+	"fmt"
 	"io/fs"
 	"net/http"
-	"text/template"
 
+	"github.com/abibby/salusa/di"
 	"github.com/go-openapi/spec"
 )
 
 type Operationer interface {
-	Operation() (*spec.Operation, error)
+	Operation(ctx context.Context) (*spec.Operation, error)
 }
 type Pathser interface {
-	Paths() (*spec.Paths, error)
+	Paths(ctx context.Context, basePath string) (*spec.Paths, error)
 }
 type APIDocer interface {
-	APIDoc() (*spec.Swagger, error)
+	APIDoc(context.Context) (*spec.Swagger, error)
 }
 
-// not go:generate npm upgrade && npm i
+//go:generate npm run upgrade-and-install
 
 //go:embed node_modules/swagger-ui-dist
 var embededFiles embed.FS
 
 //go:embed swagger-initializer.js
-var swaggerInit string
+var swaggerInitializer []byte
 
-func SwaggerUI(url string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func SwaggerUI(prefix string) http.Handler {
+	return http.StripPrefix(prefix, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		swaggerUIFiles, err := fs.Sub(embededFiles, "node_modules/swagger-ui-dist")
 		if err != nil {
 			panic(err)
 		}
-		if r.URL.Path == "/swagger-initializer.js" {
-			tpl, err := template.New("").Parse(swaggerInit)
+		switch r.URL.Path {
+		case "":
+			http.Redirect(w, r, r.RequestURI+"/", http.StatusFound)
+
+		case "/swagger-initializer.js":
+			w.Header().Add("Content-Length", fmt.Sprint(len(swaggerInitializer)))
+			w.Header().Add("Content-Type", "application/json")
+			w.Write(swaggerInitializer)
+
+		case "/swagger.json":
+			api, err := di.Resolve[APIDocer](r.Context())
 			if err != nil {
 				panic(err)
 			}
-			tpl.Execute(w, map[string]string{"URL": url})
-			return
+			doc, err := api.APIDoc(r.Context())
+			if err != nil {
+				panic(err)
+			}
+			e := json.NewEncoder(w)
+			e.SetIndent("", "    ")
+			err = e.Encode(doc)
+			if err != nil {
+				panic(err)
+			}
+
+		default:
+			http.FileServerFS(swaggerUIFiles).ServeHTTP(w, r)
 		}
-		http.FileServerFS(swaggerUIFiles).ServeHTTP(w, r)
-	})
+	}))
 }

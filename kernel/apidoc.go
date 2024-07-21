@@ -2,9 +2,13 @@ package kernel
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/url"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/openapidoc"
+	"github.com/abibby/salusa/router"
 	"github.com/go-openapi/spec"
 )
 
@@ -17,25 +21,48 @@ func (k *Kernel) APIDoc(ctx context.Context) (*spec.Swagger, error) {
 	if k.docs != nil {
 		docs = *k.docs
 	}
-	h := k.RootHandler(context.Background())
+	h := k.RootHandler()
 	if paths, ok := h.(openapidoc.Pathser); ok {
 		var err error
-		docs.Paths, err = paths.Paths()
+		docs.Paths, err = paths.Paths(ctx, docs.BasePath)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	u, err := url.Parse(k.cfg.GetBaseURL())
+	err := k.addUrlInfo(ctx, &docs)
 	if err != nil {
-		k.Logger(context.Background()).Warn("invalid base url")
-	} else {
-		docs.Schemes = []string{u.Scheme}
-		docs.Host = u.Host
-		docs.BasePath = u.Path
+		return nil, err
 	}
 
 	docs.Swagger = "2.0"
 
 	return &docs, nil
+}
+
+func (k *Kernel) addUrlInfo(ctx context.Context, docs *spec.Swagger) error {
+	urlResolver, err := di.Resolve[router.URLResolver](ctx)
+	if errors.Is(err, di.ErrNotRegistered) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	u, err := url.Parse(urlResolver.Resolve("/"))
+	if err != nil {
+		return fmt.Errorf("resolve: %w", err)
+	}
+
+	if u.Host == "" {
+		return fmt.Errorf("no host in url %#v", u)
+	}
+
+	if docs.Schemes == nil {
+		docs.Schemes = []string{u.Scheme}
+	}
+	if docs.Host == "" {
+		docs.Host = u.Host
+	}
+
+	return nil
 }

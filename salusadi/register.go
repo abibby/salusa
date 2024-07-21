@@ -10,6 +10,7 @@ import (
 	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/filesystem"
+	"github.com/abibby/salusa/openapidoc/openapidocdi"
 	"github.com/abibby/salusa/request"
 )
 
@@ -23,6 +24,7 @@ func Register[TUser auth.User](migrations *migrate.Migrations) func(ctx context.
 			email.Register,
 			event.Register,
 			filesystem.Register,
+			openapidocdi.Register,
 		}
 
 		for _, register := range registerers {

@@ -6,17 +6,17 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/kernel"
 	"github.com/jmoiron/sqlx"
 )
 
 type dbDeps struct {
-	Cfg kernel.KernelConfig `inject:""`
-	Log *slog.Logger        `inject:""`
+	Cfg config.Config `inject:""`
+	Log *slog.Logger  `inject:""`
 }
 
 func RegisterFromConfig(migrations *migrate.Migrations) func(ctx context.Context) error {

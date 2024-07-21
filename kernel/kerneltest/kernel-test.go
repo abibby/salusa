@@ -8,20 +8,21 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/kernel"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
-type TestKernel[T kernel.KernelConfig] struct {
+type TestKernel[T config.Config] struct {
 	kernel *kernel.Kernel
 	config T
 	ctx    context.Context
 	t      *testing.T
 }
 
-func NewTestKernelFactory[T kernel.KernelConfig](k *kernel.Kernel, cfg T) func(t *testing.T) *TestKernel[T] {
+func NewTestKernelFactory[T config.Config](k *kernel.Kernel, cfg T) func(t *testing.T) *TestKernel[T] {
 	return func(t *testing.T) *TestKernel[T] {
 		ctx := di.TestDependencyProviderContext()
 		k := kernel.Config(func() T { return cfg })(k)
@@ -82,7 +83,7 @@ func (k *TestKernel[T]) DeleteJSON(target string, body any) *HttpResult {
 }
 
 func (k *TestKernel[T]) HandleRequest(r *http.Request) *HttpResult {
-	h := k.kernel.RootHandler(k.ctx)
+	h := k.kernel.RootHandler()
 	spew.Dump(di.GetDependencyProvider(k.ctx))
 	w := httptest.NewRecorder()
 

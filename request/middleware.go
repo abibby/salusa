@@ -3,11 +3,11 @@ package request
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/abibby/salusa/router"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type errorContextKey struct{}
@@ -45,11 +45,15 @@ func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
 				if e == nil {
 					return
 				}
+				spew.Dump(e)
 				var err error
-				if e, ok := e.(error); ok {
+				switch e := e.(type) {
+				case error:
 					err = e
-				} else {
-					err = fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+				case string:
+					err = errors.New(e)
+				default:
+					err = NewDefaultHTTPError(http.StatusInternalServerError)
 				}
 				for _, handler := range handlers {
 					handler(err)

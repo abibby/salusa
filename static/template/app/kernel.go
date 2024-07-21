@@ -1,10 +1,12 @@
 package app
 
 import (
+	"context"
+
 	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/event/cron"
 	"github.com/abibby/salusa/kernel"
-	"github.com/abibby/salusa/router"
+	"github.com/abibby/salusa/openapidoc"
 	"github.com/abibby/salusa/salusadi"
 	"github.com/abibby/salusa/static/template/app/events"
 	"github.com/abibby/salusa/static/template/app/jobs"
@@ -16,6 +18,7 @@ import (
 	"github.com/abibby/salusa/static/template/routes"
 	"github.com/abibby/salusa/view"
 	"github.com/go-openapi/spec"
+	"github.com/google/uuid"
 )
 
 var Kernel = kernel.New(
@@ -24,21 +27,10 @@ var Kernel = kernel.New(
 		salusadi.Register[*models.User](migrations.Use()),
 		view.Register(resources.Content, "**/*.html"),
 		providers.Register,
-		// func(ctx context.Context) error {
-		// 	k, err := di.Resolve[*kernel.Kernel](ctx)
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	doc, err := k.APIDoc()
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		// 	e := json.NewEncoder(os.Stdout)
-		// 	e.SetIndent("", "  ")
-		// 	e.Encode(doc)
-		// 	os.Exit(1)
-		// 	return nil
-		// },
+		func(ctx context.Context) error {
+			openapidoc.RegisterFormat[uuid.UUID]("uuid")
+			return nil
+		},
 	),
 	kernel.Services(
 		cron.Service().
@@ -47,8 +39,10 @@ var Kernel = kernel.New(
 			event.NewListener[*jobs.LogJob](),
 		),
 	),
-	router.InitRoutes(routes.InitRoutes),
+	kernel.InitRoutes(routes.InitRoutes),
 	kernel.APIDocumentationInfo(spec.InfoProps{
-		Title: "Salusa Example API",
+		Title:       "Salusa Example API",
+		Description: `This is the API documentaion for the example Salusa application`,
 	}),
+	kernel.APIDocumentationBasePath("/api"),
 )

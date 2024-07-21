@@ -1,7 +1,9 @@
 package router
 
 import (
+	"context"
 	"net/http"
+	"strings"
 
 	"github.com/abibby/salusa/openapidoc"
 	"github.com/go-openapi/spec"
@@ -9,20 +11,24 @@ import (
 
 var _ openapidoc.Pathser = (*Router)(nil)
 
-func (r *Router) Paths() (*spec.Paths, error) {
+func (r *Router) Paths(ctx context.Context, basePath string) (*spec.Paths, error) {
 	var err error
 	paths := &spec.Paths{
 		Paths: map[string]spec.PathItem{},
 	}
 	for _, route := range r.routes.Routes {
-		pathItem, ok := paths.Paths[route.Path]
+		if basePath != "" && !strings.HasPrefix(route.Path, basePath) {
+			continue
+		}
+		path := strings.TrimPrefix(route.Path, basePath)
+		pathItem, ok := paths.Paths[path]
 		if !ok {
 			pathItem = spec.PathItem{}
 		}
 
 		var op *spec.Operation
 		if oper, ok := route.handler.(openapidoc.Operationer); ok {
-			op, err = oper.Operation()
+			op, err = oper.Operation(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -49,7 +55,7 @@ func (r *Router) Paths() (*spec.Paths, error) {
 			continue
 			// return nil, fmt.Errorf("unsupported method %s", route.Method)
 		}
-		paths.Paths[route.Path] = pathItem
+		paths.Paths[path] = pathItem
 	}
 	return paths, nil
 }

@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"reflect"
+	"slices"
 )
 
 type PrimaryKeyer interface {
@@ -20,6 +21,21 @@ func PrimaryKey(m any) []string {
 		return []string{fallback}
 	}
 	return primary
+}
+
+func PrimaryKeyFields(m any) []reflect.StructField {
+	return RPrimaryKeyFields(reflect.TypeOf(m))
+}
+func RPrimaryKeyFields(t reflect.Type) []reflect.StructField {
+	keys := PrimaryKey(Create(t).Interface())
+	primaryFields := make([]reflect.StructField, 0, len(keys))
+	for _, sf := range GetFields(t) {
+		tag := DBTag(sf)
+		if slices.Contains(keys, tag.Name) {
+			primaryFields = append(primaryFields, sf)
+		}
+	}
+	return primaryFields
 }
 
 func PrimaryKeyValue(m any) ([]any, error) {

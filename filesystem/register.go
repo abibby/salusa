@@ -6,8 +6,8 @@ import (
 	"io/fs"
 	"os"
 
+	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/kernel"
 )
 
 type Config interface {
@@ -33,7 +33,7 @@ func (l *LocalFS) FS() fs.FS {
 }
 
 func Register(ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(cfg kernel.KernelConfig) (fs.FS, error) {
+	di.RegisterLazySingletonWith(ctx, func(cfg config.Config) (fs.FS, error) {
 		var cfgAny any = cfg
 		cfger, ok := cfgAny.(FSConfiger)
 		if !ok {

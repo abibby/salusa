@@ -10,6 +10,7 @@ require (
 	github.com/cosmtrek/air v1.51.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-mail/mail v2.3.1+incompatible
+	github.com/go-openapi/spec v0.21.0
 	github.com/go-sql-driver/mysql v1.8.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.4.0
@@ -43,7 +44,6 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
-	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gohugoio/hugo v0.123.3 // indirect

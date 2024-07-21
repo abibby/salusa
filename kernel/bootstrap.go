@@ -18,6 +18,8 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 	}
 	k.bootstrapped = true
 
+	k.rootHandler = k.rootHandlerFactory(ctx)
+
 	di.RegisterSingleton(ctx, func() *Kernel {
 		return k
 	})

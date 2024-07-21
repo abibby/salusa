@@ -36,12 +36,15 @@ func (k *Kernel) Run(ctx context.Context) error {
 
 func (k *Kernel) RunHttpServer(ctx context.Context) error {
 	k.Logger(ctx).Info(fmt.Sprintf("listening at http://localhost:%d", k.cfg.GetHTTPPort()))
+	h := k.rootHandler
 
-	handler := k.rootHandler(ctx)
+	for _, m := range k.globalMiddleware {
+		h = m(h)
+	}
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", k.cfg.GetHTTPPort()),
-		Handler: handler,
+		Handler: h,
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx
 		},
