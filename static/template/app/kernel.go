@@ -40,9 +40,11 @@ var Kernel = kernel.New(
 		),
 	),
 	kernel.InitRoutes(routes.InitRoutes),
-	kernel.APIDocumentationInfo(spec.InfoProps{
-		Title:       "Salusa Example API",
-		Description: `This is the API documentaion for the example Salusa application`,
-	}),
-	kernel.APIDocumentationBasePath("/api"),
+	kernel.APIDocumentation(
+		openapidoc.Info(spec.InfoProps{
+			Title:       "Salusa Example API",
+			Description: `This is the API documentaion for the example Salusa application`,
+		}),
+		openapidoc.BasePath("/api"),
+	),
 )

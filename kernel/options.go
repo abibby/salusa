@@ -6,6 +6,7 @@ import (
 
 	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/openapidoc"
 	"github.com/abibby/salusa/router"
 	"github.com/go-openapi/spec"
 )
@@ -64,29 +65,12 @@ func Services(services ...Service) KernelOption {
 	}
 }
 
-func APIDocumentationInfo(info spec.InfoProps) KernelOption {
-	return swagger(func(s *spec.Swagger) *spec.Swagger {
-		s.Info = &spec.Info{
-			InfoProps: info,
-		}
-		return s
-	})
-}
-
-func APIDocumentationBasePath(basePath string) KernelOption {
-	return swagger(func(s *spec.Swagger) *spec.Swagger {
-		s.BasePath = basePath
-		return s
-	})
-}
-
-func swagger(opt func(*spec.Swagger) *spec.Swagger) KernelOption {
+func APIDocumentation(options ...openapidoc.SwaggerOption) KernelOption {
 	return func(k *Kernel) *Kernel {
-		if k.docs == nil {
-			k.docs = &spec.Swagger{}
-			// k.docs.Schemes = []string{"http", "https"}
+		k.docs = &spec.Swagger{}
+		for _, opt := range options {
+			k.docs = opt(k.docs)
 		}
-		k.docs = opt(k.docs)
 		return k
 	}
 }

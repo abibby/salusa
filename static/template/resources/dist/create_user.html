@@ -6,7 +6,7 @@
     <title>Login</title>
   </head>
   <body>
-    <form action="/user" method="POST">
+    <form action="{{ route "auth.user.create" }}" method="POST">
       <div>
         <label for="#username">username</label>
         <input type="text" id="username" name="username" />
