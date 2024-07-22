@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/di"
+	"github.com/go-openapi/spec"
 )
 
 func init() {
@@ -16,9 +17,14 @@ func init() {
 }
 
 type RequestHandler[TRequest, TResponse any] struct {
-	handler func(r *TRequest) (TResponse, error)
+	handler   func(r *TRequest) (TResponse, error)
+	operation *spec.OperationProps
 }
 
+func (h *RequestHandler[TRequest, TResponse]) Docs(op *spec.OperationProps) *RequestHandler[TRequest, TResponse] {
+	h.operation = op
+	return h
+}
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := h.serveHTTP(w, r)
 	if err == nil {

@@ -17,9 +17,12 @@ var _ openapidoc.Operationer = (*RequestHandler[any, any])(nil)
 // Operation implements openapidoc.Operationer.
 func (h *RequestHandler[TRequest, TResponse]) Operation(ctx context.Context) (*spec.Operation, error) {
 	var err error
-	op := spec.NewOperation("")
-	// op.Parameters
-	// spec.NewResponse()
+	var op *spec.Operation
+	if h.operation != nil {
+		op = &spec.Operation{OperationProps: *h.operation}
+	} else {
+		op = spec.NewOperation("")
+	}
 
 	op.Responses = &spec.Responses{}
 	op.Parameters, err = newAPIRequest[TRequest]()
