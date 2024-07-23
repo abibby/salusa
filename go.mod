@@ -17,6 +17,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
+	github.com/lmittmann/tint v1.0.5
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/spf13/cobra v1.8.0

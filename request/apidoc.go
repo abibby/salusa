@@ -14,7 +14,11 @@ var typeModel = reflect.TypeOf((*model.Model)(nil)).Elem()
 
 var _ openapidoc.Operationer = (*RequestHandler[any, any])(nil)
 
-// Operation implements openapidoc.Operationer.
+func (h *RequestHandler[TRequest, TResponse]) Docs(op *spec.OperationProps) *RequestHandler[TRequest, TResponse] {
+	h.operation = op
+	return h
+}
+
 func (h *RequestHandler[TRequest, TResponse]) Operation(ctx context.Context) (*spec.Operation, error) {
 	var err error
 	var op *spec.Operation
@@ -33,6 +37,12 @@ func (h *RequestHandler[TRequest, TResponse]) Operation(ctx context.Context) (*s
 	if err != nil {
 		return nil, err
 	}
+	if op.Responses.Default != nil {
+		op.Produces = []string{
+			"application/json",
+		}
+	}
+
 	return op, nil
 }
 
@@ -46,7 +56,7 @@ func newAPIRequest[T any]() ([]spec.Parameter, error) {
 		return nil, err
 	}
 	if len(schema.Properties) > 0 {
-		params = append(params, *spec.BodyParam("Body", schema))
+		params = append(params, *spec.BodyParam(t.Name(), schema))
 	}
 	for _, field := range helpers.GetFields(t) {
 		if name, ok := field.Tag.Lookup("query"); ok {
@@ -103,5 +113,6 @@ func newAPIResponse[T any]() (*spec.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return resp, nil
 }

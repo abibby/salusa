@@ -18,7 +18,7 @@ func InitRoutes(r *router.Router) {
 	r.Get("/login", view.View("login.html", nil)).Name("login")
 	r.Get("/user/create", view.View("create_user.html", nil)).Name("user.create")
 
-	r.Handle("/docs", openapidoc.SwaggerUI("/docs"))
+	r.Handle("/docs", openapidoc.SwaggerUI())
 
 	r.Group("/api", func(r *router.Router) {
 		auth.RegisterRoutes(r, auth.NewBasicAuthController[*models.User](

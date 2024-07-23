@@ -7,10 +7,11 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/router"
-	"github.com/davecgh/go-spew/spew"
 )
 
-type errorContextKey struct{}
+type errorContextType uint8
+
+const errorContextKey = errorContextType(iota)
 
 type errorsContainer struct {
 	errors []error
@@ -19,70 +20,64 @@ type errorsContainer struct {
 func (e *errorsContainer) add(err error) {
 	e.errors = append(e.errors, err)
 }
-func (w *errorsContainer) joinedError() error {
-	if len(w.errors) == 0 {
-		return nil
-	}
-	if len(w.errors) == 1 {
-		return w.errors[0]
-	}
-	return errors.Join(w.errors...)
-}
 
 func addError(r *http.Request, err error) {
-	e := r.Context().Value(errorContextKey{})
+	e := r.Context().Value(errorContextKey)
 	if e == nil {
 		return
 	}
 	e.(*errorsContainer).add(err)
 }
 
-func HandleErrors(handlers ...func(err error)) router.MiddlewareFunc {
+func HandleErrors(handlers ...func(ctx context.Context, err error)) router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			errContainer := &errorsContainer{errors: []error{}}
+
 			defer func() {
-				e := recover()
-				if e == nil {
-					return
-				}
-				spew.Dump(e)
-				var err error
-				switch e := e.(type) {
-				case error:
-					err = e
-				case string:
-					err = errors.New(e)
-				default:
-					err = NewDefaultHTTPError(http.StatusInternalServerError)
-				}
-				for _, handler := range handlers {
-					handler(err)
+				recoverErr := toError(recover())
+				if recoverErr != nil {
+					errContainer.add(recoverErr)
 				}
 
-				// err = fmt.Errorf("%w\n%s", err, debug.Stack())
-				responder, ok := getResponder(err)
+				for _, err := range errContainer.errors {
+					for _, handler := range handlers {
+						handler(r.Context(), err)
+					}
+				}
+
+				if recoverErr == nil {
+					return
+				}
+
+				responder, ok := getResponder(recoverErr)
 				if !ok {
-					responder = NewHTTPError(err, http.StatusInternalServerError)
+					responder = NewHTTPError(recoverErr, http.StatusInternalServerError)
 				}
 				if httpErr, ok := responder.(*HTTPError); ok {
 					httpErr.WithStack()
 				}
-				err = responder.Respond(w, r)
-				if err != nil {
-					log.Print(err)
+				recoverErr = responder.Respond(w, r)
+				if recoverErr != nil {
+					log.Print(recoverErr)
 				}
 			}()
 
-			e := &errorsContainer{errors: []error{}}
-
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), errorContextKey{}, e)))
-
-			err := e.joinedError()
-			if err != nil {
-				for _, handler := range handlers {
-					handler(err)
-				}
-			}
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), errorContextKey, errContainer)))
 		})
+	}
+}
+
+func toError(e any) error {
+	if e == nil {
+		return nil
+	}
+	switch e := e.(type) {
+	case error:
+		return e
+	case string:
+		return errors.New(e)
+	default:
+		return NewDefaultHTTPError(http.StatusInternalServerError)
 	}
 }

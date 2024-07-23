@@ -4,17 +4,15 @@ import (
 	"context"
 	"reflect"
 	"sync"
-
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 type DependencyFactory[T any] func(ctx context.Context, tag string) (T, error)
 
 var (
-	contextType            = helpers.GetType[context.Context]()
-	stringType             = helpers.GetType[string]()
-	errorType              = helpers.GetType[error]()
-	dependencyProviderType = helpers.GetType[*DependencyProvider]()
+	contextType            = reflect.TypeFor[context.Context]()
+	stringType             = reflect.TypeFor[string]()
+	errorType              = reflect.TypeFor[error]()
+	dependencyProviderType = reflect.TypeFor[*DependencyProvider]()
 )
 
 func Register[T any](ctx context.Context, factory DependencyFactory[T]) {
@@ -34,9 +32,9 @@ func RegisterWith[T, W any](ctx context.Context, factory func(ctx context.Contex
 
 func RegisterSingleton[T any](ctx context.Context, factory func() T) {
 	dp := GetDependencyProvider(ctx)
-	v := factory()
+	value := factory()
 	dp.Register(func(ctx context.Context, tag string) (T, error) {
-		return v, nil
+		return value, nil
 	})
 }
 
@@ -53,14 +51,9 @@ func RegisterLazySingletonWith[T, W any](ctx context.Context, factory func(with 
 
 func RegisterLazySingleton[T any](ctx context.Context, factory func() (T, error)) {
 	dp := GetDependencyProvider(ctx)
-	var v T
-	var err error
-	initialize := sync.OnceFunc(func() {
-		v, err = factory()
-	})
+	onceFactory := sync.OnceValues(factory)
 	dp.Register(func(ctx context.Context, tag string) (T, error) {
-		initialize()
-		return v, err
+		return onceFactory()
 	})
 }
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
+	"github.com/abibby/salusa/salusaconfig"
 	"github.com/go-openapi/spec"
 )
 
@@ -21,7 +21,7 @@ type Kernel struct {
 
 	docs *spec.Swagger
 
-	cfg config.Config
+	cfg salusaconfig.Config
 
 	bootstrapped bool
 }
@@ -52,6 +52,6 @@ func (k *Kernel) RootHandler() http.Handler {
 	return k.rootHandler
 }
 
-func (k *Kernel) Config() config.Config {
+func (k *Kernel) Config() salusaconfig.Config {
 	return k.cfg
 }

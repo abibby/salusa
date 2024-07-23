@@ -5,5 +5,5 @@ import (
 )
 
 func GenerateToken(claims jwt.Claims) (string, error) {
-	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(appKey)
+	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(getAppKey())
 }

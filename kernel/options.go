@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/openapidoc"
 	"github.com/abibby/salusa/router"
+	"github.com/abibby/salusa/salusaconfig"
 	"github.com/go-openapi/spec"
 )
 
@@ -20,7 +20,7 @@ func Bootstrap(bootstrap ...func(context.Context) error) KernelOption {
 	}
 }
 
-func Config[T config.Config](cb func() T) KernelOption {
+func Config[T salusaconfig.Config](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
 		cfg := cb()
 		k.cfg = cfg
@@ -28,7 +28,7 @@ func Config[T config.Config](cb func() T) KernelOption {
 			di.RegisterSingleton(ctx, func() T {
 				return cfg
 			})
-			di.RegisterSingleton(ctx, func() config.Config {
+			di.RegisterSingleton(ctx, func() salusaconfig.Config {
 				return cfg
 			})
 			return nil

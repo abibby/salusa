@@ -1,4 +1,4 @@
-package config
+package salusaconfig
 
 type Config interface {
 	GetHTTPPort() int

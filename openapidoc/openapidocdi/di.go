@@ -8,9 +8,13 @@ import (
 	"github.com/abibby/salusa/openapidoc"
 )
 
+type apiDocerOpts struct {
+	Kernel *kernel.Kernel `inject:""`
+}
+
 func Register(ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(k *kernel.Kernel) (openapidoc.APIDocer, error) {
-		return k, nil
+	di.RegisterLazySingletonWith(ctx, func(opts *apiDocerOpts) (openapidoc.APIDocer, error) {
+		return opts.Kernel, nil
 	})
 	return nil
 }

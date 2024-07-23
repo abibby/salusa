@@ -9,7 +9,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type MiddlewareFunc = mux.MiddlewareFunc
+type Middleware interface {
+	Middleware(next http.Handler) http.Handler
+}
+type MiddlewareFunc func(http.Handler) http.Handler
+
+func (f MiddlewareFunc) Middleware(next http.Handler) http.Handler {
+	return f(next)
+}
 
 type WithDependencyProvider interface {
 	WithDependencyProvider(dp *di.DependencyProvider)
@@ -19,6 +26,11 @@ type Route struct {
 	Method  string
 	name    string
 	handler http.Handler
+	router  *Router
+}
+
+func (r *Route) GetMiddleware() []Middleware {
+	return r.router.middleware
 }
 
 func (r *Route) Name(name string) *Route {
@@ -31,17 +43,19 @@ type routeList struct {
 }
 
 type Router struct {
-	prefix string
-	router *mux.Router
-	dp     *di.DependencyProvider
-	routes *routeList
+	prefix     string
+	router     *mux.Router
+	dp         *di.DependencyProvider
+	routes     *routeList
+	middleware []Middleware
 }
 
 func New() *Router {
 	return &Router{
-		prefix: "",
-		router: mux.NewRouter(),
-		routes: &routeList{Routes: []*Route{}},
+		prefix:     "",
+		router:     mux.NewRouter(),
+		routes:     &routeList{Routes: []*Route{}},
+		middleware: []Middleware{},
 	}
 }
 
@@ -76,15 +90,24 @@ func (r *Router) Handle(p string, handler http.Handler) *Route {
 	return r.addRoute(handler, path.Join(p, "*"), "ALL")
 }
 
-func (r *Router) Use(middleware MiddlewareFunc) {
-	r.router.Use(middleware)
+func (r *Router) UseFunc(middleware func(http.Handler) http.Handler) {
+	m := MiddlewareFunc(middleware)
+	r.router.Use(m.Middleware)
+	r.middleware = append(r.middleware, m)
+}
+func (r *Router) Use(middleware Middleware) {
+	r.router.Use(middleware.Middleware)
+	r.middleware = append(r.middleware, middleware)
 }
 
 func (r *Router) Group(prefix string, cb func(r *Router)) {
+	middleware := make([]Middleware, len(r.middleware))
+	copy(middleware, r.middleware)
 	cb(&Router{
-		prefix: path.Join(r.prefix, prefix),
-		router: r.router.PathPrefix(prefix).Subrouter(),
-		routes: r.routes,
+		prefix:     path.Join(r.prefix, prefix),
+		router:     r.router.PathPrefix(prefix).Subrouter(),
+		routes:     r.routes,
+		middleware: middleware,
 	})
 }
 
@@ -103,6 +126,7 @@ func (r *Router) addRoute(handler http.Handler, pathName, method string) *Route 
 		Path:    path.Join(r.prefix, pathName),
 		Method:  method,
 		handler: handler,
+		router:  r,
 	}
 	r.routes.Routes = append(r.routes.Routes, route)
 	return route

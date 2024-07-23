@@ -27,13 +27,24 @@ func (r *Router) Paths(ctx context.Context, basePath string) (*spec.Paths, error
 		}
 
 		var op *spec.Operation
-		if oper, ok := route.handler.(openapidoc.Operationer); ok {
-			op, err = oper.Operation(ctx)
-			if err != nil {
-				return nil, err
+		oper, ok := route.handler.(openapidoc.Operationer)
+		if !ok {
+			continue
+		}
+		op, err = oper.Operation(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		middleware := route.GetMiddleware()
+		for _, m := range middleware {
+			if opm, ok := m.(openapidoc.OperationMiddleware); ok {
+				op = opm.OperationMiddleware(op)
 			}
-		} else {
-			// op = spec.NewOperation("")
+		}
+
+		if op.ID == "" {
+			op.ID = route.name
 		}
 
 		switch route.Method {

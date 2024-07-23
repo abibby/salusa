@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/salusaconfig"
 )
 
 type URLResolver interface {
@@ -21,7 +21,7 @@ type URLResolver interface {
 }
 
 func (r *Router) Register(ctx context.Context) {
-	di.RegisterWith(ctx, func(ctx context.Context, tag string, cfg config.Config) (URLResolver, error) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, cfg salusaconfig.Config) (URLResolver, error) {
 		origin := cfg.GetBaseURL()
 
 		if origin == "" {

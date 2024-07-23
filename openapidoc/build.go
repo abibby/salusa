@@ -96,7 +96,7 @@ func Schema(t reflect.Type, requireTag bool) (*spec.Schema, error) {
 	if t.Implements(typeEncodingTextMarshaler) {
 		return spec.StringProperty(), nil
 	}
-
+	// fmt.Printf("%v %v\n", t, t.Kind())
 	switch t.Kind() {
 	case reflect.Bool:
 		return spec.BoolProperty(), nil
@@ -138,6 +138,8 @@ func Schema(t reflect.Type, requireTag bool) (*spec.Schema, error) {
 	case reflect.Struct:
 
 		schema := &spec.Schema{}
+		schema.AddType("object", "")
+
 		for _, field := range helpers.GetFields(t) {
 			name, ok := field.Tag.Lookup("json")
 			if ok {

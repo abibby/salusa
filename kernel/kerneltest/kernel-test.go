@@ -8,21 +8,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abibby/salusa/config"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/salusaconfig"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
-type TestKernel[T config.Config] struct {
+type TestKernel[T salusaconfig.Config] struct {
 	kernel *kernel.Kernel
 	config T
 	ctx    context.Context
 	t      *testing.T
 }
 
-func NewTestKernelFactory[T config.Config](k *kernel.Kernel, cfg T) func(t *testing.T) *TestKernel[T] {
+func NewTestKernelFactory[T salusaconfig.Config](k *kernel.Kernel, cfg T) func(t *testing.T) *TestKernel[T] {
 	return func(t *testing.T) *TestKernel[T] {
 		ctx := di.TestDependencyProviderContext()
 		k := kernel.Config(func() T { return cfg })(k)

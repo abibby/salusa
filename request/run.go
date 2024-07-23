@@ -39,8 +39,8 @@ const (
 )
 
 var (
-	textUnmarshalerType = helpers.GetType[encoding.TextUnmarshaler]()
-	fsFileType          = helpers.GetType[fs.File]()
+	textUnmarshalerType = reflect.TypeFor[encoding.TextUnmarshaler]()
+	fsFileType          = reflect.TypeFor[fs.File]()
 )
 
 type File struct {

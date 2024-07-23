@@ -71,9 +71,8 @@ func (e *HTTPError) Unwrap() error {
 	return e.err
 }
 
-func (e *HTTPError) WithStack() *HTTPError {
+func (e *HTTPError) WithStack() {
 	e.stack = debug.Stack()
-	return e
 }
 
 func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
@@ -109,6 +108,23 @@ func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
 		"isLocal": func(s string) bool {
 			return strings.HasPrefix(s, cwd)
 		},
+		"getSrc": func(s *StackFrame) string {
+			b, err := os.ReadFile(s.File)
+			if err != nil {
+				return "Error: " + err.Error()
+			}
+			lines := bytes.Split(b, []byte("\n"))
+
+			out := []byte{}
+
+			around := 4
+
+			for i := max(s.Line-around, 0); i < min(len(lines), s.Line+around); i++ {
+				out = fmt.Appendf(out, "%3d %s\n", i+1, lines[i])
+			}
+
+			return string(out)
+		},
 	})
 	t, err = t.Parse(errorTemplate)
 	if err != nil {
@@ -134,8 +150,6 @@ func parseStack(stack []byte) *StackTrace {
 	goRoutine := string(lines[0])
 
 	frames := []*StackFrame{}
-
-	os.Stderr.Write(stack)
 
 	for i := 1; i < len(lines); i += 2 {
 		if len(lines) <= i+1 {

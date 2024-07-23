@@ -21,15 +21,13 @@ type RequestHandler[TRequest, TResponse any] struct {
 	operation *spec.OperationProps
 }
 
-func (h *RequestHandler[TRequest, TResponse]) Docs(op *spec.OperationProps) *RequestHandler[TRequest, TResponse] {
-	h.operation = op
-	return h
-}
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := h.serveHTTP(w, r)
 	if err == nil {
 		return
 	}
+	addError(r, err)
+
 	if responder, ok := getResponder(err); ok {
 		h.respond(w, r, responder)
 	} else if handler, ok := err.(http.Handler); ok {
@@ -37,7 +35,6 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	} else {
 		h.respond(w, r, NewHTTPError(err, http.StatusInternalServerError))
 	}
-	addError(r, err)
 }
 func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	var req TRequest

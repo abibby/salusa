@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/abibby/salusa/config"
+	"github.com/abibby/salusa/salusaconfig"
 )
 
 type testKernel interface {
@@ -22,7 +22,7 @@ type RequestBuilder struct {
 	header http.Header
 }
 
-func NewRequestBuilder[T config.Config](k *TestKernel[T]) *RequestBuilder {
+func NewRequestBuilder[T salusaconfig.Config](k *TestKernel[T]) *RequestBuilder {
 	return &RequestBuilder{
 		kernel: k,
 		ctx:    k.ctx,

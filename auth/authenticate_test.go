@@ -14,7 +14,7 @@ func TestAuthenticate(t *testing.T) {
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 		"sub":   "test",
 		"scope": "access",
-	}).SignedString(appKey)
+	}).SignedString(getAppKey())
 	if err != nil {
 		assert.NoError(t, err)
 		return

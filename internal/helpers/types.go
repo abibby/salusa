@@ -6,28 +6,29 @@ import (
 )
 
 func NewOf[T any]() (T, error) {
-	var zero [0]T
-	t := reflect.TypeOf(zero).Elem()
-	if t.Kind() == reflect.Pointer {
-		return reflect.New(t.Elem()).Interface().(T), nil
-	}
-
-	if t.Kind() == reflect.Interface {
+	t := reflect.TypeFor[T]()
+	v, err := RNewOf(t)
+	if v.IsZero() {
 		var zero T
-		return zero, fmt.Errorf("cannot create a new interface %s", t)
+		return zero, err
 	}
-	return reflect.New(t).Elem().Interface().(T), nil
+	return v.Interface().(T), err
+}
+func RNewOf(t reflect.Type) (reflect.Value, error) {
+	if t.Kind() == reflect.Interface {
+		return reflect.Zero(t), fmt.Errorf("cannot create a new interface %s", t)
+	}
+	v := reflect.New(t).Elem()
+	if t.Kind() == reflect.Pointer {
+		v.Set(reflect.New(t.Elem()))
+	}
+	return v, nil
 }
 func Create(t reflect.Type) reflect.Value {
 	if t.Kind() == reflect.Pointer {
 		return reflect.New(t.Elem())
 	}
 	return reflect.New(t).Elem()
-}
-
-func GetType[T any]() reflect.Type {
-	var v [0]T
-	return reflect.TypeOf(v).Elem()
 }
 
 func Zero[T any]() T {

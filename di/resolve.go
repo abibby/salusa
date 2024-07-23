@@ -12,7 +12,7 @@ func Resolve[T any](ctx context.Context) (T, error) {
 	dp := GetDependencyProvider(ctx)
 
 	var result T
-	v, err := dp.resolve(ctx, helpers.GetType[T](), "", nil)
+	v, err := dp.resolve(ctx, reflect.TypeFor[T](), "", nil)
 	if v != nil {
 		result = v.(T)
 	}
@@ -27,7 +27,7 @@ func ResolveFill[T any](ctx context.Context) (T, error) {
 	v, err = helpers.NewOf[T]()
 	if err != nil {
 		var zero T
-		return zero, errNotRegistered(helpers.GetType[T]())
+		return zero, errNotRegistered(reflect.TypeFor[T]())
 	}
 	err = Fill(ctx, v)
 	if err != nil {

@@ -2,12 +2,18 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
+	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 
+	"github.com/abibby/salusa/clog"
+	"github.com/abibby/salusa/openapidoc"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
+	"github.com/go-openapi/spec"
 )
 
 type contextKey uint8
@@ -25,11 +31,26 @@ var appKey []byte
 func SetAppKey(key []byte) {
 	appKey = key
 }
+func getAppKey() []byte {
+	if appKey == nil {
+		slog.Warn("No app key set, using a random app key. Any auth tokens will not work after the server is restarted")
+		appKey = make([]byte, 256)
+		_, err := rand.Read(appKey)
+		if err != nil {
+			panic(fmt.Errorf("could not generate app key: %w", err))
+		}
+	}
+	return appKey
+}
 
 func GetClaims(r *http.Request) (*Claims, bool) {
 	return GetClaimsCtx(r.Context())
 }
 func GetClaimsCtx(ctx context.Context) (*Claims, bool) {
+	claims, _ := getClaimsCtx(ctx)
+	return claims, claims != nil
+}
+func getClaimsCtx(ctx context.Context) (claims *Claims, inContext bool) {
 	iClaims := ctx.Value(claimKey)
 	if iClaims == nil {
 		return nil, false
@@ -45,46 +66,87 @@ func setClaims(r *http.Request, claims *Claims) *http.Request {
 func AttachUser() router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, ok := getClaimsCtx(r.Context())
+			if ok {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			claims, err := authenticate(r)
-			if err == nil {
-				next.ServeHTTP(w, setClaims(r, claims))
-				return
+			if err != nil {
+				clog.Use(r.Context()).Warn("authentication failed", "err", err)
 			}
 
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(w, setClaims(r, claims))
 		})
 	}
 }
 
-func LoggedIn() router.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, ok := GetClaims(r)
-			if !ok {
-				respond(Err401Unauthorized, w, r)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
+type LoggedInMiddleware struct {
+	securityDefinitionName string
 }
 
-func HasClaim(validate func(c *Claims) bool) router.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			claims, ok := GetClaims(r)
-			if !ok {
-				respond(Err401Unauthorized, w, r)
-				return
-			}
+var _ router.Middleware = (*LoggedInMiddleware)(nil)
+var _ openapidoc.OperationMiddleware = (*LoggedInMiddleware)(nil)
 
-			if !validate(claims) {
-				respond(Err401Unauthorized, w, r)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
+func LoggedIn() *LoggedInMiddleware {
+	return &LoggedInMiddleware{
+		securityDefinitionName: openapidoc.DefaultSecurityDefinitionName,
+	}
+}
+func (m *LoggedInMiddleware) SecurityDefinition(name string) *LoggedInMiddleware {
+	m.securityDefinitionName = name
+	return m
+}
+func (m *LoggedInMiddleware) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, ok := GetClaims(r)
+		if !ok {
+			respond(Err401Unauthorized, w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+func (m *LoggedInMiddleware) OperationMiddleware(s *spec.Operation) *spec.Operation {
+	if m.securityDefinitionName == "" {
+		return s
+	}
+	if s.Security == nil {
+		s.Security = []map[string][]string{}
+	}
+	s.Security = append(s.Security, map[string][]string{
+		m.securityDefinitionName: {},
+	})
+	return s
+}
+
+type HasClaimMiddleware struct {
+	validate func(c *Claims) bool
+}
+
+var _ router.Middleware = (*HasClaimMiddleware)(nil)
+
+func (m *HasClaimMiddleware) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := GetClaims(r)
+		if !ok {
+			respond(Err401Unauthorized, w, r)
+			return
+		}
+
+		if !m.validate(claims) {
+			respond(Err401Unauthorized, w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func HasClaim(validate func(c *Claims) bool) *HasClaimMiddleware {
+	return &HasClaimMiddleware{
+		validate: validate,
 	}
 }
 

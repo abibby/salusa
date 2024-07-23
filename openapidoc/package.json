@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "upgrade-and-install": "npm upgrade && npm i"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "swagger-ui-dist": "^5.17.14"
+    "redoc": "^2.1.5"
   }
 }
