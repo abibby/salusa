@@ -11,7 +11,6 @@ import (
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/kernel"
 	"github.com/abibby/salusa/salusaconfig"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -84,7 +83,7 @@ func (k *TestKernel[T]) DeleteJSON(target string, body any) *HttpResult {
 
 func (k *TestKernel[T]) HandleRequest(r *http.Request) *HttpResult {
 	h := k.kernel.RootHandler()
-	spew.Dump(di.GetDependencyProvider(k.ctx))
+
 	w := httptest.NewRecorder()
 
 	h.ServeHTTP(w, r)

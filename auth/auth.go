@@ -73,7 +73,9 @@ func AttachUser() router.MiddlewareFunc {
 			}
 
 			claims, err := authenticate(r)
-			if err != nil {
+			if errors.Is(err, ErrMissingAuthorizationHeader) {
+				// noop
+			} else if err != nil {
 				clog.Use(r.Context()).Warn("authentication failed", "err", err)
 			}
 

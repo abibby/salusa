@@ -13,32 +13,64 @@
         margin-left: 2ch;
       }
       .src {
-        background-color: white;
-        border: solid;
         tab-size: 4;
+        background-color: white;
+        margin: 0;
+        padding: 0.25em;
+        border: solid;
       }
+      .collapse {
+        background-color: #eee;
+      }
+      .collapse > input[type="checkbox"] {
+        display: none;
+      }
+      .collapse > label {
+        cursor: pointer;
+        padding: 0.25em;
+      }
+      label::before {
+        display: inline;
+        font-family: monospace;
+        content: "+ ";
+      }
+      .collapse>input[type="checkbox"]:checked + label::before {
+        content: "- ";
+      }
+      .collapse > .src {
+        display: none;
+      }
+      .collapse>input[type="checkbox"]:checked + label + .src {
+        display: block;
+      }
+
     </style>
   </head>
+
   <body>
     <h1>Error: {{ .Status }} {{ .StatusText }}</h1>
-    {{ .Error }} {{ if ne .StackTrace nil }}
-    <div id="stack">
-      <h3>{{ .StackTrace.GoRoutine }}</h3>
-      <ul>
-        {{range $frame := .StackTrace.Stack}} 
-          {{ $isLocal := isLocal $frame.File }}
-          <li class="stack-frame" data-is-local="{{ $isLocal }}">
-            <div class="call">{{$frame.Call}}</div>
-            <div class="file">{{$frame.File}}:{{$frame.Line}}</div>
-            {{ if $isLocal }}
-              <pre class="src">{{ getSrc $frame }}</pre>
-            {{ end }}
-          </li>
-        {{end}}
-      </ul>
-    </div>
-    {{end}}
+    {{ .Error }} 
+    
+    {{ if ne .StackTrace nil }}
+      <div id="stack">
+        <h3>{{ .StackTrace.GoRoutine }}</h3>
+        <ul>
+          {{range $frame := .StackTrace.Stack}} 
+            {{ $isLocal := isLocal $frame.File }}
+            <li class="stack-frame" data-is-local="{{ $isLocal }}">
+              <div class="call">{{$frame.Call}}</div>
+              <div class="file">{{$frame.File}}:{{$frame.Line}}</div>
 
-    <script></script>
+              <div class="collapse">
+                <input id="{{ $frame.Call }}" type="checkbox" {{ if $isLocal }} checked {{ end }}>
+                <label for="{{ $frame.Call }}">Source</label>
+                <pre class="src">{{ getSrc $frame }}</pre>
+              </div>
+
+            </li>
+          {{end}}
+        </ul>
+      </div>
+    {{end}}
   </body>
 </html>

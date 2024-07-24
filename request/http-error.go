@@ -13,6 +13,8 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+
+	"github.com/abibby/salusa/clog"
 )
 
 type HTMLError interface {
@@ -30,12 +32,6 @@ type errResponse struct {
 	Fields     ValidationError `json:"fields,omitempty"`
 }
 
-type HTTPError struct {
-	err    error
-	status int
-	stack  []byte
-}
-
 type StackTrace struct {
 	GoRoutine string        `json:"go_routine"`
 	Stack     []*StackFrame `json:"stack"`
@@ -46,6 +42,12 @@ type StackFrame struct {
 	File  string `json:"file"`
 	Line  int    `json:"line"`
 	Extra int    `json:"-"`
+}
+
+type HTTPError struct {
+	err    error
+	status int
+	stack  []byte
 }
 
 var _ error = &HTTPError{}
@@ -73,6 +75,10 @@ func (e *HTTPError) Unwrap() error {
 
 func (e *HTTPError) WithStack() {
 	e.stack = debug.Stack()
+}
+
+func (e *HTTPError) Status() int {
+	return e.status
 }
 
 func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
@@ -151,6 +157,7 @@ func parseStack(stack []byte) *StackTrace {
 
 	frames := []*StackFrame{}
 
+	hasPanicked := false
 	for i := 1; i < len(lines); i += 2 {
 		if len(lines) <= i+1 {
 			break
@@ -173,17 +180,35 @@ func parseStack(stack []byte) *StackTrace {
 				extra = c
 			}
 		}
-		frames = append(frames, &StackFrame{
-			Call:  call,
-			File:  file,
-			Line:  line,
-			Extra: extra,
-		})
+		if hasPanicked {
+			frames = append(frames, &StackFrame{
+				Call:  call,
+				File:  file,
+				Line:  line,
+				Extra: extra,
+			})
+		} else if strings.HasPrefix(call, "panic(") {
+			hasPanicked = true
+		}
 	}
 	return &StackTrace{
 		GoRoutine: goRoutine,
 		Stack:     frames,
 	}
+}
+
+func ErrorHandler(err error) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		responder, ok := getResponder(err)
+		if !ok {
+			responder = NewHTTPError(err, http.StatusInternalServerError)
+		}
+
+		err = responder.Respond(w, r)
+		if err != nil {
+			clog.Use(r.Context()).Warn("failed to respond to request", "err", err)
+		}
+	})
 }
 
 func parsInt(s string) (int, error) {

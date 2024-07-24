@@ -3,7 +3,7 @@ package request
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/abibby/salusa/router"
@@ -20,6 +20,15 @@ type errorsContainer struct {
 func (e *errorsContainer) add(err error) {
 	e.errors = append(e.errors, err)
 }
+func (w *errorsContainer) joinedError() error {
+	if len(w.errors) == 0 {
+		return nil
+	}
+	if len(w.errors) == 1 {
+		return w.errors[0]
+	}
+	return errors.Join(w.errors...)
+}
 
 func addError(r *http.Request, err error) {
 	e := r.Context().Value(errorContextKey)
@@ -29,38 +38,46 @@ func addError(r *http.Request, err error) {
 	e.(*errorsContainer).add(err)
 }
 
-func HandleErrors(handlers ...func(ctx context.Context, err error)) router.MiddlewareFunc {
+func hasHandleErrors(r *http.Request) bool {
+	e := r.Context().Value(errorContextKey)
+	return e != nil
+}
+
+func HandleErrors(handlers ...func(ctx context.Context, err error) http.Handler) router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			errContainer := &errorsContainer{errors: []error{}}
 
 			defer func() {
-				recoverErr := toError(recover())
-				if recoverErr != nil {
-					errContainer.add(recoverErr)
-				}
-
-				for _, err := range errContainer.errors {
-					for _, handler := range handlers {
-						handler(r.Context(), err)
+				err := toError(recover())
+				if err != nil {
+					var httpErr *HTTPError
+					if !errors.As(err, &httpErr) {
+						httpErr = NewHTTPError(err, http.StatusInternalServerError)
 					}
+					httpErr.WithStack()
+
+					errContainer.add(httpErr)
 				}
 
-				if recoverErr == nil {
+				err = errContainer.joinedError()
+				if err == nil {
 					return
 				}
 
-				responder, ok := getResponder(recoverErr)
-				if !ok {
-					responder = NewHTTPError(recoverErr, http.StatusInternalServerError)
+				var errorResponse http.Handler
+
+				for _, handler := range handlers {
+					h := handler(r.Context(), err)
+					if h != nil {
+						errorResponse = h
+					}
 				}
-				if httpErr, ok := responder.(*HTTPError); ok {
-					httpErr.WithStack()
+				if errorResponse == nil {
+					errorResponse = ErrorHandler(err)
 				}
-				recoverErr = responder.Respond(w, r)
-				if recoverErr != nil {
-					log.Print(recoverErr)
-				}
+
+				errorResponse.ServeHTTP(w, r)
 			}()
 
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), errorContextKey, errContainer)))
@@ -78,6 +95,6 @@ func toError(e any) error {
 	case string:
 		return errors.New(e)
 	default:
-		return NewDefaultHTTPError(http.StatusInternalServerError)
+		return errors.New(fmt.Sprint(e))
 	}
 }

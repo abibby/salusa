@@ -27,13 +27,8 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 	addError(r, err)
-
-	if responder, ok := getResponder(err); ok {
-		h.respond(w, r, responder)
-	} else if handler, ok := err.(http.Handler); ok {
-		handler.ServeHTTP(w, r)
-	} else {
-		h.respond(w, r, NewHTTPError(err, http.StatusInternalServerError))
+	if !hasHandleErrors(r) {
+		ErrorHandler(err).ServeHTTP(w, r)
 	}
 }
 func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) error {
