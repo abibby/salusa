@@ -21,7 +21,7 @@ func ParseOf[T jwt.Claims](token string) (T, error) {
 			return nil, fmt.Errorf("expected HMAC received %v: %w", token.Header["alg"], ErrUnexpectedAlgorithm)
 		}
 
-		return appKey, nil
+		return getAppKey(), nil
 	})
 	if err != nil {
 		var zero T

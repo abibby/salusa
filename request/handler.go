@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/abibby/salusa/di"
+	"github.com/go-openapi/spec"
 )
 
 func init() {
@@ -16,7 +17,8 @@ func init() {
 }
 
 type RequestHandler[TRequest, TResponse any] struct {
-	handler func(r *TRequest) (TResponse, error)
+	handler   func(r *TRequest) (TResponse, error)
+	operation *spec.OperationProps
 }
 
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -24,18 +26,14 @@ func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r
 	if err == nil {
 		return
 	}
-	if responder, ok := getResponder(err); ok {
-		h.respond(w, r, responder)
-	} else if handler, ok := err.(http.Handler); ok {
-		handler.ServeHTTP(w, r)
-	} else {
-		h.respond(w, r, NewHTTPError(err, http.StatusInternalServerError))
-	}
 	addError(r, err)
+	if !hasHandleErrors(r) {
+		ErrorHandler(err).ServeHTTP(w, r)
+	}
 }
 func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	var req TRequest
-	err := RunRW(r, w, &req)
+	err := Run(r, &req)
 	if validationErr, ok := err.(ValidationError); ok {
 		return NewHTTPError(validationErr, http.StatusUnprocessableEntity)
 	} else if err != nil {

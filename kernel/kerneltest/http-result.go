@@ -63,7 +63,7 @@ func (r *HttpResult) AssertJSONString(jsonBody string) *HttpResult {
 	var actual any
 	err = json.Unmarshal(r.Body(), &actual)
 	if err != nil {
-		assert.Fail(r.t, "body is not json", err.Error())
+		assert.Fail(r.t, "body is not json", "%s\n=====\n%s\n=====", err.Error(), r.Body())
 		return r
 	}
 	assert.Equal(r.t, expected, actual, "Statuses do not match")

@@ -8,14 +8,19 @@ import (
 )
 
 var (
-	ErrInvalidAuthorizationHeader = fmt.Errorf("missing or invalid Authorization header")
+	ErrMissingAuthorizationHeader = fmt.Errorf("missing Authorization header")
+	ErrInvalidAuthorizationHeader = fmt.Errorf("invalid Authorization header")
 	ErrUnexpectedAlgorithm        = fmt.Errorf("unexpected algorithm")
 	ErrNoAccessScope              = fmt.Errorf("no access scope")
 )
 
 func authenticate(r *http.Request) (*Claims, error) {
-	prefix := "Bearer "
 	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, ErrMissingAuthorizationHeader
+	}
+
+	prefix := "Bearer "
 	if !strings.HasPrefix(authHeader, prefix) {
 		return nil, ErrInvalidAuthorizationHeader
 	}

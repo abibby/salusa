@@ -23,7 +23,7 @@ func (k *Kernel) Validate(ctx context.Context) error {
 		}
 	}
 
-	h := k.rootHandler(ctx)
+	h := k.rootHandler
 	if v, ok := h.(Validator); ok {
 		err := v.Validate(ctx)
 		if err != nil {

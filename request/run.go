@@ -39,8 +39,8 @@ const (
 )
 
 var (
-	textUnmarshalerType = helpers.GetType[encoding.TextUnmarshaler]()
-	fsFileType          = helpers.GetType[fs.File]()
+	textUnmarshalerType = reflect.TypeFor[encoding.TextUnmarshaler]()
+	fsFileType          = reflect.TypeFor[fs.File]()
 )
 
 type File struct {
@@ -98,9 +98,6 @@ func (f *FileInfo) Sys() any {
 var _ fs.FileInfo = (*FileInfo)(nil)
 
 func Run(requestHttp *http.Request, requestStruct any) error {
-	return RunRW(requestHttp, nil, requestStruct)
-}
-func RunRW(requestHttp *http.Request, responseHttp http.ResponseWriter, requestStruct any) error {
 	urlArgs := map[string]map[string][]string{
 		"query": requestHttp.URL.Query(),
 		"path":  pathArgs(requestHttp),
@@ -178,8 +175,6 @@ func RunRW(requestHttp *http.Request, responseHttp http.ResponseWriter, requestS
 	}
 
 	ctx := requestHttp.Context()
-	ctx = context.WithValue(ctx, requestKey, requestHttp)
-	ctx = context.WithValue(ctx, responseKey, responseHttp)
 	err = di.Fill(ctx, requestStruct,
 		di.AutoResolve[context.Context](),
 		di.AutoResolve[*http.Request](),

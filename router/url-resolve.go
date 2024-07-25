@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,7 +12,7 @@ import (
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/salusaconfig"
 )
 
 type URLResolver interface {
@@ -20,15 +21,17 @@ type URLResolver interface {
 }
 
 func (r *Router) Register(ctx context.Context) {
-	di.RegisterWith(ctx, func(ctx context.Context, tag string, cfg kernel.KernelConfig) (URLResolver, error) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, cfg salusaconfig.Config) (URLResolver, error) {
 		origin := cfg.GetBaseURL()
 
-		if origin != "" {
+		if origin == "" {
 			req, err := di.Resolve[*http.Request](ctx)
-			if err != nil {
+			if errors.Is(err, di.ErrNotRegistered) {
 				origin = "/"
+			} else if err != nil {
+				return nil, err
 			} else {
-				origin = req.Header.Get("Origin")
+				origin = getOrigin(req)
 			}
 		}
 
@@ -37,6 +40,15 @@ func (r *Router) Register(ctx context.Context) {
 			router: r,
 		}, nil
 	})
+}
+
+func getOrigin(r *http.Request) string {
+	origin := r.Header.Get("Origin")
+	if origin != "" {
+		return origin
+	}
+
+	return "http://" + r.Host
 }
 
 type Attr struct {

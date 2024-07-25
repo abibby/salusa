@@ -8,7 +8,7 @@ import (
 
 func TestIntegration(t *testing.T) {
 	test.Kernel(t).
-		GetJSON("/user").
+		GetJSON("/api/user").
 		AssertStatusOK().
 		AssertJSONString(`{
 			"users": []

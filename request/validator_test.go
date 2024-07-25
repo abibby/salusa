@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/request/rules"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,7 +41,7 @@ func Test_Validate_ignores_failing_rules_if_no_value_is_passed(t *testing.T) {
 	}
 
 	err := Validate(nil, &Request{})
-	spew.Dump(err)
+
 	assert.NoError(t, err)
 }
 

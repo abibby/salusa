@@ -10,12 +10,12 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/salusaconfig"
 	"github.com/jmoiron/sqlx"
 )
 
 type dbDeps struct {
-	Cfg kernel.KernelConfig `inject:""`
+	Cfg salusaconfig.Config `inject:""`
 	Log *slog.Logger        `inject:""`
 }
 

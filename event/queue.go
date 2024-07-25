@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/salusaconfig"
 )
 
 type Queue interface {
@@ -22,7 +22,7 @@ type Config interface {
 }
 
 func Register(ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(cfg kernel.KernelConfig) (Queue, error) {
+	di.RegisterLazySingletonWith(ctx, func(cfg salusaconfig.Config) (Queue, error) {
 		var cfgAny any = cfg
 		cfger, ok := cfgAny.(QueueConfiger)
 		if !ok {

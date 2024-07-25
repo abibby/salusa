@@ -54,14 +54,12 @@ func (r *Response) Respond(w http.ResponseWriter, _ *http.Request) error {
 }
 
 func getResponder(err error) (Responder, bool) {
-	var responder Responder
-	var ok bool
-	for err != nil {
-		responder, ok = err.(Responder)
-		if ok {
-			return responder, true
-		}
-		err = errors.Unwrap(err)
+	var responder interface {
+		error
+		Responder
+	}
+	if errors.As(err, &responder) {
+		return responder, true
 	}
 	return nil, false
 }

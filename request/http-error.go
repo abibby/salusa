@@ -13,6 +13,8 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+
+	"github.com/abibby/salusa/clog"
 )
 
 type HTMLError interface {
@@ -30,12 +32,6 @@ type errResponse struct {
 	Fields     ValidationError `json:"fields,omitempty"`
 }
 
-type HTTPError struct {
-	err    error
-	status int
-	stack  []byte
-}
-
 type StackTrace struct {
 	GoRoutine string        `json:"go_routine"`
 	Stack     []*StackFrame `json:"stack"`
@@ -46,6 +42,12 @@ type StackFrame struct {
 	File  string `json:"file"`
 	Line  int    `json:"line"`
 	Extra int    `json:"-"`
+}
+
+type HTTPError struct {
+	err    error
+	status int
+	stack  []byte
 }
 
 var _ error = &HTTPError{}
@@ -71,9 +73,12 @@ func (e *HTTPError) Unwrap() error {
 	return e.err
 }
 
-func (e *HTTPError) WithStack() *HTTPError {
+func (e *HTTPError) WithStack() {
 	e.stack = debug.Stack()
-	return e
+}
+
+func (e *HTTPError) Status() int {
+	return e.status
 }
 
 func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
@@ -109,6 +114,23 @@ func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
 		"isLocal": func(s string) bool {
 			return strings.HasPrefix(s, cwd)
 		},
+		"getSrc": func(s *StackFrame) string {
+			b, err := os.ReadFile(s.File)
+			if err != nil {
+				return "Error: " + err.Error()
+			}
+			lines := bytes.Split(b, []byte("\n"))
+
+			out := []byte{}
+
+			around := 4
+
+			for i := max(s.Line-around, 0); i < min(len(lines), s.Line+around); i++ {
+				out = fmt.Appendf(out, "%3d %s\n", i+1, lines[i])
+			}
+
+			return string(out)
+		},
 	})
 	t, err = t.Parse(errorTemplate)
 	if err != nil {
@@ -135,14 +157,17 @@ func parseStack(stack []byte) *StackTrace {
 
 	frames := []*StackFrame{}
 
+	hasPanicked := false
 	for i := 1; i < len(lines); i += 2 {
 		if len(lines) <= i+1 {
 			break
 		}
 		call := string(lines[i])
-		pathLine := strings.SplitN(string(lines[i+1]), ":", 2)
-		file := strings.TrimSpace(pathLine[0])
-		pathLineEnd := strings.SplitN(pathLine[1], " ", 2)
+		pathLine := string(lines[i+1])
+		i := strings.LastIndex(pathLine, ":")
+		// pathLine := strings.SplitN(string(lines[i+1]), ":", 2)
+		file := strings.TrimSpace(pathLine[:i])
+		pathLineEnd := strings.SplitN(pathLine[i+1:], " ", 2)
 
 		line, err := strconv.Atoi(pathLineEnd[0])
 		if err != nil {
@@ -155,17 +180,35 @@ func parseStack(stack []byte) *StackTrace {
 				extra = c
 			}
 		}
-		frames = append(frames, &StackFrame{
-			Call:  call,
-			File:  file,
-			Line:  line,
-			Extra: extra,
-		})
+		if hasPanicked {
+			frames = append(frames, &StackFrame{
+				Call:  call,
+				File:  file,
+				Line:  line,
+				Extra: extra,
+			})
+		} else if strings.HasPrefix(call, "panic(") {
+			hasPanicked = true
+		}
 	}
 	return &StackTrace{
 		GoRoutine: goRoutine,
 		Stack:     frames,
 	}
+}
+
+func ErrorHandler(err error) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		responder, ok := getResponder(err)
+		if !ok {
+			responder = NewHTTPError(err, http.StatusInternalServerError)
+		}
+
+		err = responder.Respond(w, r)
+		if err != nil {
+			clog.Use(r.Context()).Warn("failed to respond to request", "err", err)
+		}
+	})
 }
 
 func parsInt(s string) (int, error) {

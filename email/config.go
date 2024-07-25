@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/salusaconfig"
 )
 
 type MailConfiger interface {
@@ -28,7 +28,7 @@ func (c *SMTPConfig) Mailer() Mailer {
 }
 
 func Register(ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(cfg kernel.KernelConfig) (Mailer, error) {
+	di.RegisterLazySingletonWith(ctx, func(cfg salusaconfig.Config) (Mailer, error) {
 		var cfgAny any = cfg
 		cfger, ok := cfgAny.(MailConfiger)
 		if !ok {

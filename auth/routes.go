@@ -21,6 +21,7 @@ import (
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/abibby/salusa/view"
+	"github.com/go-openapi/spec"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -165,7 +166,9 @@ type UserCreateResponse[T User] struct {
 }
 
 func (o *BasicAuthController[T]) UserCreate() http.Handler {
-	return request.Handler(o.RunUserCreate)
+	return request.Handler(o.RunUserCreate).Docs(&spec.OperationProps{
+		Tags: []string{"auth"},
+	})
 }
 func (o *BasicAuthController[T]) RunUserCreate(r *UserCreateRequest) (*UserCreateResponse[T], error) {
 	u, err := o.newUser(r.Request)
@@ -233,7 +236,9 @@ type LoginResponse struct {
 }
 
 func (o *BasicAuthController[T]) Login() http.Handler {
-	return request.Handler(o.RunLogin)
+	return request.Handler(o.RunLogin).Docs(&spec.OperationProps{
+		Tags: []string{"auth"},
+	})
 }
 func (o *BasicAuthController[T]) RunLogin(r *LoginRequest) (*LoginResponse, error) {
 	u, err := helpers.NewOf[T]()
@@ -315,7 +320,9 @@ type VerifyEmailRequest struct {
 }
 
 func (o *BasicAuthController[T]) VerifyEmail() http.Handler {
-	return request.Handler(o.RunVerifyEmail)
+	return request.Handler(o.RunVerifyEmail).Docs(&spec.OperationProps{
+		Tags: []string{"auth"},
+	})
 }
 func (o *BasicAuthController[T]) RunVerifyEmail(r *VerifyEmailRequest) (http.Handler, error) {
 	v, err := helpers.NewOf[T]()
@@ -368,7 +375,9 @@ type ResetPasswordResponse[T User] struct {
 }
 
 func (o *BasicAuthController[T]) ResetPassword() http.Handler {
-	return request.Handler(o.RunResetPassword)
+	return request.Handler(o.RunResetPassword).Docs(&spec.OperationProps{
+		Tags: []string{"auth"},
+	})
 }
 func (o *BasicAuthController[T]) RunResetPassword(r *ResetPasswordRequest) (*ResetPasswordResponse[T], error) {
 	u, err := helpers.NewOf[T]()
@@ -427,7 +436,9 @@ type ForgotPasswordResponse struct {
 }
 
 func (o *BasicAuthController[T]) ForgotPassword() http.Handler {
-	return request.Handler(o.RunForgotPassword)
+	return request.Handler(o.RunForgotPassword).Docs(&spec.OperationProps{
+		Tags: []string{"auth"},
+	})
 }
 func (o *BasicAuthController[T]) RunForgotPassword(r *ForgotPasswordRequest) (*ForgotPasswordResponse, error) {
 	u, err := helpers.NewOf[T]()
@@ -486,7 +497,9 @@ type ChangePasswordResponse[T User] struct {
 }
 
 func (o *BasicAuthController[T]) ChangePassword() http.Handler {
-	return request.Handler(o.RunChangePassword)
+	return request.Handler(o.RunChangePassword).Docs(&spec.OperationProps{
+		Tags: []string{"auth"},
+	})
 }
 func (o *BasicAuthController[T]) RunChangePassword(r *ChangePasswordRequest[T]) (*ChangePasswordResponse[T], error) {
 	err := bcrypt.CompareHashAndPassword(r.User.GetPasswordHash(), r.User.SaltedPassword(r.OldPassword))
@@ -520,7 +533,9 @@ type RefreshRequest[T User] struct {
 }
 
 func (o *BasicAuthController[T]) Refresh() http.Handler {
-	return request.Handler(o.RunRefresh)
+	return request.Handler(o.RunRefresh).Docs(&spec.OperationProps{
+		Tags: []string{"auth"},
+	})
 }
 func (o *BasicAuthController[T]) RunRefresh(r *RefreshRequest[T]) (*LoginResponse, error) {
 	claims, err := Parse(r.RefreshToken)
