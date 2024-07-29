@@ -48,14 +48,8 @@ type BasicAuthController[T User] struct {
 	basicAuthController
 }
 
-func (c *BasicAuthController[T]) newUser(r *http.Request) (T, error) {
-	anyUser, err := c.basicAuthController.newUser(r)
-	user, _ := anyUser.(T)
-	return user, err
-}
-
 type basicAuthController struct {
-	newUser             func(r *http.Request) (any, error)
+	createUserHandler   func(controller any) http.Handler
 	resetPasswordName   string
 	accessTokenOptions  func(u any, claims *Claims) jwt.Claims
 	refreshTokenOptions func(u any, claims *Claims) jwt.Claims
@@ -63,21 +57,14 @@ type basicAuthController struct {
 
 type AuthOption func(a *basicAuthController) *basicAuthController
 
-func NewUser[T User, R any](cb func(r R) T) AuthOption {
+type CreateUserFunc[T User] func(user T, req *UserCreateRequest) (*UserCreateResponse[T], error)
+
+func CreateUser[T User, TRequest any](cb func(r *TRequest, c *BasicAuthController[T]) (*UserCreateResponse[T], error)) AuthOption {
 	return func(a *basicAuthController) *basicAuthController {
-		a.newUser = func(r *http.Request) (any, error) {
-			req, err := helpers.NewOf[R]()
-			if err != nil {
-				var zero T
-				return zero, err
-			}
-			err = request.Run(r, req)
-			if err != nil {
-				var zero T
-				return zero, err
-			}
-			u := cb(req)
-			return u, nil
+		a.createUserHandler = func(controller any) http.Handler {
+			return request.Handler(func(r *TRequest) (*UserCreateResponse[T], error) {
+				return cb(r, controller.(*BasicAuthController[T]))
+			})
 		}
 		return a
 	}
@@ -114,8 +101,8 @@ var defaultViewTemplate = view.NewViewTemplate(emails, "**/*.html")
 
 func NewBasicAuthController[T User](options ...AuthOption) *BasicAuthController[T] {
 	core := &basicAuthController{
-		newUser: func(r *http.Request) (any, error) {
-			return nil, nil
+		createUserHandler: func(controller any) http.Handler {
+			return nil
 		},
 		resetPasswordName: "reset-password",
 		accessTokenOptions: func(u any, claims *Claims) jwt.Claims {
@@ -166,16 +153,15 @@ type UserCreateResponse[T User] struct {
 }
 
 func (o *BasicAuthController[T]) UserCreate() http.Handler {
-	return request.Handler(o.RunUserCreate).Docs(&spec.OperationProps{
-		Tags: []string{"auth"},
-	})
-}
-func (o *BasicAuthController[T]) RunUserCreate(r *UserCreateRequest) (*UserCreateResponse[T], error) {
-	u, err := o.newUser(r.Request)
-	if err != nil {
-		return nil, err
+	h := o.createUserHandler(o)
+	if docser, ok := h.(interface{ Docs(*spec.OperationProps) }); ok {
+		docser.Docs(&spec.OperationProps{
+			Tags: []string{"auth"},
+		})
 	}
-
+	return h
+}
+func (o *BasicAuthController[T]) RunUserCreate(u T, r *UserCreateRequest) (*UserCreateResponse[T], error) {
 	for _, col := range u.UsernameColumns() {
 		v, err := helpers.RGetValue(reflect.ValueOf(u), col)
 		if err != nil {
@@ -186,7 +172,7 @@ func (o *BasicAuthController[T]) RunUserCreate(r *UserCreateRequest) (*UserCreat
 		}
 	}
 
-	err = r.Update(func(tx *sqlx.Tx) error {
+	err := r.Update(func(tx *sqlx.Tx) error {
 		err := model.SaveContext(r.Ctx, tx, u)
 		if err != nil {
 			return err

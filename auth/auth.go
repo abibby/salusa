@@ -66,8 +66,7 @@ func setClaims(r *http.Request, claims *Claims) *http.Request {
 func AttachUser() router.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, ok := getClaimsCtx(r.Context())
-			if ok {
+			if r.Context().Value(claimKey) != nil {
 				next.ServeHTTP(w, r)
 				return
 			}

@@ -93,9 +93,7 @@ func (b *ModelBuilder[T]) LoadOne(tx database.DB, v any) error {
 
 // Load executes the query as a select statement and sets v to the first record.
 func (b *Builder) LoadOne(tx database.DB, v any) error {
-	q, bindings, err := b.Clone().
-		Limit(1).
-		SQLString(dialects.New())
+	q, bindings, err := b.Limit(1).SQLString(dialects.New())
 
 	if err != nil {
 		return err
@@ -136,4 +134,25 @@ func (b *ModelBuilder[T]) Each(tx database.DB, cb func(v T) error) error {
 			}
 		}
 	}
+}
+
+// Count executes select and returns the number of records.
+func (b *ModelBuilder[T]) Count(tx database.DB) (int, error) {
+	return b.builder.Count(tx)
+}
+
+// Count executes select and returns the number of records.
+func (b *Builder) Count(tx database.DB) (int, error) {
+	return b.numericFunc(tx, "count", "*")
+}
+
+func (b *Builder) numericFunc(tx database.DB, function, column string) (int, error) {
+	var count int
+	err := b.
+		Unordered().
+		SelectFunction(function, column).LoadOne(tx, &count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

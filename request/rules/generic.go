@@ -1,5 +1,7 @@
 package rules
 
+import "reflect"
+
 // Nullable
 // Size
 
@@ -88,6 +90,9 @@ func initGenericRules() {
 		String: func(value string, arguments TypeRuleArguments) bool {
 			return len(value) <= int(arguments.GetInt(0))
 		},
+		Array: func(value reflect.Value, arguments TypeRuleArguments) bool {
+			return value.Len() <= int(arguments.GetInt(0))
+		},
 	})
 	AddTypeRule("min", &TypeRule{
 		ArgCount: 1,
@@ -102,6 +107,9 @@ func initGenericRules() {
 		},
 		String: func(value string, arguments TypeRuleArguments) bool {
 			return len(value) >= int(arguments.GetInt(0))
+		},
+		Array: func(value reflect.Value, arguments TypeRuleArguments) bool {
+			return value.Len() >= int(arguments.GetInt(0))
 		},
 	})
 }

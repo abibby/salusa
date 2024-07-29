@@ -16,8 +16,21 @@ type DB interface {
 	sqlx.ExecerContext
 }
 
+type Transaction interface {
+	Run(func(tx *sqlx.Tx) error) error
+}
+
 type Update func(func(tx *sqlx.Tx) error) error
+
+func (f Update) Run(cb func(tx *sqlx.Tx) error) error {
+	return f(cb)
+}
+
 type Read func(func(tx *sqlx.Tx) error) error
+
+func (f Read) Run(cb func(tx *sqlx.Tx) error) error {
+	return f(cb)
+}
 
 func Exec(ctx context.Context, db DB, query string, args []interface{}) (sql.Result, error) {
 	result, err := db.ExecContext(ctx, query, args...)
@@ -66,7 +79,7 @@ func runTx(ctx context.Context, db DB, f func(*sqlx.Tx) error, readOnly bool) er
 	}
 	return err
 }
-func NewUpdate(ctx context.Context, mtx *sync.Mutex, db DB) Update {
+func NewUpdate(ctx context.Context, mtx sync.Locker, db DB) Update {
 	return func(f func(tx *sqlx.Tx) error) (err error) {
 		if mtx != nil {
 			mtx.Lock()
@@ -75,12 +88,27 @@ func NewUpdate(ctx context.Context, mtx *sync.Mutex, db DB) Update {
 		return runTx(ctx, db, f, false)
 	}
 }
-func NewRead(ctx context.Context, mtx *sync.Mutex, db DB) Read {
+func NewRead(ctx context.Context, mtx sync.Locker, db DB) Read {
 	return func(f func(tx *sqlx.Tx) error) error {
 		if mtx != nil {
-			mtx.Lock()
-			defer mtx.Unlock()
+			if rwmtx, ok := mtx.(*sync.RWMutex); ok {
+				rwmtx.RLock()
+				defer rwmtx.RUnlock()
+			} else {
+				mtx.Lock()
+				defer mtx.Unlock()
+			}
 		}
 		return runTx(ctx, db, f, true)
 	}
+}
+
+func Value[T any](txFunc Transaction, cb func(tx *sqlx.Tx) (T, error)) (T, error) {
+	var result T
+	err := txFunc.Run(func(tx *sqlx.Tx) error {
+		var err error
+		result, err = cb(tx)
+		return err
+	})
+	return result, err
 }

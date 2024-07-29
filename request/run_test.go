@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/abibby/nulls"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -189,4 +191,97 @@ func TestRun_multipart_file(t *testing.T) {
 	defer structRequest.Foo.Close()
 
 	assert.Equal(t, "foo content", string(fooContent))
+}
+
+type IntPtr struct {
+	IntPtr *int `query:"int_ptr"`
+}
+type NullsInt struct {
+	IntPtr *nulls.Int `query:"int_ptr"`
+}
+type TimeReq struct {
+	Time time.Time `query:"time"`
+}
+type TimePtrReq struct {
+	Time *time.Time `query:"time"`
+}
+
+func ptr[T any](v T) *T {
+	return &v
+}
+
+func TestRun(t *testing.T) {
+	type args struct {
+		requestHttp   *http.Request
+		requestStruct any
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantRequest any
+		wantErr     bool
+	}{
+		{
+			name: "int pointer",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com?int_ptr=1", http.NoBody),
+				&IntPtr{},
+			},
+			wantRequest: &IntPtr{IntPtr: ptr(1)},
+			wantErr:     false,
+		},
+		{
+			name: "int pointer empty",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com?int_ptr=", http.NoBody),
+				&IntPtr{},
+			},
+			wantRequest: &IntPtr{IntPtr: nil},
+			wantErr:     false,
+		},
+		{
+			name: "int pointer missing",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com", http.NoBody),
+				&IntPtr{},
+			},
+			wantRequest: &IntPtr{IntPtr: nil},
+			wantErr:     false,
+		},
+		{
+			name: "nulls.Int",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com?int_ptr=1", http.NoBody),
+				&NullsInt{},
+			},
+			wantRequest: &NullsInt{IntPtr: nulls.NewInt(1)},
+			wantErr:     false,
+		},
+		{
+			name: "time",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com?time=2020-01-01T00:00:00Z", http.NoBody),
+				&TimeReq{},
+			},
+			wantRequest: &TimeReq{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)},
+			wantErr:     false,
+		},
+		{
+			name: "time pointer",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com?time=2020-01-01T00:00:00Z", http.NoBody),
+				&TimePtrReq{},
+			},
+			wantRequest: &TimePtrReq{Time: ptr(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))},
+			wantErr:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := Run(tt.args.requestHttp, tt.args.requestStruct); (err != nil) != tt.wantErr {
+				t.Errorf("Run() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			assert.Equal(t, tt.wantRequest, tt.args.requestStruct)
+		})
+	}
 }

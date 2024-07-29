@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/abibby/salusa/di"
 	"github.com/gorilla/mux"
 )
 
@@ -18,9 +17,6 @@ func (f MiddlewareFunc) Middleware(next http.Handler) http.Handler {
 	return f(next)
 }
 
-type WithDependencyProvider interface {
-	WithDependencyProvider(dp *di.DependencyProvider)
-}
 type Route struct {
 	Path    string
 	Method  string
@@ -45,7 +41,6 @@ type routeList struct {
 type Router struct {
 	prefix     string
 	router     *mux.Router
-	dp         *di.DependencyProvider
 	routes     *routeList
 	middleware []Middleware
 }
@@ -57,10 +52,6 @@ func New() *Router {
 		routes:     &routeList{Routes: []*Route{}},
 		middleware: []Middleware{},
 	}
-}
-
-func (r *Router) WithDependencyProvider(dp *di.DependencyProvider) {
-	r.dp = dp
 }
 
 func (r *Router) Get(path string, handler http.Handler) *Route {
@@ -80,12 +71,10 @@ func (r *Router) Delete(path string, handler http.Handler) *Route {
 }
 
 func (r *Router) handleMethod(method, path string, handler http.Handler) *Route {
-	r.addDP(handler)
 	r.router.Handle(path, handler).Methods(method)
 	return r.addRoute(handler, path, method)
 }
 func (r *Router) Handle(p string, handler http.Handler) *Route {
-	r.addDP(handler)
 	r.router.PathPrefix(p).Handler(handler)
 	return r.addRoute(handler, path.Join(p, "*"), "ALL")
 }
@@ -111,16 +100,6 @@ func (r *Router) Group(prefix string, cb func(r *Router)) {
 	})
 }
 
-func (r *Router) addDP(handler http.Handler) {
-	if r.dp == nil {
-		return
-	}
-	w, ok := handler.(WithDependencyProvider)
-	if !ok {
-		return
-	}
-	w.WithDependencyProvider(r.dp)
-}
 func (r *Router) addRoute(handler http.Handler, pathName, method string) *Route {
 	route := &Route{
 		Path:    path.Join(r.prefix, pathName),

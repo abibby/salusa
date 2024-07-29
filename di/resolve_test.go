@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Generic[T any] func(value T) T
+
 func TestResolve(t *testing.T) {
 	t.Run("context", func(t *testing.T) {
 

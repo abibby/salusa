@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"text/template"
 )
@@ -14,6 +15,7 @@ type MessageOptions struct {
 	Attribute string
 	Value     any
 	Arguments []string
+	Field     reflect.StructField
 }
 
 type Message struct {
@@ -21,6 +23,7 @@ type Message struct {
 	String  string `json:"string"`
 	Numeric string `json:"numeric"`
 }
+type localMessage Message
 
 func (m *Message) UnmarshalJSON(b []byte) error {
 	if b[0] == '"' {
@@ -34,7 +37,6 @@ func (m *Message) UnmarshalJSON(b []byte) error {
 		m.Numeric = s
 		return nil
 	} else {
-		type localMessage Message
 		return json.Unmarshal(b, (*localMessage)(m))
 	}
 }
@@ -52,6 +54,9 @@ func init() {
 }
 
 func getMessage(ctx context.Context, ruleName string, options *MessageOptions) (string, error) {
+	if message, ok := options.Field.Tag.Lookup("message"); ok {
+		return message, nil
+	}
 	defaultMessage := func() string {
 		if len(options.Arguments) == 0 {
 			return ruleName
@@ -65,12 +70,17 @@ func getMessage(ctx context.Context, ruleName string, options *MessageOptions) (
 
 	messageTemplate := ""
 
-	switch options.Value.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+	val := reflect.ValueOf(options.Value)
+	if val.Kind() == reflect.Pointer {
+		val = val.Elem()
+	}
+	if val.CanInt() || val.CanUint() || val.CanFloat() {
 		messageTemplate = message.Numeric
-	case string:
+	} else if val.Kind() == reflect.String {
 		messageTemplate = message.String
-	default:
+	} else if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
+		messageTemplate = message.Array
+	} else {
 		messageTemplate = message.String
 	}
 

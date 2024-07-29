@@ -25,3 +25,7 @@ func runTests(t *testing.T, cases map[string]TestCase) {
 		})
 	}
 }
+
+func ptr[T any](v T) *T {
+	return &v
+}

@@ -56,6 +56,10 @@ func RegisterLazySingleton[T any](ctx context.Context, factory func() (T, error)
 		return onceFactory()
 	})
 }
+func RegisterValue(ctx context.Context, t reflect.Type, factory func(ctx context.Context, tag string) (reflect.Value, error)) {
+	dp := GetDependencyProvider(ctx)
+	dp.RegisterValue(t, factory)
+}
 
 // factory should be of type DependencyFactory[T any] func(ctx context.Context, tag string) (T, error)
 func (d *DependencyProvider) Register(factory any) {
@@ -70,12 +74,19 @@ func (d *DependencyProvider) Register(factory any) {
 		panic(ErrInvalidDependencyFactory)
 	}
 
-	d.factories[t.Out(0)] = func(ctx context.Context, tag string) (any, error) {
+	d.RegisterValue(t.Out(0), func(ctx context.Context, tag string) (reflect.Value, error) {
 		out := v.Call([]reflect.Value{
 			reflect.ValueOf(ctx),
 			reflect.ValueOf(tag),
 		})
 		err, _ := out[1].Interface().(error)
-		return out[0].Interface(), err
+		return out[0], err
+	})
+}
+
+func (d *DependencyProvider) RegisterValue(t reflect.Type, factory func(ctx context.Context, tag string) (reflect.Value, error)) {
+	d.factories[t] = func(ctx context.Context, tag string) (any, error) {
+		v, err := factory(ctx, tag)
+		return v.Interface(), err
 	}
 }

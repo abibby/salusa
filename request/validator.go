@@ -85,6 +85,7 @@ func validateRule(ctx context.Context, attribute string, request *http.Request, 
 			Attribute: attribute,
 			Value:     fv.Interface(),
 			Arguments: args,
+			Field:     ft,
 		})
 		if err != nil {
 			return err
@@ -109,6 +110,7 @@ func validateRule(ctx context.Context, attribute string, request *http.Request, 
 			Attribute: attribute,
 			Value:     fv.Interface(),
 			Arguments: args,
+			Field:     ft,
 		})
 		if err != nil {
 			return err

@@ -125,7 +125,7 @@ func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
 
 			around := 4
 
-			for i := max(s.Line-around, 0); i < min(len(lines), s.Line+around); i++ {
+			for i := max(s.Line-around-1, 0); i < min(len(lines), s.Line+around); i++ {
 				out = fmt.Appendf(out, "%3d %s\n", i+1, lines[i])
 			}
 
@@ -146,7 +146,10 @@ func (e *HTTPError) Respond(w http.ResponseWriter, r *http.Request) error {
 	reader, writer := io.Pipe()
 	go func() {
 		err := t.Execute(writer, response)
-		_ = writer.CloseWithError(err)
+		err = writer.CloseWithError(err)
+		if err != nil {
+			clog.Use(r.Context()).Warn("failed to close error response", "err", err)
+		}
 	}()
 	return NewResponse(reader).SetStatus(e.status).AddHeader("Content-Type", "text/html").Respond(w, r)
 }

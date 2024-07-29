@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -17,27 +18,24 @@ type ValidationOptions struct {
 
 type ValidationRule func(options *ValidationOptions) bool
 
+var typeTime = reflect.TypeFor[time.Time]()
+
 var rules = map[string]ValidationRule{}
-var initalized = false
 
 func AddRule(key string, rule ValidationRule) {
 	rules[key] = rule
 }
 
-func initRules() {
-	initalized = true
-
+var initRules = sync.OnceFunc(func() {
 	initNumericRules()
 	initStringRules()
 	initGenericRules()
 	initBoolRules()
 	initDateRules()
-}
+})
 
 func GetRule(key string) (ValidationRule, bool) {
-	if !initalized {
-		initRules()
-	}
+	initRules()
 
 	r, ok := rules[key]
 	return r, ok
@@ -89,41 +87,64 @@ type TypeRule struct {
 	String   func(value string, arguments TypeRuleArguments) bool
 	Bool     func(value bool, arguments TypeRuleArguments) bool
 	Time     func(value time.Time, arguments TypeRuleArguments) bool
+	Array    func(value reflect.Value, arguments TypeRuleArguments) bool
 }
 
 func AddTypeRule(key string, rule *TypeRule) {
 	AddRule(key, func(options *ValidationOptions) bool {
 		if len(options.Arguments) < rule.ArgCount {
-			log.Printf("max must have %d argument(s)", rule.ArgCount)
+			log.Printf("%s must have %d argument(s)", key, rule.ArgCount)
 			return true
 		}
 		val := reflect.ValueOf(options.Value)
 
-		switch options.Value.(type) {
-		case int, int8, int16, int32, int64:
+		if val.Kind() == reflect.Pointer {
+			val = val.Elem()
+		}
+
+		if val.Type() == typeTime {
+			if rule.Time == nil {
+				log.Printf("no rule for int fields")
+				return true
+			}
+			return rule.Time(val.Interface().(time.Time), options.Arguments)
+		}
+
+		if val.CanInt() {
 			if rule.Int == nil {
 				log.Printf("no rule for int fields")
 				return true
 			}
 			return rule.Int(val.Int(), options.Arguments)
-		case uint, uint8, uint16, uint32, uint64:
+		}
+		if val.CanUint() {
 			if rule.Uint == nil {
 				log.Printf("no rule for uint fields")
 				return true
 			}
 			return rule.Uint(val.Uint(), options.Arguments)
-		case float32, float64:
+		}
+		if val.CanFloat() {
 			if rule.Float == nil {
 				log.Printf("no rule for float fields")
 				return true
 			}
 			return rule.Float(val.Float(), options.Arguments)
-		case string:
+		}
+		if val.Kind() == reflect.String {
 			if rule.String == nil {
 				log.Printf("no rule for string fields")
 				return true
 			}
 			return rule.String(val.String(), options.Arguments)
+		}
+
+		if val.Kind() == reflect.Slice {
+			if rule.Array == nil {
+				log.Printf("no rule for string fields")
+				return true
+			}
+			return rule.Array(val, options.Arguments)
 		}
 
 		log.Printf("using a numeric rule on a non numeric field")

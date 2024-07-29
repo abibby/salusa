@@ -11,6 +11,8 @@ import (
 	"github.com/abibby/salusa/set"
 )
 
+var ErrNotFillable = errors.New("struct is not fillable")
+
 type IsFillabler interface {
 	IsFillable() bool
 }
@@ -64,6 +66,8 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		return fmt.Errorf("di: Fill(non-struct "+v.Type().String()+"): %w", ErrFillParameters)
 	}
 
+	var hasFillableFields = false
+
 	err := helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
 		if !sf.IsExported() {
 			return nil
@@ -73,6 +77,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		if !ok && !opt.autoResolve.Has(fv.Type()) {
 			return nil
 		}
+		hasFillableFields = true
 		tag := parseTag(rawTag)
 
 		result, err := dp.resolve(ctx, sf.Type, tag.Name, opt)
@@ -91,6 +96,10 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 	})
 	if err != nil {
 		return err
+	}
+
+	if !hasFillableFields {
+		return fmt.Errorf("di: Fill(not fillable): %w", ErrNotFillable)
 	}
 
 	return nil

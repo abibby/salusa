@@ -2,6 +2,7 @@ package kernel
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/abibby/salusa/request"
@@ -16,6 +17,7 @@ type Kernel struct {
 	rootHandlerFactory func(ctx context.Context) http.Handler
 	rootHandler        http.Handler
 	services           []Service
+	closers            []io.Closer
 
 	globalMiddleware []router.MiddlewareFunc
 
@@ -35,6 +37,7 @@ func New(options ...KernelOption) *Kernel {
 			request.DIMiddleware(),
 		},
 		services:     []Service{},
+		closers:      []io.Closer{},
 		bootstrapped: false,
 	}
 

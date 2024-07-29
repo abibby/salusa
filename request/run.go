@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -48,6 +49,8 @@ type File struct {
 	handle *FileInfo
 }
 
+var _ fs.FileInfo = (*FileInfo)(nil)
+
 // Close implements fs.File.
 func (f *File) Close() error {
 	return f.file.Close()
@@ -77,7 +80,7 @@ func (f *FileInfo) ModTime() time.Time {
 
 // Mode implements fs.FileInfo.
 func (f *FileInfo) Mode() fs.FileMode {
-	return 0o644
+	return 0644
 }
 
 // Name implements fs.FileInfo.
@@ -94,8 +97,6 @@ func (f *FileInfo) Size() int64 {
 func (f *FileInfo) Sys() any {
 	return nil
 }
-
-var _ fs.FileInfo = (*FileInfo)(nil)
 
 func Run(requestHttp *http.Request, requestStruct any) error {
 	urlArgs := map[string]map[string][]string{
@@ -180,7 +181,9 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 		di.AutoResolve[*http.Request](),
 		di.AutoResolve[http.ResponseWriter](),
 	)
-	if err != nil {
+	if errors.Is(err, di.ErrNotFillable) {
+		// no-op
+	} else if err != nil {
 		return fmt.Errorf("failed to di.Fill request: %w", err)
 	}
 
@@ -230,8 +233,10 @@ func setFile(sf reflect.StructField, fv reflect.Value, requestHttp *http.Request
 	}
 
 	fv.Set(reflect.ValueOf(&File{
-		file:   file,
-		handle: &FileInfo{header: handle},
+		file: file,
+		handle: &FileInfo{
+			header: handle,
+		},
 	}))
 	return nil
 }
@@ -273,41 +278,63 @@ func decode(t reflect.Type, values []string) (reflect.Value, error) {
 		return reflect.ValueOf(v), err
 	}
 
+	if reflect.PointerTo(t).Implements(textUnmarshalerType) {
+		v := helpers.Create(reflect.PointerTo(t)).Interface()
+		err := v.(encoding.TextUnmarshaler).UnmarshalText([]byte(values[0]))
+		return reflect.ValueOf(v).Elem(), err
+	}
+
 	switch t.Kind() {
-
-	// case reflect.Array:
-	// case reflect.Map:
-	// case reflect.Struct:
-
 	case reflect.Slice:
-		sliceT := t.Elem()
-		slice := reflect.MakeSlice(sliceT, 0, len(values))
-		for _, part := range values {
-			result, err := decode(sliceT, []string{part})
-			if err != nil {
-				return invalidValue, err
-			}
-			slice = reflect.Append(slice, result)
-		}
-		return slice, nil
+		return decodeSlice(t, values)
 
 	case reflect.Pointer:
-		v, err := decode(t.Elem(), values)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		result := v.Interface()
-		return reflect.ValueOf(&result), nil
+		return decodePointer(t, values)
 
 	default:
-		conv, ok := builtinConverters[t.Kind()]
-		if !ok {
-			return invalidValue, fmt.Errorf("no converter for %s", t.Kind())
-		}
-		result := conv(values[0])
-		if result == invalidValue {
-			return invalidValue, fmt.Errorf("should be of type %s", t.Kind())
-		}
-		return result, nil
+		return decodeBuiltin(t, values)
 	}
+}
+
+func decodeSlice(t reflect.Type, values []string) (reflect.Value, error) {
+	sliceT := t.Elem()
+	slice := reflect.MakeSlice(sliceT, 0, len(values))
+	for _, part := range values {
+		result, err := decode(sliceT, []string{part})
+		if err != nil {
+			return invalidValue, err
+		}
+		slice = reflect.Append(slice, result)
+	}
+	return slice, nil
+}
+
+func decodePointer(t reflect.Type, values []string) (reflect.Value, error) {
+	if values[0] == "" {
+		return reflect.New(t).Elem(), nil
+	}
+	v, err := decode(t.Elem(), values)
+	if err != nil {
+		return reflect.Value{}, err
+	}
+	// result := v.Interface()
+	vPtr := reflect.New(t.Elem())
+	vPtr.Elem().Set(v)
+	return vPtr, nil
+}
+
+func decodeBuiltin(t reflect.Type, values []string) (reflect.Value, error) {
+	conv, ok := builtinConverters[t.Kind()]
+	if !ok {
+		return invalidValue, fmt.Errorf("no converter for %s", t.Kind())
+	}
+	result := conv(values[0])
+	if result == invalidValue {
+		return invalidValue, fmt.Errorf(`should be of type %s: value "%s"`, t.Kind(), values[0])
+	}
+
+	if t != result.Type() {
+		return result.Convert(t), nil
+	}
+	return result, nil
 }

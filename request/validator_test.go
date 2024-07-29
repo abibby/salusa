@@ -110,3 +110,73 @@ func Test_Validate_required(t *testing.T) {
 		"Foo": []string{"The Foo field is required."},
 	}, err)
 }
+
+func Test_Validate_max(t *testing.T) {
+	t.Run("number", func(t *testing.T) {
+		type Request struct {
+			Foo int `validate:"max:1"`
+		}
+
+		err := Validate(nil, &Request{
+			Foo: 2,
+		})
+
+		assert.Equal(t, ValidationError{
+			"Foo": []string{"The Foo must not be greater than 1."},
+		}, err)
+	})
+
+	t.Run("number pointer", func(t *testing.T) {
+		type Request struct {
+			Foo *int `validate:"max:1"`
+		}
+
+		err := Validate(nil, &Request{
+			Foo: ptr(2),
+		})
+
+		assert.Equal(t, ValidationError{
+			"Foo": []string{"The Foo must not be greater than 1."},
+		}, err)
+	})
+
+	t.Run("string", func(t *testing.T) {
+		type Request struct {
+			Foo string `validate:"max:1"`
+		}
+
+		err := Validate(nil, &Request{
+			Foo: "12",
+		})
+
+		assert.Equal(t, ValidationError{
+			"Foo": []string{"The Foo must not be greater than 1 characters."},
+		}, err)
+	})
+
+	t.Run("array", func(t *testing.T) {
+		type Request struct {
+			Foo []int `validate:"max:1"`
+		}
+
+		err := Validate(nil, &Request{
+			Foo: []int{1, 2},
+		})
+
+		assert.Equal(t, ValidationError{
+			"Foo": []string{"The Foo must not have more than 1 items."},
+		}, err)
+	})
+}
+
+func Test_Validate_customMessage(t *testing.T) {
+	type Request struct {
+		Foo int `validate:"required" message:"custom message."`
+	}
+
+	err := Validate(nil, &Request{})
+
+	assert.Equal(t, ValidationError{
+		"Foo": []string{"custom message."},
+	}, err)
+}

@@ -3,11 +3,14 @@ package kernel
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
+	"reflect"
 	"strings"
 
 	"github.com/abibby/salusa/clog"
@@ -98,6 +101,9 @@ func (k *Kernel) runFetch(ctx context.Context, uri, method string, headers []str
 	if err != nil {
 		return err
 	}
+	u.Host = ""
+	u.Scheme = ""
+	r.RequestURI = u.String()
 	r = r.WithContext(ctx)
 	r.Header.Add("Content-Type", "application/json")
 	r.Header.Add("Accept", "application/json")
@@ -123,6 +129,7 @@ func (k *Kernel) handlerWithMiddleware() http.Handler {
 	}
 	return h
 }
+
 func (k *Kernel) RunHttpServer(ctx context.Context) error {
 	clog.Use(ctx).Info(fmt.Sprintf("listening at http://localhost:%d", k.cfg.GetHTTPPort()))
 	server := &http.Server{
@@ -132,6 +139,9 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 			return ctx
 		},
 	}
+
+	k.addCloser(server)
+
 	return server.ListenAndServe()
 }
 
@@ -158,4 +168,33 @@ func (k *Kernel) RunServices(ctx context.Context) {
 			}
 		}(ctx, s)
 	}
+}
+
+func (k *Kernel) singles(ctx context.Context) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		tries := 0
+		for range c {
+			if tries == 0 {
+				go func() {
+					log.Print("Gracefully shutting down server Ctrl+C again to force")
+					for _, closer := range k.closers {
+						err := closer.Close()
+						if err != nil {
+							slog.Error("failed to close resource",
+								"err", err,
+								"resource", reflect.TypeOf(closer),
+							)
+						}
+					}
+					os.Exit(1)
+				}()
+			} else {
+				log.Print("Force shutting down server")
+				os.Exit(1)
+			}
+			tries++
+		}
+	}()
 }

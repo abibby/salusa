@@ -18,6 +18,7 @@ func (dp *DependencyProvider) Validate(ctx context.Context, v any, opts ...FillO
 		opt = o(opt)
 	}
 	errs := []error{}
+
 	err := helpers.EachField(reflect.ValueOf(v), func(sf reflect.StructField, fv reflect.Value) error {
 		if !sf.IsExported() {
 			return nil

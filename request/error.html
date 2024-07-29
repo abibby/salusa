@@ -59,7 +59,11 @@
             {{ $isLocal := isLocal $frame.File }}
             <li class="stack-frame" data-is-local="{{ $isLocal }}">
               <div class="call">{{$frame.Call}}</div>
-              <div class="file">{{$frame.File}}:{{$frame.Line}}</div>
+              <div class="file">
+                <a href="vscode://file{{$frame.File}}:{{$frame.Line}}">
+                  {{$frame.File}}:{{$frame.Line}}
+                </a>
+              </div>
 
               <div class="collapse">
                 <input id="{{ $frame.Call }}" type="checkbox" {{ if $isLocal }} checked {{ end }}>

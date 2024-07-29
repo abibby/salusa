@@ -34,8 +34,8 @@ func (d *DevNull) Write(p []byte) (n int, err error) {
 var emails embed.FS
 
 var nullLogger = slog.New(slog.NewTextHandler(&DevNull{}, nil))
-var usernameRoutes = auth.NewBasicAuthController[*auth.UsernameUser](auth.NewUser(auth.NewUsernameUser))
-var emailRoutes = auth.NewBasicAuthController[*auth.EmailVerifiedUser](auth.NewUser(auth.NewEmailVerifiedUser))
+var usernameRoutes = auth.NewBasicAuthController[*auth.UsernameUser](auth.CreateUser(auth.NewUsernameUser))
+var emailRoutes = auth.NewBasicAuthController[*auth.EmailVerifiedUser](auth.CreateUser(auth.NewEmailVerifiedUser))
 var emailTemplates = view.NewViewTemplate(emails)
 
 func TestAuthRoutesUserCreate(t *testing.T) {

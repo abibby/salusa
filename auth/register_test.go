@@ -28,7 +28,7 @@ func TestRegister(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := di.TestDependencyProviderContext()
-		databasedi.Register(ctx, db)
+		databasedi.Register(db)(ctx)
 		err = auth.Register[*AutoIncrementUser](ctx)
 		assert.NoError(t, err)
 
@@ -56,7 +56,7 @@ func TestRegister(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := di.TestDependencyProviderContext()
-		databasedi.Register(ctx, db)
+		databasedi.Register(db)(ctx)
 		err = auth.Register[*auth.UsernameUser](ctx)
 		assert.NoError(t, err)
 
@@ -84,7 +84,7 @@ func TestRegister(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := di.TestDependencyProviderContext()
-		databasedi.Register(ctx, db)
+		databasedi.Register(db)(ctx)
 		err = auth.Register[*auth.UsernameUser](ctx)
 		assert.NoError(t, err)
 

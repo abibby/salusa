@@ -42,25 +42,39 @@ func RegisterFromConfig(migrations *migrate.Migrations) func(ctx context.Context
 				}
 			}
 			deps.Log.Info("database ready")
+
 			return db, nil
 		})
-		RegisterTransactions(ctx, nil)
+
+		err := RegisterTransactions(nil)(ctx)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 }
 
-func Register(ctx context.Context, db *sqlx.DB) {
-	di.RegisterSingleton(ctx, func() *sqlx.DB {
-		return db
-	})
-	RegisterTransactions(ctx, nil)
+func Register(db *sqlx.DB) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		di.RegisterSingleton(ctx, func() *sqlx.DB {
+			return db
+		})
+		err := RegisterTransactions(nil)(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
-func RegisterTransactions(ctx context.Context, mtx *sync.Mutex) {
-	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Read, error) {
-		return database.NewRead(ctx, mtx, db), nil
-	})
-	di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Update, error) {
-		return database.NewUpdate(ctx, mtx, db), nil
-	})
+func RegisterTransactions(mtx sync.Locker) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Read, error) {
+			return database.NewRead(ctx, mtx, db), nil
+		})
+		di.RegisterWith(ctx, func(ctx context.Context, tag string, db *sqlx.DB) (database.Update, error) {
+			return database.NewUpdate(ctx, mtx, db), nil
+		})
+		return nil
+	}
 }
