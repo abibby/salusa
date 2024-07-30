@@ -144,7 +144,6 @@ type UserCreateRequest struct {
 	Update   database.Update    `inject:""`
 	Ctx      context.Context    `inject:""`
 	Logger   *slog.Logger       `inject:""`
-	Request  *http.Request      `inject:""`
 	URL      router.URLResolver `inject:""`
 	Template *view.ViewTemplate `inject:",optional"`
 }

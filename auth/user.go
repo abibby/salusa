@@ -33,15 +33,16 @@ type UsernameUser struct {
 var _ User = (*UsernameUser)(nil)
 
 type UsernameUserCreateRequest struct {
+	UserCreateRequest
 	Username string `json:"username" validate:"required"`
 }
 
-func NewUsernameUser(request *UsernameUserCreateRequest) *UsernameUser {
-	return &UsernameUser{
+func NewUsernameUser(request *UsernameUserCreateRequest, c *BasicAuthController[*UsernameUser]) (*UserCreateResponse[*UsernameUser], error) {
+	return c.RunUserCreate(&UsernameUser{
 		ID:           uuid.New(),
 		Username:     request.Username,
 		PasswordHash: []byte{},
-	}
+	}, &request.UserCreateRequest)
 }
 
 func (u *UsernameUser) GetID() string {
@@ -80,17 +81,17 @@ var _ EmailVerified = (*EmailVerifiedUser)(nil)
 var _ User = (*EmailVerifiedUser)(nil)
 
 type EmailVerifiedUserCreateRequest struct {
+	UserCreateRequest
 	Email string `json:"username"  validate:"required|email"`
 }
 
-func NewEmailVerifiedUser(request *EmailVerifiedUserCreateRequest) *EmailVerifiedUser {
-	return &EmailVerifiedUser{
+func NewEmailVerifiedUser(request *EmailVerifiedUserCreateRequest, c *BasicAuthController[*EmailVerifiedUser]) (*UserCreateResponse[*EmailVerifiedUser], error) {
+	return c.RunUserCreate(&EmailVerifiedUser{
 		ID:           uuid.New(),
 		Email:        request.Email,
 		PasswordHash: []byte{},
-	}
+	}, &request.UserCreateRequest)
 }
-
 func (u *EmailVerifiedUser) GetID() string {
 	return u.ID.String()
 }

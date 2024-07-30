@@ -41,7 +41,7 @@ func TestRun_fails_with_invalid_type_from_query_string(t *testing.T) {
 	assert.Error(t, err)
 	assert.IsType(t, ValidationError{}, err)
 	assert.Equal(t, err, ValidationError{
-		"foo": []string{"should be of type int"},
+		"foo": []string{"should be of type int: value \"bar\""},
 	})
 }
 

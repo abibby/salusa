@@ -8,6 +8,7 @@ import (
 	"github.com/abibby/salusa/static/template/app/handlers"
 	"github.com/abibby/salusa/static/template/app/models"
 	"github.com/abibby/salusa/view"
+	"github.com/google/uuid"
 )
 
 func InitRoutes(r *router.Router) {
@@ -22,10 +23,14 @@ func InitRoutes(r *router.Router) {
 
 	r.Group("/api", func(r *router.Router) {
 		auth.RegisterRoutes(r, auth.NewBasicAuthController[*models.User](
-			auth.NewUser(func(r *auth.EmailVerifiedUserCreateRequest) *models.User {
-				return &models.User{
-					EmailVerifiedUser: *auth.NewEmailVerifiedUser(r),
-				}
+			auth.CreateUser(func(r *auth.EmailVerifiedUserCreateRequest, c *auth.BasicAuthController[*models.User]) (*auth.UserCreateResponse[*models.User], error) {
+				return c.RunUserCreate(&models.User{
+					EmailVerifiedUser: auth.EmailVerifiedUser{
+						ID:           uuid.New(),
+						Email:        r.Email,
+						PasswordHash: []byte{},
+					},
+				}, &r.UserCreateRequest)
 			}),
 			auth.ResetPasswordName("reset-password"),
 		))

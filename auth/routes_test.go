@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"log/slog"
@@ -41,11 +40,14 @@ var emailTemplates = view.NewViewTemplate(emails)
 func TestAuthRoutesUserCreate(t *testing.T) {
 	Run(t, "can create user", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		resp, err := usernameRoutes.RunUserCreate(&auth.UserCreateRequest{
-			Update:  dbtest.Update(tx),
-			Ctx:     ctx,
-			Logger:  nullLogger,
-			Request: httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user","password":"pass"}`)),
+
+		resp, err := usernameRoutes.RunUserCreate(&auth.UsernameUser{
+			Username:     "user",
+			PasswordHash: []byte{},
+		}, &auth.UserCreateRequest{
+			Update: dbtest.Update(tx),
+			Ctx:    ctx,
+			Logger: nullLogger,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
@@ -60,11 +62,13 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 
 	Run(t, "force lowercase usernames", func(t *testing.T, tx *sqlx.Tx) {
 		ctx := context.Background()
-		resp, err := usernameRoutes.RunUserCreate(&auth.UserCreateRequest{
-			Update:  dbtest.Update(tx),
-			Ctx:     ctx,
-			Logger:  nullLogger,
-			Request: httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"USER","password":"pass"}`)),
+		resp, err := usernameRoutes.RunUserCreate(&auth.UsernameUser{
+			Username:     "user",
+			PasswordHash: []byte{},
+		}, &auth.UserCreateRequest{
+			Update: dbtest.Update(tx),
+			Ctx:    ctx,
+			Logger: nullLogger,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "user", resp.User.Username)
@@ -81,12 +85,14 @@ func TestAuthRoutesUserCreate(t *testing.T) {
 		ctx := context.Background()
 		urlResolver := routertest.NewTestResolver()
 		m := emailtest.NewTestMailer()
-		resp, err := emailRoutes.RunUserCreate(&auth.UserCreateRequest{
+		resp, err := emailRoutes.RunUserCreate(&auth.EmailVerifiedUser{
+			Email:        "user@example.com",
+			PasswordHash: []byte{},
+		}, &auth.UserCreateRequest{
 			Update:   dbtest.Update(tx),
 			Ctx:      ctx,
 			Mailer:   m,
 			Logger:   nullLogger,
-			Request:  httptest.NewRequest("POST", "/user/create", bytes.NewBufferString(`{"username":"user@example.com","password":"pass"}`)),
 			URL:      urlResolver,
 			Template: emailTemplates,
 		})
