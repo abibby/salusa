@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
@@ -10,6 +11,19 @@ import (
 	"github.com/abibby/salusa/internal/relationship"
 	"github.com/jmoiron/sqlx"
 )
+
+type QueryError struct {
+	err   error
+	query string
+}
+
+func (e *QueryError) Error() string {
+	return fmt.Sprintf("%s: %v", e.query, e.err)
+}
+
+func (e *QueryError) Unwrap() error {
+	return e.err
+}
 
 // Get executes the query as a select statement and returns the result.
 func (b *ModelBuilder[T]) Get(tx database.DB) ([]T, error) {
@@ -63,13 +77,25 @@ func (b *ModelBuilder[T]) Load(tx database.DB, v any) error {
 }
 
 // Load executes the query as a select statement and sets v to the result.
-func (b *Builder) Load(tx database.DB, v any) error {
+func (b *Builder) Load(tx database.DB, v any) (err error) {
 	q, bindings, err := b.SQLString(dialects.New())
 	if err != nil {
 		return err
 	}
-
-	err = sqlx.SelectContext(b.Context(), tx, v, q, bindings...)
+	defer func() {
+		if err == nil {
+			return
+		}
+		err = &QueryError{
+			err:   err,
+			query: q,
+		}
+	}()
+	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
+		err = sqlx.SelectContext(b.Context(), tx, v, q, bindings...)
+	} else {
+		err = sqlx.GetContext(b.Context(), tx, v, q, bindings...)
+	}
 	if err != nil {
 		return err
 	}
@@ -87,32 +113,17 @@ func (b *Builder) Load(tx database.DB, v any) error {
 }
 
 // Load executes the query as a select statement and sets v to the result.
+//
+// Deprecated: Use ModelBuilder.Load
 func (b *ModelBuilder[T]) LoadOne(tx database.DB, v any) error {
 	return b.builder.LoadOne(tx, v)
 }
 
 // Load executes the query as a select statement and sets v to the first record.
+//
+// Deprecated: Use Builder.Load
 func (b *Builder) LoadOne(tx database.DB, v any) error {
-	q, bindings, err := b.Limit(1).SQLString(dialects.New())
-
-	if err != nil {
-		return err
-	}
-
-	err = sqlx.GetContext(b.Context(), tx, v, q, bindings...)
-	if err != nil {
-		return err
-	}
-	err = relationship.InitializeRelationships(v)
-	if err != nil {
-		return err
-	}
-
-	err = hooks.AfterLoad(b.Context(), tx, v)
-	if err != nil {
-		return err
-	}
-	return nil
+	return b.Load(tx, v)
 }
 
 func (b *ModelBuilder[T]) Each(tx database.DB, cb func(v T) error) error {

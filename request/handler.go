@@ -2,10 +2,15 @@ package request
 
 import (
 	"context"
-	"log/slog"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"reflect"
 
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/validate"
 	"github.com/go-openapi/spec"
 )
 
@@ -23,12 +28,9 @@ type RequestHandler[TRequest, TResponse any] struct {
 
 func (h *RequestHandler[TRequest, TResponse]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := h.serveHTTP(w, r)
-	if err == nil {
+	if err != nil {
+		RespondError(w, r, err)
 		return
-	}
-	addError(r, err)
-	if !hasHandleErrors(r) {
-		ErrorHandler(err).ServeHTTP(w, r)
 	}
 }
 func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r *http.Request) error {
@@ -47,17 +49,38 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 		return err
 	}
 
-	var anyResp any = resp
-	switch resp := anyResp.(type) {
+	return respond(w, r, resp)
+}
+
+func RespondError(w http.ResponseWriter, r *http.Request, err error) {
+	if err == nil {
+		return
+	}
+	addError(r, err)
+	if !hasHandleErrors(r) {
+		ErrorHandler(err).ServeHTTP(w, r)
+	}
+}
+
+func Respond(w http.ResponseWriter, r *http.Request, resp any) {
+	err := respond(w, r, resp)
+	if err != nil {
+		RespondError(w, r, err)
+		return
+	}
+}
+func respond(w http.ResponseWriter, r *http.Request, resp any) error {
+	switch resp := resp.(type) {
 	case Responder:
-		h.respond(w, r, resp)
+		return resp.Respond(w, r)
 	case http.Handler:
 		resp.ServeHTTP(w, r)
+		return nil
+	case *http.Response:
+		return serveResponse(w, resp)
 	default:
-		h.respond(w, r, NewJSONResponse(resp))
+		return NewJSONResponse(resp).Respond(w, r)
 	}
-
-	return nil
 }
 
 func (h *RequestHandler[TRequest, TResponse]) Run(r *TRequest) (TResponse, error) {
@@ -70,21 +93,49 @@ func Handler[TRequest, TResponse any](callback func(r *TRequest) (TResponse, err
 	}
 }
 
-func (h *RequestHandler[TRequest, TResponse]) respond(w http.ResponseWriter, req *http.Request, r Responder) {
-	err := r.Respond(w, req)
-	if err != nil {
-		logger, resolveErr := di.Resolve[*slog.Logger](req.Context())
-		if resolveErr != nil {
-			logger = slog.Default()
-		}
-		logger.Error("request failed", "error", err)
-	}
-}
 func (r *RequestHandler[TRequest, TResponse]) Validate(ctx context.Context) error {
-	var req TRequest
-	return di.Validate(ctx, &req,
+	t := reflect.TypeFor[TRequest]()
+	errs := []error{}
+	for _, sf := range helpers.GetFields(t) {
+		if isMissingTags(sf) {
+			errs = append(errs, fmt.Errorf("%s.%s missing tags", t, sf.Name))
+		}
+	}
+	return validate.Append(ctx, errors.Join(errs...), di.Validator(ctx, t,
 		di.AutoResolve[context.Context](),
 		di.AutoResolve[*http.Request](),
 		di.AutoResolve[http.ResponseWriter](),
-	)
+	))
+}
+
+func isMissingTags(sf reflect.StructField) bool {
+	if _, ok := sf.Tag.Lookup("json"); ok {
+		return false
+	}
+	if _, ok := sf.Tag.Lookup("query"); ok {
+		return false
+	}
+	if _, ok := sf.Tag.Lookup("path"); ok {
+		return false
+	}
+	if _, ok := sf.Tag.Lookup("inject"); ok {
+		return false
+	}
+	return true
+}
+func serveResponse(w http.ResponseWriter, r *http.Response) error {
+	if r == nil {
+		return nil
+	}
+	defer r.Body.Close()
+
+	for k, vs := range r.Header {
+		for _, v := range vs {
+			w.Header().Add(k, v)
+		}
+	}
+	w.WriteHeader(r.StatusCode)
+
+	_, err := io.Copy(w, r.Body)
+	return err
 }

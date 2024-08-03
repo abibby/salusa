@@ -18,6 +18,7 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 		return ErrAlreadyBootstrapped
 	}
 	k.bootstrapped = true
+	k.dependencyProvider = di.GetDependencyProvider(ctx)
 
 	k.rootHandler = k.rootHandlerFactory(ctx)
 

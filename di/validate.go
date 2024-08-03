@@ -7,42 +7,58 @@ import (
 	"reflect"
 
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/validate"
 )
 
-func Validate(ctx context.Context, v any, opts ...FillOption) error {
-	return GetDependencyProvider(ctx).Validate(ctx, v, opts...)
+type DIValidator struct {
+	dp  *DependencyProvider
+	typ reflect.Type
 }
-func (dp *DependencyProvider) Validate(ctx context.Context, v any, opts ...FillOption) error {
-	opt := newFillOptions()
-	for _, o := range opts {
-		opt = o(opt)
-	}
-	errs := []error{}
 
-	err := helpers.EachField(reflect.ValueOf(v), func(sf reflect.StructField, fv reflect.Value) error {
+var _ validate.Validator = (*DIValidator)(nil)
+
+func (v *DIValidator) Validate(ctx context.Context) error {
+	opt := newFillOptions()
+	// for _, o := range opts {
+	// 	opt = o(opt)
+	// }
+	errs := []error{}
+	t := v.typ
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Struct {
+		return nil
+	}
+	for _, sf := range helpers.GetFields(t) {
 		if !sf.IsExported() {
-			return nil
+			continue
 		}
 
 		_, ok := sf.Tag.Lookup("inject")
-		if !ok && !opt.autoResolve.Has(fv.Type()) {
-			return nil
+		if !ok && !opt.autoResolve.Has(sf.Type) {
+			continue
 		}
 
 		switch sf.Type {
 		case contextType, dependencyProviderType:
-			return nil
+			continue
 		}
 
-		_, ok = dp.factories[sf.Type]
+		_, ok = v.dp.factories[sf.Type]
 		if !ok {
-			errs = append(errs, fmt.Errorf("missing dependancy %s", sf.Type))
+			errs = append(errs, fmt.Errorf("missing dependancy %s on %s.%s", sf.Type, v.typ, sf.Name))
 		}
-
-		return nil
-	})
-	if err != nil {
-		panic(err)
 	}
 	return errors.Join(errs...)
+}
+
+func Validator(ctx context.Context, rootType reflect.Type, opts ...FillOption) *DIValidator {
+	return GetDependencyProvider(ctx).Validator(rootType, opts...)
+}
+func (dp *DependencyProvider) Validator(rootType reflect.Type, opts ...FillOption) *DIValidator {
+	return &DIValidator{
+		dp:  dp,
+		typ: rootType,
+	}
 }

@@ -6,9 +6,6 @@ type Service interface {
 	Run(ctx context.Context) error
 	Name() string
 }
-type Validator interface {
-	Validate(ctx context.Context) error
-}
 
 type Restarter interface {
 	Restart()

@@ -25,11 +25,20 @@ type hasOneOrMany[T model.Model] struct {
 
 var _ iHasOneOrMany = hasOneOrMany[model.Model]{}
 
-// Subquery returns a SubBuilder scoped to the relationship.
+// Subquery returns a Builder scoped to the relationship.
 func (r hasOneOrMany[T]) Subquery() *Builder {
 	return From[T]().
 		WhereColumn(r.relatedKey, "=", database.GetTable(r.parent)+"."+r.parentKey).
 		builder
+}
+
+// Query returns a ModelBuilder scoped to the relationship.
+func (r hasOneOrMany[T]) Query() *ModelBuilder[T] {
+	v, ok := helpers.GetValue(r.parent, r.parentKey)
+	if !ok {
+		panic(fmt.Errorf("no column %s in %v", r.parentKey, reflect.TypeOf(r.parent)))
+	}
+	return From[T]().Where(r.relatedKey, "=", v)
 }
 
 func (r hasOneOrMany[T]) parentKeyValue() (any, bool) {

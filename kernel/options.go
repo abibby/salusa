@@ -51,7 +51,7 @@ func InitRoutes(cb func(r *router.Router)) KernelOption {
 		return r
 	})
 }
-func Middleware(globalMiddleware []router.MiddlewareFunc) KernelOption {
+func Middleware(globalMiddleware []router.Middleware) KernelOption {
 	return func(k *Kernel) *Kernel {
 		k.globalMiddleware = globalMiddleware
 		return k

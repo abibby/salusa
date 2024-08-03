@@ -83,13 +83,6 @@ func TestRegister(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid type", func(t *testing.T) {
-		assert.PanicsWithValue(t, di.ErrInvalidDependencyFactory, func() {
-			dp := di.NewDependencyProvider()
-			dp.Register(func() {})
-		})
-	})
-
 	t.Run("resolve fillable struct", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {

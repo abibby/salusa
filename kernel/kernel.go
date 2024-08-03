@@ -2,9 +2,9 @@ package kernel
 
 import (
 	"context"
-	"io"
 	"net/http"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/abibby/salusa/salusaconfig"
@@ -17,9 +17,10 @@ type Kernel struct {
 	rootHandlerFactory func(ctx context.Context) http.Handler
 	rootHandler        http.Handler
 	services           []Service
-	closers            []io.Closer
+	// closers            []io.Closer
+	dependencyProvider *di.DependencyProvider
 
-	globalMiddleware []router.MiddlewareFunc
+	globalMiddleware []router.Middleware
 
 	docs *spec.Swagger
 
@@ -33,11 +34,11 @@ func New(options ...KernelOption) *Kernel {
 		bootstrap:      []func(context.Context) error{},
 		registerConfig: func(context.Context) error { return nil },
 		rootHandler:    http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
-		globalMiddleware: []router.MiddlewareFunc{
+		globalMiddleware: []router.Middleware{
 			request.DIMiddleware(),
 		},
-		services:     []Service{},
-		closers:      []io.Closer{},
+		services: []Service{},
+		// closers:      []io.Closer{},
 		bootstrapped: false,
 	}
 

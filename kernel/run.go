@@ -2,70 +2,43 @@ package kernel
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"reflect"
-	"strings"
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
 	"github.com/spf13/pflag"
 )
 
-type StdoutResponseWriter struct {
-	header http.Header
-	status int
-}
-
-func NewStdoutResponseWriter() *StdoutResponseWriter {
-	return &StdoutResponseWriter{
-		header: http.Header{},
-		status: 200,
-	}
-}
-
-func (w *StdoutResponseWriter) Ok() bool {
-	return w.status >= 200 && w.status < 300
-}
-
-func (w *StdoutResponseWriter) Status() int {
-	return w.status
-}
-
-var _ http.ResponseWriter = (*StdoutResponseWriter)(nil)
-
-// Header implements http.ResponseWriter.
-func (s *StdoutResponseWriter) Header() http.Header {
-	return s.header
-}
-
-// Write implements http.ResponseWriter.
-func (s *StdoutResponseWriter) Write(b []byte) (int, error) {
-	return os.Stdout.Write(b)
-}
-
-// WriteHeader implements http.ResponseWriter.
-func (s *StdoutResponseWriter) WriteHeader(statusCode int) {
-	s.status = statusCode
-}
-
 func (k *Kernel) Run(ctx context.Context) error {
+	k.singles(ctx)
+	defer func() {
+		k.closeAndLog(ctx)
+	}()
+
+	go func() {
+		<-ctx.Done()
+		k.closeAndLog(ctx)
+	}()
+
 	validate := pflag.BoolP("validate", "v", false, "validate di")
 	fetch := pflag.String("fetch", "", "run a single request and print the result to stdout")
 	method := pflag.StringP("method", "m", "get", "method for fetch")
 	headers := pflag.StringArrayP("header", "h", []string{}, "header")
+	body := pflag.StringP("body", "b", "", "body")
 
 	pflag.Parse()
 
 	err := k.Validate(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		clog.Use(ctx).Warn("validation errors", "err", err)
 	}
 	if *validate {
 		if err != nil {
@@ -75,62 +48,23 @@ func (k *Kernel) Run(ctx context.Context) error {
 	}
 
 	if *fetch != "" {
-		return k.runFetch(ctx, *fetch, *method, *headers)
+		return k.runFetch(ctx, *fetch, *method, *headers, *body)
 	}
 
 	go k.RunServices(ctx)
 
 	return k.RunHttpServer(ctx)
 }
-func (k *Kernel) runFetch(ctx context.Context, uri, method string, headers []string) error {
-	var u *url.URL
-	if strings.HasPrefix(uri, "/") {
-		uri = "http://localhost" + uri
-	} else if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
-		// noop
-	} else {
-		uri = "http://localhost/" + uri
-	}
-
-	u, err := url.Parse(uri)
-	if err != nil {
-		return err
-	}
-	h := k.handlerWithMiddleware()
-	r, err := http.NewRequest(strings.ToUpper(method), u.String(), http.NoBody)
-	if err != nil {
-		return err
-	}
-	u.Host = ""
-	u.Scheme = ""
-	r.RequestURI = u.String()
-	r = r.WithContext(ctx)
-	r.Header.Add("Content-Type", "application/json")
-	r.Header.Add("Accept", "application/json")
-	for _, header := range headers {
-		parts := strings.SplitN(header, ":", 2)
-		if len(parts) != 2 {
-			return fmt.Errorf("Invalid header %s", header)
-		}
-		r.Header.Add(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
-	}
-	w := NewStdoutResponseWriter()
-	h.ServeHTTP(w, r)
-	if !w.Ok() {
-		os.Exit(w.status / 100)
-	}
-	return nil
-}
 func (k *Kernel) handlerWithMiddleware() http.Handler {
 	h := k.rootHandler
 
 	for _, m := range k.globalMiddleware {
-		h = m(h)
+		h = m.Middleware(h)
 	}
 	return h
 }
 
-func (k *Kernel) RunHttpServer(ctx context.Context) error {
+func (k *Kernel) HttpServer(ctx context.Context) *http.Server {
 	clog.Use(ctx).Info(fmt.Sprintf("listening at http://localhost:%d", k.cfg.GetHTTPPort()))
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", k.cfg.GetHTTPPort()),
@@ -140,9 +74,16 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 		},
 	}
 
-	k.addCloser(server)
+	// k.addCloser(server)
+	di.RegisterSingleton(ctx, func() *http.Server {
+		return server
+	})
 
-	return server.ListenAndServe()
+	return server
+}
+
+func (k *Kernel) RunHttpServer(ctx context.Context) error {
+	return k.HttpServer(ctx).ListenAndServe()
 }
 
 func (k *Kernel) RunServices(ctx context.Context) {
@@ -174,27 +115,74 @@ func (k *Kernel) singles(ctx context.Context) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
+		logger := clog.Use(ctx)
 		tries := 0
 		for range c {
 			if tries == 0 {
 				go func() {
-					log.Print("Gracefully shutting down server Ctrl+C again to force")
-					for _, closer := range k.closers {
-						err := closer.Close()
-						if err != nil {
-							slog.Error("failed to close resource",
-								"err", err,
-								"resource", reflect.TypeOf(closer),
-							)
-						}
-					}
+					logger.Info("Gracefully shutting down server Ctrl+C again to force")
+					k.closeAndLog(ctx)
 					os.Exit(1)
 				}()
 			} else {
-				log.Print("Force shutting down server")
+				logger.Warn("Force shutting down server")
 				os.Exit(1)
 			}
 			tries++
 		}
 	}()
+}
+
+func (k *Kernel) Close() error {
+	return errors.Join(k.closeAll()...)
+}
+
+type resourceError struct {
+	err      error
+	resource string
+}
+
+func (e *resourceError) Error() string {
+	return fmt.Sprintf("resource %s: %v", e.resource, e.err)
+}
+
+func (e *resourceError) Unwrap() error {
+	return e.err
+}
+
+func (k *Kernel) closeAndLog(ctx context.Context) {
+	logger := clog.Use(ctx)
+	errs := k.closeAll()
+	for _, err := range errs {
+		if resErr, ok := err.(*resourceError); ok {
+			logger.Error("failed to close",
+				"err", resErr.err,
+				"resource", resErr.resource,
+			)
+		} else {
+			logger.Error("failed to close",
+				"err", err,
+			)
+		}
+	}
+}
+func (k *Kernel) closeAll() []error {
+	errs := []error{}
+
+	for _, s := range k.dependencyProvider.Singletons() {
+		v, err, ready := s.Peek()
+		if err != nil || !ready || v == k {
+			continue
+		}
+		if closer, ok := v.(io.Closer); ok {
+			err := closer.Close()
+			if err != nil {
+				errs = append(errs, &resourceError{
+					err:      err,
+					resource: reflect.TypeOf(closer).String(),
+				})
+			}
+		}
+	}
+	return errs
 }

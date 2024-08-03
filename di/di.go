@@ -14,11 +14,10 @@ const (
 )
 
 type DependencyProvider struct {
-	factories map[reflect.Type]func(ctx context.Context, tag string) (any, error)
+	factories map[reflect.Type]Factory
 }
 
 var (
-	ErrInvalidDependencyFactory       = errors.New("dependency factories must match the type di.DependencyFactory")
 	ErrNotRegistered                  = errors.New("dependency not registered")
 	ErrFillParameters                 = errors.New("invalid fill parameters")
 	ErrDependencyProviderNotInContext = errors.New("DependencyProvider not in context")
@@ -32,7 +31,7 @@ var defaultProvider = NewDependencyProvider()
 
 func NewDependencyProvider() *DependencyProvider {
 	return &DependencyProvider{
-		factories: map[reflect.Type]func(ctx context.Context, tag string) (any, error){},
+		factories: map[reflect.Type]Factory{},
 	}
 }
 
@@ -56,4 +55,18 @@ func TestDependencyProviderContext() context.Context {
 		context.Background(),
 		NewDependencyProvider(),
 	)
+}
+
+func (dp *DependencyProvider) Singletons() []Singleton {
+	singletons := make([]Singleton, 0, len(dp.factories))
+	for _, f := range dp.factories {
+		if s, ok := f.(Singleton); ok {
+			singletons = append(singletons, s)
+		}
+	}
+	return singletons
+}
+func Singletons(ctx context.Context) []Singleton {
+	dp := GetDependencyProvider(ctx)
+	return dp.Singletons()
 }

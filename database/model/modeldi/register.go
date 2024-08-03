@@ -21,19 +21,20 @@ type modelDeps struct {
 
 func Register[T model.Model](ctx context.Context) {
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, deps *modelDeps) (T, error) {
-		var zero T
-
 		v, ok := getValue(deps.Request, tag)
 		if !ok {
-			return zero, fmt.Errorf("could not fetch model %s not in request", tag)
+			var zero T
+			return zero, fmt.Errorf("could not fetch model: %s not in request", tag)
 		}
 
 		u, err := builder.From[T]().WithContext(ctx).Find(deps.DB, v)
 		if err != nil {
+			var zero T
 			return zero, err
 		}
 		if reflect.ValueOf(u).IsZero() {
-			return zero, request.NewHTTPError(fmt.Errorf("404 not found"), 404)
+			var zero T
+			return zero, request.ErrStatusNotFound
 		}
 		return u, nil
 	})
@@ -49,5 +50,11 @@ func getValue(r *http.Request, tag string) (string, bool) {
 	if ok {
 		return v, true
 	}
+
+	v = r.PathValue(tag)
+	if v != "" {
+		return v, true
+	}
+
 	return "", false
 }

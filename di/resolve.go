@@ -2,17 +2,21 @@ package di
 
 import (
 	"context"
-	"errors"
 	"reflect"
 
 	"github.com/abibby/salusa/internal/helpers"
+)
+
+var (
+	contextType            = reflect.TypeFor[context.Context]()
+	dependencyProviderType = reflect.TypeFor[*DependencyProvider]()
 )
 
 func Resolve[T any](ctx context.Context) (T, error) {
 	dp := GetDependencyProvider(ctx)
 
 	var result T
-	v, err := dp.resolve(ctx, reflect.TypeFor[T](), "", nil)
+	v, err := dp.resolve(ctx, reflect.TypeFor[T](), "", false, nil)
 	if v != nil {
 		result = v.(T)
 	}
@@ -20,40 +24,34 @@ func Resolve[T any](ctx context.Context) (T, error) {
 }
 
 func ResolveFill[T any](ctx context.Context) (T, error) {
-	v, err := Resolve[T](ctx)
-	if err == nil || !errors.Is(err, ErrNotRegistered) {
-		return v, err
-	}
-	v, err = helpers.NewOf[T]()
-	if err != nil {
-		var zero T
-		return zero, errNotRegistered(reflect.TypeFor[T]())
-	}
-	err = Fill(ctx, v)
-	if err != nil {
-		var zero T
-		return zero, err
-	}
-	return v, err
-}
-func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string, opt *FillOptions) (any, error) {
-	if t == contextType {
-		return ctx, nil
-	}
+	dp := GetDependencyProvider(ctx)
 
-	if t == dependencyProviderType {
+	var result T
+	v, err := dp.resolve(ctx, reflect.TypeFor[T](), "", true, nil)
+	if v != nil {
+		result = v.(T)
+	}
+	return result, err
+}
+
+func (dp *DependencyProvider) resolve(ctx context.Context, t reflect.Type, tag string, fill bool, opt *FillOptions) (any, error) {
+	switch t {
+	case contextType:
+		return ctx, nil
+	case dependencyProviderType:
 		return dp, nil
 	}
 
 	f, ok := dp.factories[t]
 	if ok {
-		return f(ctx, tag)
+		return f.Build(ctx, tag)
 	}
 
-	if !isFillable(t, tag) {
+	if !fill && !isFillable(t, tag) {
 		return nil, errNotRegistered(t)
 	}
-	v := reflectNew(t)
+
+	v := helpers.Create(t)
 	err := dp.fill(ctx, v, opt)
 	if err != nil {
 		return nil, err

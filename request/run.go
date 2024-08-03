@@ -176,6 +176,8 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	}
 
 	ctx := requestHttp.Context()
+	ctx = context.WithValue(ctx, requestKey, requestHttp)
+
 	err = di.Fill(ctx, requestStruct,
 		di.AutoResolve[context.Context](),
 		di.AutoResolve[*http.Request](),

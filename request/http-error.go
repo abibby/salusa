@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -50,15 +49,50 @@ type HTTPError struct {
 	stack  []byte
 }
 
+type StatusError int
+
+func (e StatusError) Error() string {
+	return fmt.Sprintf("http %d: %s", e, http.StatusText(int(e)))
+}
+
+func (e StatusError) Respond(w http.ResponseWriter, r *http.Request) error {
+	return NewHTTPError(e, int(e)).Respond(w, r)
+}
+
+const (
+	ErrStatusBadRequest                   = StatusError(http.StatusBadRequest)
+	ErrStatusUnauthorized                 = StatusError(http.StatusUnauthorized)
+	ErrStatusPaymentRequired              = StatusError(http.StatusPaymentRequired)
+	ErrStatusForbidden                    = StatusError(http.StatusForbidden)
+	ErrStatusNotFound                     = StatusError(http.StatusNotFound)
+	ErrStatusMethodNotAllowed             = StatusError(http.StatusMethodNotAllowed)
+	ErrStatusNotAcceptable                = StatusError(http.StatusNotAcceptable)
+	ErrStatusProxyAuthRequired            = StatusError(http.StatusProxyAuthRequired)
+	ErrStatusRequestTimeout               = StatusError(http.StatusRequestTimeout)
+	ErrStatusConflict                     = StatusError(http.StatusConflict)
+	ErrStatusGone                         = StatusError(http.StatusGone)
+	ErrStatusLengthRequired               = StatusError(http.StatusLengthRequired)
+	ErrStatusPreconditionFailed           = StatusError(http.StatusPreconditionFailed)
+	ErrStatusRequestEntityTooLarge        = StatusError(http.StatusRequestEntityTooLarge)
+	ErrStatusRequestURITooLong            = StatusError(http.StatusRequestURITooLong)
+	ErrStatusUnsupportedMediaType         = StatusError(http.StatusUnsupportedMediaType)
+	ErrStatusRequestedRangeNotSatisfiable = StatusError(http.StatusRequestedRangeNotSatisfiable)
+	ErrStatusExpectationFailed            = StatusError(http.StatusExpectationFailed)
+	ErrStatusTeapot                       = StatusError(http.StatusTeapot)
+	ErrStatusMisdirectedRequest           = StatusError(http.StatusMisdirectedRequest)
+	ErrStatusUnprocessableEntity          = StatusError(http.StatusUnprocessableEntity)
+	ErrStatusLocked                       = StatusError(http.StatusLocked)
+	ErrStatusFailedDependency             = StatusError(http.StatusFailedDependency)
+	ErrStatusTooEarly                     = StatusError(http.StatusTooEarly)
+	ErrStatusUpgradeRequired              = StatusError(http.StatusUpgradeRequired)
+	ErrStatusPreconditionRequired         = StatusError(http.StatusPreconditionRequired)
+	ErrStatusTooManyRequests              = StatusError(http.StatusTooManyRequests)
+	ErrStatusRequestHeaderFieldsTooLarge  = StatusError(http.StatusRequestHeaderFieldsTooLarge)
+	ErrStatusUnavailableForLegalReasons   = StatusError(http.StatusUnavailableForLegalReasons)
+)
+
 var _ error = &HTTPError{}
 var _ Responder = &HTTPError{}
-
-func NewDefaultHTTPError(status int) *HTTPError {
-	return &HTTPError{
-		err:    errors.New(http.StatusText(status)),
-		status: status,
-	}
-}
 
 func NewHTTPError(err error, status int) *HTTPError {
 	return &HTTPError{

@@ -80,7 +80,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		hasFillableFields = true
 		tag := parseTag(rawTag)
 
-		result, err := dp.resolve(ctx, sf.Type, tag.Name, opt)
+		result, err := dp.resolve(ctx, sf.Type, tag.Name, false, opt)
 		if errors.Is(err, ErrNotRegistered) {
 			if tag.Optional {
 				return nil
@@ -110,13 +110,6 @@ func AutoResolve[T any]() FillOption {
 		fo.autoResolve.Add(reflect.TypeFor[T]())
 		return fo
 	}
-}
-
-func reflectNew(t reflect.Type) reflect.Value {
-	if t.Kind() == reflect.Pointer {
-		return reflect.New(t.Elem())
-	}
-	return reflect.New(t).Elem()
 }
 
 func isFillable(t reflect.Type, tag string) bool {

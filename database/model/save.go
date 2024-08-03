@@ -54,6 +54,7 @@ func Save(tx database.DB, v Model) error {
 	return SaveContext(ctx, tx, v)
 }
 func SaveContext(ctx context.Context, tx database.DB, v Model) error {
+	inDB := v.InDatabase()
 	err := hooks.BeforeSave(ctx, tx, v)
 	if err != nil {
 		return fmt.Errorf("before save hooks: %w", err)
@@ -61,7 +62,7 @@ func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 
 	d := dialects.New()
 	columns, values := columnsAndValues(reflect.ValueOf(v).Elem())
-	if v.InDatabase() {
+	if inDB {
 		err = update(ctx, tx, d, v, columns, values)
 		if err != nil {
 			return fmt.Errorf("update: %w", err)
@@ -73,14 +74,16 @@ func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 		}
 	}
 
+	err = relationship.InitializeRelationships(v)
 	if err != nil {
 		return fmt.Errorf("initialize relationships: %w", err)
 	}
+
 	err = hooks.AfterSave(ctx, tx, v)
 	if err != nil {
 		return fmt.Errorf("after save hooks: %w", err)
 	}
-	return relationship.InitializeRelationships(v)
+	return nil
 }
 
 func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values []any) error {
