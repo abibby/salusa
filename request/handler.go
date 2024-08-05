@@ -42,6 +42,17 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 		return err
 	}
 
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, requestKey, r)
+	ctx = context.WithValue(ctx, responseKey, w)
+
+	err = di.Fill(ctx, &req)
+	if errors.Is(err, di.ErrNotRegistered) {
+		// no-op
+	} else if err != nil {
+		return fmt.Errorf("failed to di.Fill request: %w", err)
+	}
+
 	resp, err := h.handler(&req)
 	if validationErr, ok := err.(ValidationError); ok {
 		return NewHTTPError(validationErr, http.StatusUnprocessableEntity)
@@ -71,13 +82,13 @@ func Respond(w http.ResponseWriter, r *http.Request, resp any) {
 }
 func respond(w http.ResponseWriter, r *http.Request, resp any) error {
 	switch resp := resp.(type) {
+	case *http.Response:
+		return serveResponse(w, resp)
 	case Responder:
 		return resp.Respond(w, r)
 	case http.Handler:
 		resp.ServeHTTP(w, r)
 		return nil
-	case *http.Response:
-		return serveResponse(w, resp)
 	default:
 		return NewJSONResponse(resp).Respond(w, r)
 	}

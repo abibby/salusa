@@ -23,7 +23,7 @@ func TestInjectRequest(t *testing.T) {
 		WithContext(ctx)
 
 	h := request.Handler(func(r *Request) (any, error) {
-		assert.Same(t, r.Request, httpRequest)
+		assert.Same(t, httpRequest, r.Request)
 		return nil, nil
 	})
 
@@ -35,7 +35,7 @@ func TestInjectRequest(t *testing.T) {
 
 func TestInjectResponseWriter(t *testing.T) {
 	type Request struct {
-		ResponseWriter http.ResponseWriter
+		ResponseWriter http.ResponseWriter `inject:""`
 	}
 
 	ctx := di.TestDependencyProviderContext()
@@ -45,7 +45,7 @@ func TestInjectResponseWriter(t *testing.T) {
 	rw := httptest.NewRecorder()
 
 	h := request.Handler(func(r *Request) (any, error) {
-		assert.Same(t, r.ResponseWriter, rw)
+		assert.Same(t, rw, r.ResponseWriter)
 		return nil, nil
 	})
 

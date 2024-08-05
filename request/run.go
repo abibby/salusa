@@ -2,10 +2,8 @@ package request
 
 import (
 	"bytes"
-	"context"
 	"encoding"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/gorilla/mux"
 )
@@ -173,16 +170,6 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	err = Validate(requestHttp, requestStruct)
 	if err != nil {
 		return err
-	}
-
-	ctx := requestHttp.Context()
-	ctx = context.WithValue(ctx, requestKey, requestHttp)
-
-	err = di.Fill(ctx, requestStruct)
-	if errors.Is(err, di.ErrNotRegistered) {
-		// no-op
-	} else if err != nil {
-		return fmt.Errorf("failed to di.Fill request: %w", err)
 	}
 
 	return nil
