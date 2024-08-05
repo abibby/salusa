@@ -178,12 +178,8 @@ func Run(requestHttp *http.Request, requestStruct any) error {
 	ctx := requestHttp.Context()
 	ctx = context.WithValue(ctx, requestKey, requestHttp)
 
-	err = di.Fill(ctx, requestStruct,
-		di.AutoResolve[context.Context](),
-		di.AutoResolve[*http.Request](),
-		di.AutoResolve[http.ResponseWriter](),
-	)
-	if errors.Is(err, di.ErrNotFillable) {
+	err = di.Fill(ctx, requestStruct)
+	if errors.Is(err, di.ErrNotRegistered) {
 		// no-op
 	} else if err != nil {
 		return fmt.Errorf("failed to di.Fill request: %w", err)

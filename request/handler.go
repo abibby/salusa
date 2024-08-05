@@ -101,11 +101,7 @@ func (r *RequestHandler[TRequest, TResponse]) Validate(ctx context.Context) erro
 			errs = append(errs, fmt.Errorf("%s.%s missing tags", t, sf.Name))
 		}
 	}
-	return validate.Append(ctx, errors.Join(errs...), di.Validator(ctx, t,
-		di.AutoResolve[context.Context](),
-		di.AutoResolve[*http.Request](),
-		di.AutoResolve[http.ResponseWriter](),
-	))
+	return validate.Append(ctx, errors.Join(errs...), di.Validator(ctx, t))
 }
 
 func isMissingTags(sf reflect.StructField) bool {

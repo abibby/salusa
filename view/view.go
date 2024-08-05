@@ -33,7 +33,7 @@ type ViewHandler struct {
 var _ request.Responder = (*ViewHandler)(nil)
 
 func (vh *ViewHandler) Execute(ctx context.Context, w io.Writer) error {
-	d, err := di.ResolveFill[*ViewData](ctx)
+	d, err := di.Resolve[*ViewData](ctx)
 	if err != nil {
 		return fmt.Errorf("ViewHandler.Execute: %w", err)
 	}

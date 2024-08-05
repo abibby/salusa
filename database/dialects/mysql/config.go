@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -12,7 +12,7 @@ type SimpleConfig struct {
 	Database string
 }
 
-var _ dialects.Config = (*SimpleConfig)(nil)
+var _ database.Config = (*SimpleConfig)(nil)
 
 func (c *SimpleConfig) SetDialect() {
 	UseMySql()
@@ -39,7 +39,7 @@ func NewMySQLConfig(cfg *mysql.Config) *Config {
 	}
 }
 
-var _ dialects.Config = (*Config)(nil)
+var _ database.Config = (*Config)(nil)
 
 func (c *Config) SetDialect() {
 	UseMySql()

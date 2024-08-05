@@ -17,7 +17,6 @@ type Kernel struct {
 	rootHandlerFactory func(ctx context.Context) http.Handler
 	rootHandler        http.Handler
 	services           []Service
-	// closers            []io.Closer
 	dependencyProvider *di.DependencyProvider
 
 	globalMiddleware []router.Middleware
@@ -37,8 +36,7 @@ func New(options ...KernelOption) *Kernel {
 		globalMiddleware: []router.Middleware{
 			request.DIMiddleware(),
 		},
-		services: []Service{},
-		// closers:      []io.Closer{},
+		services:     []Service{},
 		bootstrapped: false,
 	}
 

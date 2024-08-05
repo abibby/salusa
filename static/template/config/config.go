@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/env"
@@ -16,7 +16,7 @@ type Config struct {
 	Port     int
 	BasePath string
 
-	Database dialects.Config
+	Database database.Config
 	Mail     email.Config
 	Queue    event.Config
 }
@@ -51,7 +51,7 @@ func (c *Config) GetBaseURL() string {
 	return c.BasePath
 }
 
-func (c *Config) DBConfig() dialects.Config {
+func (c *Config) DBConfig() database.Config {
 	return c.Database
 }
 func (c *Config) MailConfig() email.Config {

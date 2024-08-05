@@ -53,7 +53,6 @@ func TestResolve(t *testing.T) {
 	t.Run("error in fill", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
-			di.Fillable
 			S *Struct `inject:""`
 		}
 		ctx := di.TestDependencyProviderContext()
@@ -76,7 +75,7 @@ func TestResolveFill(t *testing.T) {
 			context.WithValue(context.Background(), "foo", "bar"),
 			di.NewDependencyProvider(),
 		)
-		ctx, err := di.ResolveFill[context.Context](expectedContext)
+		ctx, err := di.Resolve[context.Context](expectedContext)
 
 		assert.NoError(t, err)
 		assert.Same(t, expectedContext, ctx)
@@ -92,7 +91,7 @@ func TestResolveFill(t *testing.T) {
 			return &Struct{}, nil
 		})
 
-		v, err := di.ResolveFill[*Fillable](ctx)
+		v, err := di.Resolve[*Fillable](ctx)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, v)
@@ -109,7 +108,7 @@ func TestResolveFill(t *testing.T) {
 			return nil, resolveErr
 		})
 
-		v, err := di.ResolveFill[*Fillable](ctx)
+		v, err := di.Resolve[*Fillable](ctx)
 
 		assert.ErrorIs(t, err, resolveErr)
 		assert.Zero(t, v)

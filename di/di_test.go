@@ -86,7 +86,6 @@ func TestRegister(t *testing.T) {
 	t.Run("resolve fillable struct", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
-			di.Fillable
 			WithTag *Struct `inject:""`
 			NoTag   *Struct
 		}

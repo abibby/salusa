@@ -23,6 +23,11 @@ var (
 	ErrDependencyProviderNotInContext = errors.New("DependencyProvider not in context")
 )
 
+var (
+	contextType            = reflect.TypeFor[context.Context]()
+	dependencyProviderType = reflect.TypeFor[*DependencyProvider]()
+)
+
 func errNotRegistered(t reflect.Type) error {
 	return fmt.Errorf("%w: %s", ErrNotRegistered, t)
 }
@@ -30,9 +35,16 @@ func errNotRegistered(t reflect.Type) error {
 var defaultProvider = NewDependencyProvider()
 
 func NewDependencyProvider() *DependencyProvider {
-	return &DependencyProvider{
+	dp := &DependencyProvider{
 		factories: map[reflect.Type]Factory{},
 	}
+	dp.Register(NewFactoryFunc(func(ctx context.Context, tag string) (context.Context, error) {
+		return ctx, nil
+	}))
+	dp.Register(NewFactoryFunc(func(ctx context.Context, tag string) (*DependencyProvider, error) {
+		return dp, nil
+	}))
+	return dp
 }
 
 func ContextWithDependencyProvider(ctx context.Context, dp *DependencyProvider) context.Context {
@@ -70,3 +82,13 @@ func Singletons(ctx context.Context) []Singleton {
 	dp := GetDependencyProvider(ctx)
 	return dp.Singletons()
 }
+
+// func (dp *DependencyProvider) Get(t reflect.Type) Factory {
+// 	factory, ok := dp.factories[t]
+// 	if !ok {
+// 		return NewValueFactory(t, func(ctx context.Context, tag string) (reflect.Value, error) {
+// 			return reflect.Zero(t), errNotRegistered(t)
+// 		})
+// 	}
+// 	return factory
+// }

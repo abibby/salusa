@@ -18,10 +18,6 @@ type DIValidator struct {
 var _ validate.Validator = (*DIValidator)(nil)
 
 func (v *DIValidator) Validate(ctx context.Context) error {
-	opt := newFillOptions()
-	// for _, o := range opts {
-	// 	opt = o(opt)
-	// }
 	errs := []error{}
 	t := v.typ
 	if t.Kind() == reflect.Pointer {
@@ -36,7 +32,7 @@ func (v *DIValidator) Validate(ctx context.Context) error {
 		}
 
 		_, ok := sf.Tag.Lookup("inject")
-		if !ok && !opt.autoResolve.Has(sf.Type) {
+		if !ok {
 			continue
 		}
 
@@ -53,10 +49,10 @@ func (v *DIValidator) Validate(ctx context.Context) error {
 	return errors.Join(errs...)
 }
 
-func Validator(ctx context.Context, rootType reflect.Type, opts ...FillOption) *DIValidator {
-	return GetDependencyProvider(ctx).Validator(rootType, opts...)
+func Validator(ctx context.Context, rootType reflect.Type) *DIValidator {
+	return GetDependencyProvider(ctx).Validator(rootType)
 }
-func (dp *DependencyProvider) Validator(rootType reflect.Type, opts ...FillOption) *DIValidator {
+func (dp *DependencyProvider) Validator(rootType reflect.Type) *DIValidator {
 	return &DIValidator{
 		dp:  dp,
 		typ: rootType,

@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/salusaconfig"
@@ -23,7 +22,7 @@ func RegisterFromConfig(migrations *migrate.Migrations) func(ctx context.Context
 	return func(ctx context.Context) error {
 		di.RegisterLazySingletonWith(ctx, func(deps *dbDeps) (*sqlx.DB, error) {
 			var cfgAny any = deps.Cfg
-			cfger, ok := cfgAny.(dialects.DBConfiger)
+			cfger, ok := cfgAny.(database.DBConfiger)
 			if !ok {
 				return nil, fmt.Errorf("config not instance of dialects.DBConfiger")
 			}

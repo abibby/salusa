@@ -8,52 +8,18 @@ import (
 	"strings"
 
 	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/set"
 )
 
-var ErrNotFillable = errors.New("struct is not fillable")
+// var ErrNotFillable = errors.New("struct is not fillable")
 
-type IsFillabler interface {
-	IsFillable() bool
-}
-
-type Fillable struct{}
-
-func (*Fillable) IsFillable() bool {
-	return true
-}
-
-type FillOptions struct {
-	autoResolve set.Set[reflect.Type]
-}
-
-func newFillOptions() *FillOptions {
-	return &FillOptions{
-		autoResolve: set.Set[reflect.Type]{},
-	}
-}
-
-type FillOption func(*FillOptions) *FillOptions
-
-var (
-	isFillablerType = reflect.TypeFor[IsFillabler]()
-)
-
-func Fill(ctx context.Context, v any, opts ...FillOption) error {
+func Fill(ctx context.Context, v any) error {
 	dp := GetDependencyProvider(ctx)
-	return dp.Fill(ctx, v, opts...)
+	return dp.Fill(ctx, v)
 }
-func (dp *DependencyProvider) Fill(ctx context.Context, v any, opts ...FillOption) error {
-	opt := newFillOptions()
-	for _, o := range opts {
-		opt = o(opt)
-	}
-	return dp.fill(ctx, reflect.ValueOf(v), opt)
+func (dp *DependencyProvider) Fill(ctx context.Context, v any) error {
+	return dp.fill(ctx, reflect.ValueOf(v), "")
 }
-func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *FillOptions) error {
-	if opt == nil {
-		opt = newFillOptions()
-	}
+func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, tag string) error {
 	if v.Kind() != reflect.Pointer {
 		return fmt.Errorf("di: Fill(non-pointer "+v.Type().String()+"): %w", ErrFillParameters)
 	}
@@ -62,11 +28,18 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		return fmt.Errorf("di: Fill(nil)")
 	}
 
-	if v.Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("di: Fill(non-struct "+v.Type().String()+"): %w", ErrFillParameters)
+	if ok, err := dp.resolve(ctx, v, tag); ok {
+		return err
 	}
 
-	var hasFillableFields = false
+	if !isFillable(v.Type()) {
+		if isFillable(v.Elem().Type()) {
+			v = v.Elem()
+			v.Set(helpers.Create(v.Type()))
+		} else {
+			return errNotRegistered(v.Type())
+		}
+	}
 
 	err := helpers.EachField(v, func(sf reflect.StructField, fv reflect.Value) error {
 		if !sf.IsExported() {
@@ -74,13 +47,13 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		}
 
 		rawTag, ok := sf.Tag.Lookup("inject")
-		if !ok && !opt.autoResolve.Has(fv.Type()) {
+		if !ok {
 			return nil
 		}
-		hasFillableFields = true
 		tag := parseTag(rawTag)
 
-		result, err := dp.resolve(ctx, sf.Type, tag.Name, false, opt)
+		nv := reflect.New(sf.Type)
+		err := dp.fill(ctx, nv, tag.Name)
 		if errors.Is(err, ErrNotRegistered) {
 			if tag.Optional {
 				return nil
@@ -90,32 +63,43 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, opt *Fi
 		} else if err != nil {
 			return fmt.Errorf("failed to fill: %w", err)
 		}
-
-		fv.Set(reflect.ValueOf(result))
+		fv.Set(nv.Elem())
 		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	if !hasFillableFields {
-		return fmt.Errorf("di: Fill(not fillable): %w", ErrNotFillable)
-	}
-
 	return nil
 }
 
-func AutoResolve[T any]() FillOption {
-	return func(fo *FillOptions) *FillOptions {
-		fo.autoResolve.Add(reflect.TypeFor[T]())
-		return fo
+func isFillable(t reflect.Type) bool {
+	if t.Kind() != reflect.Pointer {
+		return false
 	}
+	if t.Elem().Kind() != reflect.Struct {
+		return false
+	}
+	for _, sf := range helpers.GetFields(t.Elem()) {
+		if _, ok := sf.Tag.Lookup("inject"); ok {
+			return true
+		}
+	}
+	return false
 }
 
-func isFillable(t reflect.Type, tag string) bool {
-	return t.Kind() == reflect.Pointer &&
-		t.Elem().Kind() == reflect.Struct &&
-		(t.Implements(isFillablerType) || tag == "fill")
+func (dp *DependencyProvider) resolve(ctx context.Context, v reflect.Value, tag string) (bool, error) {
+	f, ok := dp.factories[v.Type().Elem()]
+	if !ok {
+		return false, nil
+	}
+
+	res, err := f.Build(ctx, dp, tag)
+	if err != nil {
+		return true, err
+	}
+	v.Elem().Set(reflect.ValueOf(res))
+	return true, nil
 }
 
 type fillTag struct {

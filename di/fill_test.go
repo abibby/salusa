@@ -13,7 +13,6 @@ func TestFill(t *testing.T) {
 	t.Run("fill", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
-			di.Fillable
 			WithTag *Struct `inject:""`
 			NoTag   *Struct
 		}
@@ -33,11 +32,9 @@ func TestFill(t *testing.T) {
 	t.Run("deep", func(t *testing.T) {
 		type Struct struct{ V int }
 		type FillableB struct {
-			di.Fillable
 			Struct *Struct `inject:""`
 		}
 		type FillableA struct {
-			di.Fillable
 			B *FillableB `inject:""`
 		}
 		ctx := di.TestDependencyProviderContext()
@@ -57,7 +54,6 @@ func TestFill(t *testing.T) {
 			Value string
 		}
 		type Fillable struct {
-			di.Fillable
 			WithTag *Struct `inject:"with tag"`
 			Empty   *Struct `inject:""`
 		}
@@ -77,7 +73,6 @@ func TestFill(t *testing.T) {
 
 	t.Run("not registered", func(t *testing.T) {
 		type Fillable struct {
-			di.Fillable
 			Miss *int `inject:""`
 		}
 
@@ -89,7 +84,6 @@ func TestFill(t *testing.T) {
 
 	t.Run("non pointer", func(t *testing.T) {
 		type Fillable struct {
-			di.Fillable
 		}
 
 		ctx := di.TestDependencyProviderContext()
@@ -102,15 +96,18 @@ func TestFill(t *testing.T) {
 		type Fillable int
 
 		ctx := di.TestDependencyProviderContext()
-		f := Fillable(0)
+		di.Register(ctx, func(ctx context.Context, tag string) (Fillable, error) {
+			return 7, nil
+		})
+		var f Fillable
 		err := di.Fill(ctx, &f)
-		assert.ErrorIs(t, err, di.ErrFillParameters)
+		assert.NoError(t, err)
+		assert.Equal(t, Fillable(7), f)
 	})
 
 	t.Run("resolve error", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable struct {
-			di.Fillable
 			S *Struct `inject:""`
 		}
 
@@ -127,34 +124,9 @@ func TestFill(t *testing.T) {
 		assert.ErrorIs(t, err, resolveErr)
 	})
 
-	t.Run("auto resolve", func(t *testing.T) {
-		type StructA struct{ V int }
-		type StructB struct{ V int }
-		type Fillable struct {
-			di.Fillable
-			WithAutoResolve *StructA
-			NoTag           *StructB
-		}
-
-		ctx := di.TestDependencyProviderContext()
-		di.RegisterSingleton(ctx, func() *StructA {
-			return &StructA{}
-		})
-		di.RegisterSingleton(ctx, func() *StructB {
-			return &StructB{}
-		})
-
-		f := &Fillable{}
-		err := di.Fill(ctx, f, di.AutoResolve[*StructA]())
-		assert.NoError(t, err)
-		assert.NotNil(t, f.WithAutoResolve)
-		assert.Nil(t, f.NoTag)
-	})
-
 	t.Run("not fill unfillable type", func(t *testing.T) {
 		type Struct struct{ V int }
 		type IsFillable struct {
-			di.Fillable
 			S Struct `inject:""`
 		}
 		type NotFillable struct {
@@ -177,11 +149,9 @@ func TestFill(t *testing.T) {
 	t.Run("deep", func(t *testing.T) {
 		type Struct struct{ V int }
 		type Fillable2 struct {
-			di.Fillable
 			S *Struct `inject:""`
 		}
 		type Fillable1 struct {
-			di.Fillable
 			F *Fillable2 `inject:""`
 		}
 		type FillableRoot struct {
@@ -231,5 +201,21 @@ func TestFill(t *testing.T) {
 		err := di.Fill(ctx, f)
 		assert.NoError(t, err)
 		assert.Nil(t, f.S)
+	})
+
+	t.Run("resolve", func(t *testing.T) {
+		type Struct struct{ V int }
+
+		ctx := di.TestDependencyProviderContext()
+
+		expected := &Struct{}
+		di.RegisterSingleton(ctx, func() *Struct {
+			return expected
+		})
+
+		var s *Struct
+		err := di.Fill(ctx, &s)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, s)
 	})
 }

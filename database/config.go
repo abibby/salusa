@@ -1,4 +1,4 @@
-package dialects
+package database
 
 type DBConfiger interface {
 	DBConfig() Config
