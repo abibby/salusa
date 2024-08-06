@@ -4,6 +4,8 @@ import (
 	"context"
 	"reflect"
 	"sync"
+
+	"github.com/abibby/salusa/internal/helpers"
 )
 
 type Factory interface {
@@ -13,6 +15,23 @@ type Factory interface {
 type Singleton interface {
 	Factory
 	Peek() (any, error, bool)
+}
+
+type DependsOner interface {
+	DependsOn() []reflect.Type
+}
+
+func dependancies(t reflect.Type) []reflect.Type {
+	if !isFillable(t) {
+		return []reflect.Type{t}
+	}
+	deps := []reflect.Type{}
+	for _, sf := range helpers.GetFields(t.Elem()) {
+		if _, ok := sf.Tag.Lookup("inject"); ok {
+			deps = append(deps, sf.Type)
+		}
+	}
+	return deps
 }
 
 // ===============================
@@ -61,6 +80,9 @@ func (f FactoryFuncWith[T, W]) Build(ctx context.Context, dp *DependencyProvider
 }
 func (f FactoryFuncWith[T, W]) Type() reflect.Type {
 	return reflect.TypeFor[T]()
+}
+func (f FactoryFuncWith[T, W]) DependsOn() []reflect.Type {
+	return dependancies(reflect.TypeFor[W]())
 }
 
 // ================================
@@ -198,10 +220,9 @@ func (f *LazySingletonWithFactory[T, W]) Type() reflect.Type {
 	return reflect.TypeFor[T]()
 }
 
-//	func (f *LazySingletonWithFactory[T, W]) Load() {
-//		f.value, f.err = f.factory()
-//		f.ready = true
-//	}
 func (f *LazySingletonWithFactory[T, W]) Peek() (any, error, bool) {
 	return f.value, f.err, f.ready
+}
+func (f *LazySingletonWithFactory[T, W]) DependsOn() []reflect.Type {
+	return dependancies(reflect.TypeFor[W]())
 }

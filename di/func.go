@@ -10,7 +10,10 @@ var (
 	errorType = reflect.TypeFor[error]()
 )
 
-func PrepareFunc[T any](fn any) T {
+func PrepareFuncCtx[T any](fn any) T {
+	return PrepareFunc[T](nil, fn)
+}
+func PrepareFunc[T any](dp *DependencyProvider, fn any) T {
 	t := reflect.TypeFor[T]()
 	vFn := reflect.ValueOf(fn)
 	tFn := reflect.TypeOf(fn)
@@ -52,8 +55,9 @@ func PrepareFunc[T any](fn any) T {
 
 	return reflect.MakeFunc(t, func(args []reflect.Value) (results []reflect.Value) {
 		ctx := args[inContext].Interface().(context.Context)
-
-		dp := GetDependencyProvider(ctx)
+		if dp == nil {
+			dp = GetDependencyProvider(ctx)
+		}
 		fullArgs := make([]reflect.Value, tFn.NumIn())
 		copy(fullArgs, args)
 		for i := t.NumIn(); i < tFn.NumIn(); i++ {

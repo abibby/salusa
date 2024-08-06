@@ -16,7 +16,7 @@ func TestFunc(t *testing.T) {
 			return &Struct{V: 10}
 		})
 
-		fn := di.PrepareFunc[func(ctx context.Context, i int) int](func(ctx context.Context, i int, s *Struct) int {
+		fn := di.PrepareFuncCtx[func(ctx context.Context, i int) int](func(ctx context.Context, i int, s *Struct) int {
 			return i + s.V
 		})
 
