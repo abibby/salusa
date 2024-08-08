@@ -10,47 +10,43 @@ type Responder interface {
 	Respond(w http.ResponseWriter, r *http.Request) error
 }
 
-type Response struct {
-	body    io.Reader
-	status  int
-	headers map[string]string
+type ResponseBuilder struct {
+	*http.Response
 }
 
-var _ Responder = &Response{}
+var _ Responder = &ResponseBuilder{}
 
-func NewResponse(body io.Reader) *Response {
-	return &Response{
-		body:    body,
-		headers: map[string]string{},
+func NewResponse(body io.Reader) *ResponseBuilder {
+	closer, ok := body.(io.ReadCloser)
+	if !ok {
+		closer = io.NopCloser(body)
+	}
+	return &ResponseBuilder{
+		Response: &http.Response{
+			Header: http.Header{},
+			Body:   closer,
+		},
 	}
 }
 
-func (r *Response) Status() int {
-	return r.status
+func (r *ResponseBuilder) Status() int {
+	return r.StatusCode
 }
-func (r *Response) SetStatus(status int) *Response {
-	r.status = status
+func (r *ResponseBuilder) SetStatus(status int) *ResponseBuilder {
+	r.StatusCode = status
 	return r
 }
 
-func (r *Response) Headers() map[string]string {
-	return r.headers
+func (r *ResponseBuilder) Headers() http.Header {
+	return r.Header
 }
-func (r *Response) AddHeader(key, value string) *Response {
-	r.headers[key] = value
+func (r *ResponseBuilder) AddHeader(key, value string) *ResponseBuilder {
+	r.Header.Add(key, value)
 	return r
 }
 
-func (r *Response) Respond(w http.ResponseWriter, _ *http.Request) error {
-	for k, v := range r.headers {
-		w.Header().Set(k, v)
-	}
-	if r.status != 0 {
-		w.WriteHeader(r.status)
-	}
-
-	_, err := io.Copy(w, r.body)
-	return err
+func (r *ResponseBuilder) Respond(w http.ResponseWriter, _ *http.Request) error {
+	return serveResponse(w, r.Response)
 }
 
 func getResponder(err error) (Responder, bool) {

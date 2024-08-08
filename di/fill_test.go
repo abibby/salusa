@@ -127,10 +127,10 @@ func TestFill(t *testing.T) {
 	t.Run("not fill unfillable type", func(t *testing.T) {
 		type Struct struct{ V int }
 		type IsFillable struct {
-			S Struct `inject:""`
+			S *Struct `inject:""`
 		}
 		type NotFillable struct {
-			S Struct `inject:""`
+			S *Struct
 		}
 		type FillableRoot struct {
 			IsFillable  *IsFillable  `inject:""`
@@ -174,10 +174,10 @@ func TestFill(t *testing.T) {
 			S *Struct `inject:""`
 		}
 		type Fillable1 struct {
-			F *Fillable2 `inject:"fill"`
+			F *Fillable2 `inject:""`
 		}
 		type FillableRoot struct {
-			F *Fillable1 `inject:"fill"`
+			F *Fillable1 `inject:""`
 		}
 
 		ctx := di.TestDependencyProviderContext()
@@ -218,4 +218,15 @@ func TestFill(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, s)
 	})
+
+	t.Run("interface direct", func(t *testing.T) {
+		type Interface interface{ Foo() }
+
+		ctx := di.TestDependencyProviderContext()
+
+		var i Interface
+		err := di.Fill(ctx, i)
+		assert.Error(t, err)
+	})
+
 }

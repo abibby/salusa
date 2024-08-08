@@ -4,6 +4,8 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -13,17 +15,16 @@ import (
 )
 
 var (
-	// typeByteSlice             = reflect.TypeOf((*[]byte)(nil)).Elem()
-	typeTime                  = reflect.TypeOf((*time.Time)(nil)).Elem()
-	typeRune                  = reflect.TypeOf((*rune)(nil)).Elem()
-	typeEncodingTextMarshaler = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
-	typeJSONMarshaler         = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
-	// typeModel                 = reflect.TypeOf((*model.Model)(nil)).Elem()
+	// typeByteSlice             = reflect.TypeFor[[]byte]()
+	typeTime                  = reflect.TypeFor[time.Time]()
+	typeRune                  = reflect.TypeFor[rune]()
+	typeEncodingTextMarshaler = reflect.TypeFor[encoding.TextMarshaler]()
+	typeJSONMarshaler         = reflect.TypeFor[json.Marshaler]()
+	typeHttpResponse          = reflect.TypeFor[*http.Response]()
 )
 
 var formatMap = map[reflect.Type]string{
-	typeEncodingTextMarshaler: "",
-	typeTime:                  "date-time",
+	typeTime: "date-time",
 }
 
 func RegisterFormat[T any](format string) {
@@ -35,7 +36,7 @@ func Param(t reflect.Type, name, in string) (*spec.Parameter, error) {
 	param := &spec.Parameter{}
 	param.Schema, err = Schema(t, false)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("param %s: %w", name, err)
 	}
 	param.Type = Type(t)
 	param.Format = Format(t)
@@ -62,6 +63,8 @@ func Type(t reflect.Type) string {
 		return "object"
 	case reflect.String:
 		return "string"
+	case reflect.Pointer:
+		return Type(t.Elem())
 	default:
 		return ""
 	}
@@ -72,26 +75,72 @@ func Format(t reflect.Type) string {
 	if ok {
 		return format
 	}
+	if t.Implements(typeEncodingTextMarshaler) {
+		return ""
+	}
 
 	switch t.Kind() {
-	case reflect.Bool, reflect.Array, reflect.Slice, reflect.Map, reflect.Struct, reflect.String:
+	case reflect.Pointer:
+		return Format(t.Elem())
+	case reflect.Bool, reflect.Array, reflect.Slice, reflect.Map, reflect.Struct, reflect.String, reflect.Int:
 		return ""
 	default:
 		return t.Kind().String()
 	}
 }
 
-func Schema(t reflect.Type, requireTag bool) (*spec.Schema, error) {
+var contentTypeMap = map[reflect.Type]string{}
 
-	switch t {
-	case typeTime:
-		return spec.DateTimeProperty(), nil
-	case typeRune:
-		return spec.CharProperty(), nil
+func RegisterContentType[T any](contentType string) {
+	contentTypeMap[reflect.TypeFor[T]()] = contentType
+}
+
+func GetContentType[T any]() (string, bool) {
+	ct, ok := contentTypeMap[reflect.TypeFor[T]()]
+	return ct, ok
+}
+
+var responseMap = map[reflect.Type]*spec.Response{
+	typeHttpResponse: spec.NewResponse(),
+}
+
+func RegisterResponse[T any](response *spec.Response) {
+	responseMap[reflect.TypeFor[T]()] = response
+}
+func Response(t reflect.Type) (*spec.Response, error) {
+	r, ok := responseMap[t]
+	if ok {
+		return r, nil
+	}
+
+	resp := spec.NewResponse()
+	s, err := Schema(t, false)
+	if err != nil {
+		slog.Warn("Could not build schema for api response", "type", t, "err", err)
+	} else {
+		resp.Schema = s
+	}
+
+	return resp, nil
+}
+
+var schemaMap = map[reflect.Type]*spec.Schema{
+	typeTime: spec.DateTimeProperty(),
+	typeRune: spec.CharProperty(),
+}
+
+func RegisterSchema[T any](schema *spec.Schema) {
+	schemaMap[reflect.TypeFor[T]()] = schema
+}
+
+func Schema(t reflect.Type, requireTag bool) (*spec.Schema, error) {
+	s, ok := schemaMap[t]
+	if ok {
+		return s, nil
 	}
 
 	if t.Implements(typeJSONMarshaler) {
-		return nil, nil
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"unknown"}}}, nil
 	}
 	if t.Implements(typeEncodingTextMarshaler) {
 		return spec.StringProperty(), nil

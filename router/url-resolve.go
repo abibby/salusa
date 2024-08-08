@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -26,12 +25,10 @@ func (r *Router) Register(ctx context.Context) {
 
 		if origin == "" {
 			req, err := di.Resolve[*http.Request](ctx)
-			if errors.Is(err, di.ErrNotRegistered) {
-				origin = "/"
-			} else if err != nil {
-				return nil, err
-			} else {
+			if err == nil {
 				origin = getOrigin(req)
+			} else {
+				origin = "/"
 			}
 		}
 

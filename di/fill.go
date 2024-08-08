@@ -17,9 +17,13 @@ func Fill(ctx context.Context, v any) error {
 	return dp.Fill(ctx, v)
 }
 func (dp *DependencyProvider) Fill(ctx context.Context, v any) error {
+	ctx = ContextWithDependencyProvider(ctx, dp)
 	return dp.fill(ctx, reflect.ValueOf(v), "")
 }
 func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, tag string) error {
+	if (v == reflect.Value{}) {
+		return fmt.Errorf("di: Fill(interface): %w", ErrFillParameters)
+	}
 	if v.Kind() != reflect.Pointer {
 		return fmt.Errorf("di: Fill(non-pointer "+v.Type().String()+"): %w", ErrFillParameters)
 	}
@@ -28,7 +32,7 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, tag str
 		return fmt.Errorf("di: Fill(nil)")
 	}
 
-	if ok, err := dp.resolve(ctx, v, tag); ok {
+	if ok, err := dp.resolve(ctx, tag, v); ok {
 		return err
 	}
 
@@ -88,7 +92,7 @@ func isFillable(t reflect.Type) bool {
 	return false
 }
 
-func (dp *DependencyProvider) resolve(ctx context.Context, v reflect.Value, tag string) (bool, error) {
+func (dp *DependencyProvider) resolve(ctx context.Context, tag string, v reflect.Value) (bool, error) {
 	f, ok := dp.factories[v.Type().Elem()]
 	if !ok {
 		return false, nil

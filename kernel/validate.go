@@ -4,7 +4,6 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/validate"
 )
 
@@ -13,14 +12,14 @@ var _ validate.Validator = (*Kernel)(nil)
 func (k *Kernel) Validate(ctx context.Context) error {
 	var err error
 
-	err = validate.Append(ctx, err, di.GetDependencyProvider(ctx))
+	err = validate.Append(ctx, err, k.dependencyProvider)
 
 	for _, s := range k.services {
 		if v, ok := s.(validate.Validator); ok {
 			err = validate.Append(ctx, err, v)
 		}
 
-		err = validate.Append(ctx, err, di.Validator(ctx, reflect.TypeOf(s)))
+		err = validate.Append(ctx, err, k.dependencyProvider.Validator(reflect.TypeOf(s)))
 	}
 
 	h := k.rootHandler

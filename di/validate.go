@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	ErrDependancyCycle = errors.New("dependancy cycle")
+	ErrDependancyCycle   = errors.New("dependancy cycle")
+	ErrMissingDependancy = errors.New("missing dependancy")
 )
 
 type DIValidator struct {
@@ -48,7 +49,7 @@ func (v *DIValidator) Validate(ctx context.Context) error {
 
 		_, ok = v.dp.factories[sf.Type]
 		if !ok {
-			errs = append(errs, fmt.Errorf("missing dependancy %s on %s.%s", sf.Type, v.typ, sf.Name))
+			errs = append(errs, fmt.Errorf("%w %s on %s.%s", ErrMissingDependancy, sf.Type, v.typ, sf.Name))
 		}
 	}
 
@@ -88,7 +89,7 @@ func (dp *DependencyProvider) validateCycles() error {
 		}
 	}
 	for typ, factory := range dp.factories {
-		depends, ok := factory.(DependsOner)
+		depends, ok := factory.(Dependant)
 		if !ok {
 			continue
 		}
@@ -97,6 +98,8 @@ func (dp *DependencyProvider) validateCycles() error {
 			err = g.AddEdge(typ, dep)
 			if errors.Is(err, graph.ErrEdgeCreatesCycle) {
 				return newCycleError(g, dep, typ)
+			} else if errors.Is(err, graph.ErrVertexNotFound) {
+				return fmt.Errorf("%w %s in %s factory", ErrMissingDependancy, dep, typ)
 			} else if err != nil {
 				panic(err)
 			}

@@ -141,7 +141,9 @@ func serveResponse(w http.ResponseWriter, r *http.Response) error {
 			w.Header().Add(k, v)
 		}
 	}
-	w.WriteHeader(r.StatusCode)
+	if r.StatusCode != 0 {
+		w.WriteHeader(r.StatusCode)
+	}
 
 	_, err := io.Copy(w, r.Body)
 	return err

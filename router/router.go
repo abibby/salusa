@@ -11,10 +11,18 @@ import (
 type Middleware interface {
 	Middleware(next http.Handler) http.Handler
 }
-type MiddlewareFunc func(http.Handler) http.Handler
+type MiddlewareFunc func(next http.Handler) http.Handler
 
 func (f MiddlewareFunc) Middleware(next http.Handler) http.Handler {
 	return f(next)
+}
+
+type InlineMiddlewareFunc func(w http.ResponseWriter, r *http.Request, next http.Handler)
+
+func (f InlineMiddlewareFunc) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		f(w, r, next)
+	})
 }
 
 type Route struct {
@@ -68,6 +76,22 @@ func (r *Router) Patch(path string, handler http.Handler) *Route {
 }
 func (r *Router) Delete(path string, handler http.Handler) *Route {
 	return r.handleMethod(http.MethodDelete, path, handler)
+}
+
+func (r *Router) GetFunc(path string, handler http.HandlerFunc) *Route {
+	return r.Get(path, handler)
+}
+func (r *Router) PostFunc(path string, handler http.HandlerFunc) *Route {
+	return r.Post(path, handler)
+}
+func (r *Router) PutFunc(path string, handler http.HandlerFunc) *Route {
+	return r.Put(path, handler)
+}
+func (r *Router) PatchFunc(path string, handler http.HandlerFunc) *Route {
+	return r.Patch(path, handler)
+}
+func (r *Router) DeleteFunc(path string, handler http.HandlerFunc) *Route {
+	return r.Delete(path, handler)
 }
 
 func (r *Router) handleMethod(method, path string, handler http.Handler) *Route {

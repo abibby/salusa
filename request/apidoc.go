@@ -2,6 +2,7 @@ package request
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/abibby/salusa/database/model"
@@ -28,18 +29,27 @@ func (h *RequestHandler[TRequest, TResponse]) Operation(ctx context.Context) (*s
 		op = spec.NewOperation("")
 	}
 
-	op.Responses = &spec.Responses{}
 	op.Parameters, err = newAPIRequest[TRequest]()
 	if err != nil {
 		return nil, err
 	}
-	op.Responses.Default, err = newAPIResponse[TResponse]()
-	if err != nil {
-		return nil, err
+
+	if op.Responses == nil {
+		op.Responses = &spec.Responses{}
 	}
-	if op.Responses.Default != nil {
-		op.Produces = []string{
-			"application/json",
+	if op.Responses.Default == nil {
+		op.Responses.Default, err = openapidoc.Response(reflect.TypeFor[TResponse]())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if op.Produces == nil {
+		ct, ok := openapidoc.GetContentType[TResponse]()
+		if ok {
+			op.Produces = []string{ct}
+		} else if op.Responses.Default != nil {
+			op.Produces = []string{"application/json"}
 		}
 	}
 
@@ -53,7 +63,7 @@ func newAPIRequest[T any]() ([]spec.Parameter, error) {
 
 	schema, err := openapidoc.Schema(t, true)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("api request %s: %w", reflect.TypeFor[T](), err)
 	}
 	if len(schema.Properties) > 0 {
 		params = append(params, *spec.BodyParam(t.Name(), schema))
@@ -100,19 +110,4 @@ func newAPIRequest[T any]() ([]spec.Parameter, error) {
 	}
 
 	return params, nil
-}
-
-func newAPIResponse[T any]() (*spec.Response, error) {
-	resp := spec.NewResponse()
-	emptyResponse, err := helpers.NewOf[T]()
-	if err != nil {
-		return nil, nil
-	}
-
-	resp.Schema, err = openapidoc.Schema(reflect.TypeOf(emptyResponse), false)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
 }

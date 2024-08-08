@@ -2,8 +2,10 @@ package di
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"sync"
+	"sync/atomic"
 
 	"github.com/abibby/salusa/internal/helpers"
 )
@@ -17,7 +19,8 @@ type Singleton interface {
 	Peek() (any, error, bool)
 }
 
-type DependsOner interface {
+type Dependant interface {
+	Factory
 	DependsOn() []reflect.Type
 }
 
@@ -107,6 +110,9 @@ var _ Factory = (*ValueFactory)(nil)
 
 func (f *ValueFactory) Build(ctx context.Context, dp *DependencyProvider, tag string) (any, error) {
 	v, err := f.factory(ctx, tag)
+	if err == nil && v.Type() != f.typ {
+		return reflect.Zero(f.typ), fmt.Errorf("invalid type %v expected %v", v.Type(), f.typ)
+	}
 	return v.Interface(), err
 }
 func (f *ValueFactory) Type() reflect.Type {
@@ -134,7 +140,6 @@ func (f *SingletonFactory[T]) Build(ctx context.Context, dp *DependencyProvider,
 func (f *SingletonFactory[T]) Type() reflect.Type {
 	return reflect.TypeFor[T]()
 }
-
 func (f *SingletonFactory[T]) Peek() (any, error, bool) {
 	return f.value, nil, true
 }
@@ -164,14 +169,13 @@ func NewLazySingletonFactory[T any](factory func() (T, error)) *LazySingletonFac
 }
 
 func (f *LazySingletonFactory[T]) Build(ctx context.Context, dp *DependencyProvider, tag string) (any, error) {
-	f.once.Do(f.Load)
+	f.once.Do(f.load)
 	return f.value, f.err
 }
 func (f *LazySingletonFactory[T]) Type() reflect.Type {
 	return reflect.TypeFor[T]()
 }
-
-func (f *LazySingletonFactory[T]) Load() {
+func (f *LazySingletonFactory[T]) load() {
 	f.value, f.err = f.factory()
 	f.ready = true
 }
@@ -186,8 +190,8 @@ func (f *LazySingletonFactory[T]) Peek() (any, error, bool) {
 // ================================
 
 type LazySingletonWithFactory[T, W any] struct {
-	once    sync.Once
-	ready   bool
+	done    atomic.Uint32
+	m       sync.Mutex
 	factory func(with W) (T, error)
 
 	value any
@@ -198,13 +202,26 @@ var _ Singleton = (*LazySingletonWithFactory[any, any])(nil)
 
 func NewLazySingletonWithFactory[T, W any](factory func(with W) (T, error)) *LazySingletonWithFactory[T, W] {
 	return &LazySingletonWithFactory[T, W]{
-		once:    sync.Once{},
 		factory: factory,
 	}
 }
 
 func (f *LazySingletonWithFactory[T, W]) Build(ctx context.Context, dp *DependencyProvider, tag string) (any, error) {
-	f.once.Do(func() {
+	// implanted matching sync.Once to allow for inlining the fast path
+	if f.done.Load() == 0 {
+		f.load(ctx, dp)
+	}
+	return f.value, f.err
+}
+func (f *LazySingletonWithFactory[T, W]) Type() reflect.Type {
+	return reflect.TypeFor[T]()
+}
+func (f *LazySingletonWithFactory[T, W]) load(ctx context.Context, dp *DependencyProvider) {
+	f.m.Lock()
+	defer f.m.Unlock()
+	if f.done.Load() == 0 {
+		defer f.done.Store(1)
+
 		var with W
 		err := dp.Fill(ctx, &with)
 		if err != nil {
@@ -212,16 +229,10 @@ func (f *LazySingletonWithFactory[T, W]) Build(ctx context.Context, dp *Dependen
 			return
 		}
 		f.value, f.err = f.factory(with)
-		f.ready = true
-	})
-	return f.value, f.err
+	}
 }
-func (f *LazySingletonWithFactory[T, W]) Type() reflect.Type {
-	return reflect.TypeFor[T]()
-}
-
 func (f *LazySingletonWithFactory[T, W]) Peek() (any, error, bool) {
-	return f.value, f.err, f.ready
+	return f.value, f.err, f.done.Load() != 0
 }
 func (f *LazySingletonWithFactory[T, W]) DependsOn() []reflect.Type {
 	return dependancies(reflect.TypeFor[W]())

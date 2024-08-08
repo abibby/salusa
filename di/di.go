@@ -82,13 +82,3 @@ func Singletons(ctx context.Context) []Singleton {
 	dp := GetDependencyProvider(ctx)
 	return dp.Singletons()
 }
-
-// func (dp *DependencyProvider) Get(t reflect.Type) Factory {
-// 	factory, ok := dp.factories[t]
-// 	if !ok {
-// 		return NewValueFactory(t, func(ctx context.Context, tag string) (reflect.Value, error) {
-// 			return reflect.Zero(t), errNotRegistered(t)
-// 		})
-// 	}
-// 	return factory
-// }

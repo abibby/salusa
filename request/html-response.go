@@ -3,11 +3,11 @@ package request
 import "bytes"
 
 type HTMLResponse struct {
-	Response
+	ResponseBuilder
 }
 
 func NewHTMLResponse(data []byte) *HTMLResponse {
 	return &HTMLResponse{
-		Response: *NewResponse(bytes.NewBuffer(data)).AddHeader("Content-Type", "text/html"),
+		ResponseBuilder: *NewResponse(bytes.NewBuffer(data)).AddHeader("Content-Type", "text/html"),
 	}
 }
