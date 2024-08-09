@@ -17,7 +17,7 @@ import (
 func Register[TUser auth.User](migrations *migrate.Migrations) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 		registerers := []func(context.Context) error{
-			clog.Register(nil),
+			clog.Register,
 			request.Register,
 			auth.Register[TUser],
 			databasedi.RegisterFromConfig(migrations),

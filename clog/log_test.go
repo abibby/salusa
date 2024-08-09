@@ -20,7 +20,7 @@ func register() (context.Context, *bytes.Buffer) {
 
 	b := bytes.NewBuffer([]byte{})
 
-	_ = clog.Register(slog.NewTextHandler(b, &slog.HandlerOptions{
+	_ = clog.RegisterWith(slog.NewTextHandler(b, &slog.HandlerOptions{
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				return slog.Time(slog.TimeKey, time.Time{})
@@ -66,7 +66,7 @@ func TestResolve(t *testing.T) {
 			di.NewDependencyProvider(),
 		)
 
-		_ = clog.Register(nil)(ctx)
+		_ = clog.RegisterWith(nil)(ctx)
 
 		l, err := di.Resolve[*slog.Logger](ctx)
 		assert.NoError(t, err)

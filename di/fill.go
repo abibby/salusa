@@ -14,10 +14,12 @@ import (
 
 func Fill(ctx context.Context, v any) error {
 	dp := GetDependencyProvider(ctx)
-	return dp.Fill(ctx, v)
+	return dp.fill(ctx, reflect.ValueOf(v), "")
 }
 func (dp *DependencyProvider) Fill(ctx context.Context, v any) error {
-	ctx = ContextWithDependencyProvider(ctx, dp)
+	if ctx.Value(dpKey) != dp {
+		ctx = ContextWithDependencyProvider(ctx, dp)
+	}
 	return dp.fill(ctx, reflect.ValueOf(v), "")
 }
 func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, tag string) error {

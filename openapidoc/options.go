@@ -22,7 +22,7 @@ func BasePath(basePath string) SwaggerOption {
 	}
 }
 
-func SecurityDefinition(name string, securityScheme *spec.SecuritySchemeProps) SwaggerOption {
+func AddSecurityDefinition(name string, securityScheme *spec.SecuritySchemeProps) SwaggerOption {
 	return func(s *spec.Swagger) *spec.Swagger {
 		if s.SecurityDefinitions == nil {
 			s.SecurityDefinitions = spec.SecurityDefinitions{}
@@ -32,8 +32,8 @@ func SecurityDefinition(name string, securityScheme *spec.SecuritySchemeProps) S
 	}
 }
 
-func DefaultSecurityDefinition() SwaggerOption {
-	return SecurityDefinition(DefaultSecurityDefinitionName, &spec.SecuritySchemeProps{
+func AddDefaultSecurityDefinition() SwaggerOption {
+	return AddSecurityDefinition(DefaultSecurityDefinitionName, &spec.SecuritySchemeProps{
 		Type:        "apiKey",
 		In:          "header",
 		Name:        "Authorization",

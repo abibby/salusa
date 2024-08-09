@@ -229,4 +229,42 @@ func TestFill(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("context", func(t *testing.T) {
+		expectedCtx := di.TestDependencyProviderContext()
+
+		var ctx context.Context
+		err := di.Fill(expectedCtx, &ctx)
+		assert.NoError(t, err)
+		assert.Same(t, expectedCtx, ctx)
+	})
+
+	t.Run("context no provider", func(t *testing.T) {
+		dp := di.NewDependencyProvider()
+
+		backgroundCtx := context.Background()
+
+		var ctx context.Context
+		err := dp.Fill(backgroundCtx, &ctx)
+		assert.NoError(t, err)
+
+		assert.NotSame(t, backgroundCtx, ctx)
+
+		ctxDP := di.GetDependencyProvider(ctx)
+		assert.Same(t, dp, ctxDP)
+	})
+
+	t.Run("context with provider", func(t *testing.T) {
+		dp := di.NewDependencyProvider()
+		baseCtx := di.ContextWithDependencyProvider(context.Background(), dp)
+
+		var ctx context.Context
+		err := dp.Fill(baseCtx, &ctx)
+		assert.NoError(t, err)
+
+		assert.Same(t, baseCtx, ctx)
+
+		ctxDP := di.GetDependencyProvider(ctx)
+		assert.Same(t, dp, ctxDP)
+	})
+
 }
