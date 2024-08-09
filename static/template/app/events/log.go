@@ -6,7 +6,6 @@ import (
 )
 
 type LogEvent struct {
-	event.EventLogger
 	cron.CronEvent
 	Message string
 }

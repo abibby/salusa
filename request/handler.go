@@ -46,11 +46,11 @@ func (h *RequestHandler[TRequest, TResponse]) serveHTTP(w http.ResponseWriter, r
 	ctx = context.WithValue(ctx, requestKey, r)
 	ctx = context.WithValue(ctx, responseKey, w)
 
-	err = di.Fill(ctx, &req)
-	if errors.Is(err, di.ErrNotRegistered) {
-		// no-op
-	} else if err != nil {
-		return fmt.Errorf("failed to di.Fill request: %w", err)
+	if di.IsFillable(&req) {
+		err = di.Fill(ctx, &req)
+		if err != nil {
+			return fmt.Errorf("failed to di.Fill request: %w", err)
+		}
 	}
 
 	resp, err := h.handler(&req)

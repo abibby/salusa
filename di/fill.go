@@ -79,6 +79,9 @@ func (dp *DependencyProvider) fill(ctx context.Context, v reflect.Value, tag str
 	return nil
 }
 
+func IsFillable(v any) bool {
+	return isFillable(reflect.TypeOf(v))
+}
 func isFillable(t reflect.Type) bool {
 	if t.Kind() != reflect.Pointer {
 		return false

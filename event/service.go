@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/kernel"
 )
 
@@ -23,28 +24,25 @@ type Listener struct {
 	runner    runner
 }
 
-type job[E Event] struct {
+type handler[E Event] struct {
 	value       E
 	handlerType reflect.Type
 }
 
-func (j *job[E]) Run(ctx context.Context, dp *di.DependencyProvider) error {
+func (j *handler[E]) Run(ctx context.Context, dp *di.DependencyProvider) error {
 	t := j.handlerType
-	var h Handler[E]
-	if t.Kind() == reflect.Pointer {
-		h = reflect.New(t.Elem()).Interface().(Handler[E])
-	} else {
-		h = reflect.New(t).Elem().Interface().(Handler[E])
-	}
+	h := helpers.Create(t).Interface().(Handler[E])
 
-	err := dp.Fill(ctx, h)
-	if err != nil {
-		return err
+	if di.IsFillable(h) {
+		err := dp.Fill(ctx, h)
+		if err != nil {
+			return err
+		}
 	}
 	return h.Handle(ctx, j.value)
 }
 
-func (j *job[E]) UpdateValue(v Event) bool {
+func (j *handler[E]) UpdateValue(v Event) bool {
 	ev, ok := v.(E)
 	if !ok {
 		return false
@@ -52,20 +50,19 @@ func (j *job[E]) UpdateValue(v Event) bool {
 	j.value = ev
 	return true
 }
-func (j *job[E]) EventType() reflect.Type {
+func (j *handler[E]) EventType() reflect.Type {
 	var e E
 	return reflect.TypeOf(e)
 }
 
 func NewListener[H Handler[E], E Event]() *Listener {
 	var e E
-	var h H
 
 	return &Listener{
 		eventType: e.Type(),
-		runner: &job[E]{
+		runner: &handler[E]{
 			value:       e,
-			handlerType: reflect.TypeOf(h),
+			handlerType: reflect.TypeFor[H](),
 		},
 	}
 }
@@ -120,9 +117,9 @@ func (s *EventService) Run(ctx context.Context) error {
 		for _, r := range runners {
 			if r.UpdateValue(e) {
 				go func(job runner) {
-					err := job.Run(e.Context(ctx), s.DP)
+					err := job.Run(ctx, s.DP)
 					if err != nil {
-						s.Logger.Warn("job failed", slog.Any("error", err))
+						s.Logger.Warn("handler failed", slog.Any("error", err))
 					}
 				}(r)
 			} else {

@@ -2,7 +2,6 @@ package event
 
 import (
 	"bytes"
-	"context"
 	"encoding/gob"
 	"errors"
 	"reflect"
@@ -13,25 +12,6 @@ type EventType string
 
 type Event interface {
 	Type() EventType
-	WithContext(ctx context.Context)
-	Context(ctx context.Context) context.Context
-}
-
-type EventLogger struct {
-	// Logger *slog.Logger
-}
-
-func (e *EventLogger) Context(ctx context.Context) context.Context {
-	return ctx
-	// if e.Logger == nil {
-	// 	return ctx
-	// }
-	// return clog.Update(ctx, func(l *slog.Logger) *slog.Logger {
-	// 	return e.Logger
-	// })
-}
-func (e *EventLogger) WithContext(ctx context.Context) {
-	// e.Logger = clog.Use(ctx)
 }
 
 var (

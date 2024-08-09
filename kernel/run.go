@@ -91,12 +91,14 @@ func (k *Kernel) RunServices(ctx context.Context) {
 		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
 			for {
-				err := di.Fill(ctx, s)
-				if err != nil {
-					clog.Use(ctx).Error("service dependency injection failed", slog.Any("error", err))
-					return
+				if di.IsFillable(s) {
+					err := di.Fill(ctx, s)
+					if err != nil {
+						clog.Use(ctx).Error("service dependency injection failed", slog.Any("error", err))
+						return
+					}
 				}
-				err = s.Run(ctx)
+				err := s.Run(ctx)
 				if err == nil {
 					return
 				}
