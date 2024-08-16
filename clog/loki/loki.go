@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	Level    slog.Level
 	URL      string
 	TenantID string
 }
@@ -31,5 +32,5 @@ func (c *Config) Handler() (slog.Handler, error) {
 		return nil, err
 	}
 
-	return slogloki.Option{Level: slog.LevelDebug, Client: client}.NewLokiHandler(), nil
+	return slogloki.Option{Level: c.Level, Client: client}.NewLokiHandler(), nil
 }

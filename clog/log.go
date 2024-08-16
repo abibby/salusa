@@ -16,7 +16,7 @@ const (
 	withKey key = iota
 )
 
-type rootLogger slog.Logger
+type RootLogger slog.Logger
 
 type LoggerConfiger interface {
 	LoggerConfig() Config
@@ -26,20 +26,22 @@ type Config interface {
 	Handler() (slog.Handler, error)
 }
 
-type DefaultConfig struct{}
+type DefaultConfig struct {
+	Level slog.Level
+}
 
 var _ Config = (*DefaultConfig)(nil)
 
-func NewDefaultConfig() *DefaultConfig {
-	return &DefaultConfig{}
+func NewDefaultConfig(level slog.Level) *DefaultConfig {
+	return &DefaultConfig{Level: level}
 }
 
 func (c *DefaultConfig) Handler() (slog.Handler, error) {
-	return DefaultHandler(), nil
+	return DefaultHandler(c.Level), nil
 }
 
 func Register(ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(cfg salusaconfig.Config) (*rootLogger, error) {
+	di.RegisterLazySingletonWith(ctx, func(cfg salusaconfig.Config) (*RootLogger, error) {
 		var h slog.Handler
 		if lc, ok := cfg.(LoggerConfiger); ok {
 			var err error
@@ -49,12 +51,13 @@ func Register(ctx context.Context) error {
 			}
 		}
 		if h == nil {
-			h = DefaultHandler()
+			h = DefaultHandler(slog.LevelInfo)
 		}
+
 		logger := slog.New(h)
 
 		slog.SetDefault(logger)
-		return (*rootLogger)(logger), nil
+		return (*RootLogger)(logger), nil
 	})
 
 	registerLogger(ctx)
@@ -63,14 +66,11 @@ func Register(ctx context.Context) error {
 func RegisterWith(h slog.Handler) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 
-		di.RegisterLazySingleton(ctx, func() (*rootLogger, error) {
-			if h == nil {
-				h = DefaultHandler()
-			}
+		di.RegisterLazySingleton(ctx, func() (*RootLogger, error) {
 			logger := slog.New(h)
 
 			slog.SetDefault(logger)
-			return (*rootLogger)(logger), nil
+			return (*RootLogger)(logger), nil
 		})
 
 		registerLogger(ctx)
@@ -78,11 +78,16 @@ func RegisterWith(h slog.Handler) func(ctx context.Context) error {
 		return nil
 	}
 }
-func DefaultHandler() slog.Handler {
+func DefaultHandler(level slog.Level) slog.Handler {
 	fi, err := os.Stdout.Stat()
 	isTTY := err == nil && (fi.Mode()&os.ModeCharDevice) != 0
+	if !isTTY {
+		return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: level,
+		})
+	}
 	return tint.NewHandler(os.Stderr, &tint.Options{
-		NoColor: !isTTY,
+		Level: level,
 		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
 			err, ok := attr.Value.Any().(error)
 			if !ok {
@@ -95,7 +100,7 @@ func DefaultHandler() slog.Handler {
 	})
 }
 func registerLogger(ctx context.Context) {
-	di.RegisterWith(ctx, func(ctx context.Context, tag string, logger *rootLogger) (*slog.Logger, error) {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, logger *RootLogger) (*slog.Logger, error) {
 		with := ctx.Value(withKey)
 		sLogger := (*slog.Logger)(logger)
 		if with != nil {

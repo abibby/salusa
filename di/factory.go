@@ -15,12 +15,10 @@ type Factory interface {
 	Type() reflect.Type
 }
 type Singleton interface {
-	Factory
 	Peek() (any, error, bool)
 }
 
 type Dependant interface {
-	Factory
 	DependsOn() []reflect.Type
 }
 
@@ -155,7 +153,7 @@ type LazySingletonFactory[T any] struct {
 	ready   bool
 	factory func() (T, error)
 
-	value any
+	value T
 	err   error
 }
 
@@ -194,7 +192,7 @@ type LazySingletonWithFactory[T, W any] struct {
 	m       sync.Mutex
 	factory func(with W) (T, error)
 
-	value any
+	value T
 	err   error
 }
 
