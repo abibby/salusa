@@ -6,6 +6,7 @@ import (
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/internal/helpers"
+	"github.com/abibby/salusa/internal/relationship"
 	"github.com/abibby/salusa/set"
 )
 
@@ -53,6 +54,9 @@ func From[T model.Model]() *ModelBuilder[T] {
 // NewEmpty creates a new helpers without anything selected
 func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	m := helpers.CreateFor[T]().Interface().(T)
+
+	_ = relationship.InitializeRelationships(m)
+
 	sb := NewBuilder()
 	sb.wheres.withParent(m)
 	sb.havings.withParent(m)

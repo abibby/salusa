@@ -67,6 +67,9 @@ func RegisterWith(h slog.Handler) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 
 		di.RegisterLazySingleton(ctx, func() (*RootLogger, error) {
+			if h == nil {
+				h = DefaultHandler(slog.LevelInfo)
+			}
 			logger := slog.New(h)
 
 			slog.SetDefault(logger)
