@@ -127,7 +127,7 @@ func TestFactories(t *testing.T) {
 
 			if _, ok := ff.Default().(di.Singleton); ok {
 				t.Run("is singleton", func(t *testing.T) {
-					factory := ff.Default().(di.Singleton)
+					factory := ff.Default()
 					c1, err := factory.Build(ctx, dp, "")
 					assert.NoError(t, err)
 
@@ -137,9 +137,10 @@ func TestFactories(t *testing.T) {
 					assert.Same(t, c1, c2)
 				})
 				t.Run("peek", func(t *testing.T) {
-					factory := ff.Default().(di.Singleton)
+					factory := ff.Default()
+					singleton := factory.(di.Singleton)
 
-					c1, err, ready := factory.Peek()
+					c1, err, ready := singleton.Peek()
 					if ff.Eger {
 						assert.NotZero(t, c1)
 						assert.NoError(t, err)
@@ -154,7 +155,7 @@ func TestFactories(t *testing.T) {
 					assert.NoError(t, err)
 					assert.NotZero(t, c2)
 
-					c3, err, ready := factory.Peek()
+					c3, err, ready := singleton.Peek()
 					assert.NotZero(t, c3)
 					assert.NoError(t, err)
 					assert.True(t, ready)

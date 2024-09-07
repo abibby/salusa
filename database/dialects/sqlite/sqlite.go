@@ -1,8 +1,10 @@
 package sqlite
 
 import (
+	"encoding"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
@@ -41,26 +43,34 @@ func (*SQLite) AutoIncrement() string {
 }
 
 func (s *SQLite) Escape(v any) string {
-	switch v := v.(type) {
-	case string:
-		return "'" + strings.ReplaceAll(v, "'", "''") + "'"
-	case int, int8, int16, int32, int64,
-		uint, uint8, uint16, uint32, uint64,
-		float32, float64:
+	if marshaler, ok := v.(encoding.TextMarshaler); ok {
+		str, err := marshaler.MarshalText()
+		if err != nil {
+			panic(fmt.Errorf("failed to escape value: %w", err))
+		}
+		return s.Escape(string(str))
+	}
+	val := reflect.ValueOf(v)
+
+	if val.Kind() == reflect.String {
+		return "'" + strings.ReplaceAll(val.String(), "'", "''") + "'"
+	}
+	if val.CanInt() || val.CanUint() || val.CanFloat() {
 		return fmt.Sprint(v)
-	case bool:
-		if v {
+	}
+	if val.Kind() == reflect.Bool {
+		if val.Bool() {
 			return "1"
 		} else {
 			return "0"
 		}
-	default:
-		b, err := json.Marshal(v)
-		if err != nil {
-			panic(fmt.Errorf("failed to escape value: %w", err))
-		}
-		return s.Escape(string(b))
 	}
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		panic(fmt.Errorf("failed to escape value: %w", err))
+	}
+	return s.Escape(string(b))
 }
 
 func (*SQLite) Binding() string {

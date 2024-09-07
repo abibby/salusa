@@ -10,6 +10,7 @@ import (
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
+	"github.com/abibby/salusa/database/model/mixins"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -42,7 +43,7 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 		return nil, err
 	}
 	ctx := context.Background()
-	err = migrate.RunModelCreate(ctx, db, &Foo{}, &Bar{})
+	err = migrate.RunModelCreate(ctx, db, &Foo{}, &Bar{}, &FooSoftDelete{})
 	if err != nil {
 		return nil, err
 	}
@@ -74,4 +75,15 @@ type Bar struct {
 
 func (h *Bar) Table() string {
 	return "bars"
+}
+
+type FooSoftDelete struct {
+	model.BaseModel
+	mixins.SoftDelete
+	ID   int    `json:"id"   db:"id,primary,autoincrement"`
+	Name string `json:"name" db:"name"`
+}
+
+func (h *FooSoftDelete) Table() string {
+	return "foo_soft_deletes"
 }

@@ -49,7 +49,7 @@ func TestFirst(t *testing.T) {
 func TestGet_with_scope_and_context(t *testing.T) {
 	scopeCtx := &builder.Scope{
 		Name: "ctx",
-		Apply: func(b *builder.Builder) *builder.Builder {
+		Query: func(b *builder.Builder) *builder.Builder {
 			return b.Where("id", "=", b.Context().Value("foo"))
 		},
 	}

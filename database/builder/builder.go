@@ -52,7 +52,7 @@ func From[T model.Model]() *ModelBuilder[T] {
 
 // NewEmpty creates a new helpers without anything selected
 func NewEmpty[T model.Model]() *ModelBuilder[T] {
-	var m T
+	m := helpers.CreateFor[T]().Interface().(T)
 	sb := NewBuilder()
 	sb.wheres.withParent(m)
 	sb.havings.withParent(m)

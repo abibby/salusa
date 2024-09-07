@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/set"
 )
 
@@ -10,10 +11,13 @@ type Scoper interface {
 
 // Scope is a modifier for a query that can be easily applied.
 type Scope struct {
-	Name  string
-	Apply ScopeFunc
+	Name   string
+	Query  ScopeQueryFunc
+	Delete ScopeDeleteFunc
 }
-type ScopeFunc func(b *Builder) *Builder
+type ScopeQueryFunc func(b *Builder) *Builder
+type ScopeDeleteFunc func(next func(q *Builder, tx database.DB) error) func(q *Builder, tx database.DB) error
+
 type scopes struct {
 	parent              any
 	scopes              []*Scope
@@ -40,7 +44,7 @@ func (s *scopes) Clone() *scopes {
 	}
 }
 
-// WithScope adds a local scope to a query.
+// WithScope adds a local scope to a Delete.
 func (s *scopes) WithScope(scope *Scope) *scopes {
 	s.scopes = append(s.scopes, scope)
 	return s
@@ -61,14 +65,16 @@ func (s *scopes) WithoutScope(scope *Scope) *scopes {
 func (s *scopes) allScopes() []*Scope {
 	if scoper, ok := s.parent.(Scoper); ok {
 		allGlobalScopes := scoper.Scopes()
-		globalScopes := make([]*Scope, 0, len(allGlobalScopes))
+		combinedScopes := make([]*Scope, len(s.scopes), len(s.scopes)+len(allGlobalScopes))
+		copy(combinedScopes, s.scopes)
+
 		for _, scope := range allGlobalScopes {
 			if s.withoutGlobalScopes.Has(scope.Name) {
 				continue
 			}
-			globalScopes = append(globalScopes, scope)
+			combinedScopes = append(combinedScopes, scope)
 		}
-		return append(s.scopes, globalScopes...)
+		return combinedScopes
 	}
 
 	return s.scopes
@@ -78,4 +84,11 @@ func (s *scopes) allScopes() []*Scope {
 func (b *scopes) WithoutGlobalScope(scope *Scope) *scopes {
 	b.withoutGlobalScopes.Add(scope.Name)
 	return b
+}
+
+func (b *Builder) ActiveScopes() []*Scope {
+	return b.scopes.allScopes()
+}
+func (b *ModelBuilder[T]) ActiveScopes() []*Scope {
+	return b.builder.ActiveScopes()
 }

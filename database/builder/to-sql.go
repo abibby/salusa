@@ -11,7 +11,7 @@ func (b *ModelBuilder[T]) SQLString(d dialects.Dialect) (string, []any, error) {
 func (b *Builder) SQLString(d dialects.Dialect) (string, []any, error) {
 	b = b.Clone()
 	for _, scope := range b.scopes.allScopes() {
-		b = scope.Apply(b)
+		b = scope.Query(b)
 	}
 	return helpers.Result().
 		Add(b.selects).

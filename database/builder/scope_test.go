@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/model/mixins"
 	"github.com/abibby/salusa/internal/test"
 )
 
@@ -14,7 +15,7 @@ type ScopeFoo struct {
 
 func (f *ScopeFoo) Scopes() []*builder.Scope {
 	return []*builder.Scope{
-		builder.SoftDeletes,
+		mixins.SoftDeleteScope,
 	}
 }
 
@@ -26,13 +27,13 @@ type ScopeBar struct {
 func TestScope(t *testing.T) {
 	scopeA := &builder.Scope{
 		Name: "with-a",
-		Apply: func(b *builder.Builder) *builder.Builder {
+		Query: func(b *builder.Builder) *builder.Builder {
 			return b.Where("a", "=", "b")
 		},
 	}
 	scopeCtx := &builder.Scope{
 		Name: "ctx",
-		Apply: func(b *builder.Builder) *builder.Builder {
+		Query: func(b *builder.Builder) *builder.Builder {
 			foo := b.Context().Value("foo")
 			return b.Where("a", "=", foo)
 		},
@@ -58,7 +59,7 @@ func TestScope(t *testing.T) {
 		},
 		{
 			Name:             "without global scope",
-			Builder:          builder.From[*ScopeFoo]().WithoutGlobalScope(builder.SoftDeletes),
+			Builder:          builder.From[*ScopeFoo]().WithoutGlobalScope(mixins.SoftDeleteScope),
 			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\"",
 			ExpectedBindings: []any{},
 		},

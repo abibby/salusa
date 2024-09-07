@@ -24,6 +24,10 @@ func RNewOf(t reflect.Type) (reflect.Value, error) {
 	}
 	return v, nil
 }
+func CreateFor[T any]() reflect.Value {
+	return Create(reflect.TypeFor[T]())
+}
+
 func Create(t reflect.Type) reflect.Value {
 	if t.Kind() == reflect.Pointer {
 		return reflect.New(t.Elem())
