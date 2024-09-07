@@ -5,16 +5,17 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/databasedi"
+	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/di"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRegister(t *testing.T) {
+	cfg := sqlite.NewConfig(":memory:")
 	t.Run("db", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
-		db := sqlx.MustOpen("sqlite3", ":memory:")
+		db := sqlx.MustOpen(cfg.DriverName(), cfg.DataSourceName())
 		defer db.Close()
 		_ = databasedi.Register(db)(ctx)
 
@@ -25,7 +26,7 @@ func TestRegister(t *testing.T) {
 
 	t.Run("tx read", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
-		db := sqlx.MustOpen("sqlite3", ":memory:")
+		db := sqlx.MustOpen(cfg.DriverName(), cfg.DataSourceName())
 		defer db.Close()
 		_ = databasedi.Register(db)(ctx)
 
@@ -36,7 +37,7 @@ func TestRegister(t *testing.T) {
 
 	t.Run("tx update", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
-		db := sqlx.MustOpen("sqlite3", ":memory:")
+		db := sqlx.MustOpen(cfg.DriverName(), cfg.DataSourceName())
 		defer db.Close()
 		_ = databasedi.Register(db)(ctx)
 
@@ -47,7 +48,7 @@ func TestRegister(t *testing.T) {
 
 	t.Run("tx", func(t *testing.T) {
 		ctx := di.TestDependencyProviderContext()
-		db := sqlx.MustOpen("sqlite3", ":memory:")
+		db := sqlx.MustOpen(cfg.DriverName(), cfg.DataSourceName())
 		defer db.Close()
 		_ = databasedi.Register(db)(ctx)
 

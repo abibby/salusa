@@ -13,7 +13,6 @@ import (
 	"github.com/abibby/salusa/database/model/mixins"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,8 +36,9 @@ func QueryTest(t *testing.T, testCases []Case) {
 }
 
 var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
-	sqlite.UseSQLite()
-	db, err := sqlx.Open("sqlite3", ":memory:")
+	cfg := sqlite.NewConfig(":memory:")
+	cfg.SetDialect()
+	db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
 	if err != nil {
 		return nil, err
 	}

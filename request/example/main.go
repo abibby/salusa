@@ -12,8 +12,6 @@ import (
 	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/router"
 	"github.com/jmoiron/sqlx"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Foo struct {

@@ -2,6 +2,8 @@ package builder
 
 import (
 	"errors"
+	"slices"
+	"strings"
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
@@ -18,6 +20,11 @@ type Updater struct {
 	updates Updates
 }
 
+type record struct {
+	key   string
+	value any
+}
+
 func (d *Updater) SQLString(dialect dialects.Dialect) (string, []any, error) {
 	if len(d.updates) == 0 {
 		return "", nil, ErrNoUpdates
@@ -25,11 +32,19 @@ func (d *Updater) SQLString(dialect dialects.Dialect) (string, []any, error) {
 
 	sets := []helpers.SQLStringer{}
 
+	updates := []record{}
+
 	for k, v := range d.updates {
+		updates = append(updates, record{key: k, value: v})
+	}
+	slices.SortFunc(updates, func(a, b record) int {
+		return strings.Compare(a.key, b.key)
+	})
+	for _, u := range updates {
 		sets = append(sets, helpers.Concat(
-			helpers.Identifier(k),
+			helpers.Identifier(u.key),
 			helpers.Raw("="),
-			helpers.Literal(v),
+			helpers.Literal(u.value),
 		))
 	}
 

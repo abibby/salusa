@@ -2,7 +2,8 @@ package sqlite
 
 import (
 	"github.com/abibby/salusa/database"
-	_ "modernc.org/sqlite"
+	// _ "modernc.org/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Config struct {
@@ -21,7 +22,7 @@ func (c *Config) SetDialect() {
 	UseSQLite()
 }
 func (c *Config) DriverName() string {
-	return "sqlite"
+	return "sqlite3"
 }
 func (c *Config) DataSourceName() string {
 	return c.Path

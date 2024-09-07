@@ -12,7 +12,6 @@ import (
 	"github.com/abibby/salusa/internal/test"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
 

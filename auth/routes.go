@@ -234,15 +234,14 @@ func (o *BasicAuthController[T]) RunLogin(r *LoginRequest) (*LoginResponse, erro
 	if len(userColumns) == 0 {
 		panic("need columns")
 	}
-	err = r.Read(func(tx *sqlx.Tx) error {
-		q := builder.From[T]().WithContext(r.Ctx)
-		for _, column := range userColumns {
-			q = q.OrWhere(column, "=", strings.ToLower(r.Username))
-		}
 
-		var err error
-		u, err = q.First(tx)
-		return err
+	q := builder.From[T]().WithContext(r.Ctx)
+	for _, column := range userColumns {
+		q = q.OrWhere(column, "=", strings.ToLower(r.Username))
+	}
+
+	u, err = database.Value(r.Read, func(tx *sqlx.Tx) (T, error) {
+		return q.First(tx)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to log in: %w", err)
@@ -260,7 +259,7 @@ func (o *BasicAuthController[T]) RunLogin(r *LoginRequest) (*LoginResponse, erro
 
 	err = bcrypt.CompareHashAndPassword(u.GetPasswordHash(), u.SaltedPassword(r.Password))
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-		r.Log.Info("login attempt with incorrect password", "user_id", u.GetID(), "password", r.Password)
+		r.Log.Info("login attempt with incorrect password", "username", r.Username, "user_id", u.GetID())
 		return nil, request.NewHTTPError(ErrInvalidUserPass, http.StatusUnauthorized)
 	} else if err != nil {
 		return nil, fmt.Errorf("could not check password hash: %w", err)
