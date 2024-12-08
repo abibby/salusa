@@ -47,7 +47,7 @@ func (v *DIValidator) Validate(ctx context.Context) error {
 			continue
 		}
 
-		_, ok = v.dp.factories[sf.Type]
+		_, ok = v.dp.factories.Get(sf.Type)
 		if !ok {
 			errs = append(errs, fmt.Errorf("%w %s on %s.%s", ErrMissingDependancy, sf.Type, v.typ, sf.Name))
 		}
@@ -82,13 +82,13 @@ func (dp *DependencyProvider) validateCycles() error {
 	g := graph.New(typeHash, graph.Directed(), graph.PreventCycles())
 
 	var err error
-	for typ := range dp.factories {
+	for typ := range dp.factories.All() {
 		err = g.AddVertex(typ)
 		if err != nil {
 			panic(err)
 		}
 	}
-	for typ, factory := range dp.factories {
+	for typ, factory := range dp.factories.All() {
 		depends, ok := factory.(Dependant)
 		if !ok {
 			continue
@@ -107,6 +107,7 @@ func (dp *DependencyProvider) validateCycles() error {
 	}
 	return nil
 }
+
 func newCycleError[K comparable, T any](g graph.Graph[K, T], source, target K) error {
 	path, err := graph.ShortestPath(g, source, target)
 	if err != nil {

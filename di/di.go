@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/abibby/salusa/extra/maps"
 )
 
 type contextKey uint8
@@ -14,7 +16,7 @@ const (
 )
 
 type DependencyProvider struct {
-	factories map[reflect.Type]Factory
+	factories maps.Map[reflect.Type, Factory]
 }
 
 var (
@@ -36,7 +38,7 @@ var defaultProvider = NewDependencyProvider()
 
 func NewDependencyProvider() *DependencyProvider {
 	dp := &DependencyProvider{
-		factories: map[reflect.Type]Factory{},
+		factories: &maps.Sync[reflect.Type, Factory]{},
 	}
 	dp.Register(NewFactoryFunc(func(ctx context.Context, tag string) (context.Context, error) {
 		return ctx, nil
@@ -70,8 +72,9 @@ func TestDependencyProviderContext() context.Context {
 }
 
 func (dp *DependencyProvider) Singletons() []Singleton {
-	singletons := make([]Singleton, 0, len(dp.factories))
-	for _, f := range dp.factories {
+	singletons := []Singleton{}
+
+	for _, f := range dp.factories.All() {
 		if s, ok := f.(Singleton); ok {
 			singletons = append(singletons, s)
 		}

@@ -98,7 +98,7 @@ func isFillable(t reflect.Type) bool {
 }
 
 func (dp *DependencyProvider) resolve(ctx context.Context, tag string, v reflect.Value) (bool, error) {
-	f, ok := dp.factories[v.Type().Elem()]
+	f, ok := dp.factories.Get(v.Type().Elem())
 	if !ok {
 		return false, nil
 	}

@@ -34,5 +34,5 @@ func RegisterValue(ctx context.Context, t reflect.Type, factory func(ctx context
 }
 
 func (d *DependencyProvider) Register(factory Factory) {
-	d.factories[factory.Type()] = factory
+	d.factories.Set(factory.Type(), factory)
 }
