@@ -8,10 +8,10 @@ import (
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/email/emailtest"
 	"github.com/abibby/salusa/event"
-	"github.com/abibby/salusa/kernel/kerneltest"
 	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/abibby/salusa/static/template/migrations"
+	"github.com/abibby/salusa/testing/kerneltest"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )
