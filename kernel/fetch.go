@@ -14,52 +14,54 @@ import (
 	"github.com/abibby/salusa/salusaconfig"
 )
 
-type StdoutResponseWriter struct {
+type ResponseWriter struct {
 	header http.Header
+	writer io.Writer
 	status int
 }
 
-func NewStdoutResponseWriter() *StdoutResponseWriter {
-	return &StdoutResponseWriter{
+func NewStdoutResponseWriter() *ResponseWriter {
+	return &ResponseWriter{
 		header: http.Header{},
+		writer: os.Stdout,
 		status: 0,
 	}
 }
 
-func (w *StdoutResponseWriter) Ok() bool {
+func (w *ResponseWriter) Ok() bool {
 	return w.status >= 200 && w.status < 300
 }
 
-func (w *StdoutResponseWriter) Status() int {
+func (w *ResponseWriter) Status() int {
 	return w.status
 }
 
-var _ http.ResponseWriter = (*StdoutResponseWriter)(nil)
+var _ http.ResponseWriter = (*ResponseWriter)(nil)
 
 // Header implements http.ResponseWriter.
-func (s *StdoutResponseWriter) Header() http.Header {
+func (s *ResponseWriter) Header() http.Header {
 	return s.header
 }
 
 // Write implements http.ResponseWriter.
-func (s *StdoutResponseWriter) Write(b []byte) (int, error) {
+func (s *ResponseWriter) Write(b []byte) (int, error) {
 	if s.status == 0 {
 		s.WriteHeader(200)
 	}
-	return os.Stdout.Write(b)
+	return s.writer.Write(b)
 }
 
 // WriteHeader implements http.ResponseWriter.
-func (s *StdoutResponseWriter) WriteHeader(statusCode int) {
+func (s *ResponseWriter) WriteHeader(statusCode int) {
 	if s.status != 0 {
 		return
 	}
 	for k, vs := range s.header {
 		for _, v := range vs {
-			fmt.Fprintf(os.Stdout, "< header: %s: %s\n", k, v)
+			fmt.Fprintf(s.writer, "< header: %s: %s\n", k, v)
 		}
 	}
-	fmt.Fprintf(os.Stdout, "< status: %d\n", statusCode)
+	fmt.Fprintf(s.writer, "< status: %d\n", statusCode)
 	s.status = statusCode
 }
 func newRequest(ctx context.Context, uri, method string, body string) (*http.Request, error) {

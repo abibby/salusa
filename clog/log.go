@@ -82,10 +82,10 @@ func RegisterWith(h slog.Handler) func(ctx context.Context) error {
 	}
 }
 func DefaultHandler(level slog.Level) slog.Handler {
-	fi, err := os.Stdout.Stat()
+	fi, err := os.Stderr.Stat()
 	isTTY := err == nil && (fi.Mode()&os.ModeCharDevice) != 0
 	if !isTTY {
-		return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		return slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: level,
 		})
 	}

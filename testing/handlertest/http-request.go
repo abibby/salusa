@@ -1,32 +1,28 @@
-package kerneltest
+package handlertest
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-
-	"github.com/abibby/salusa/salusaconfig"
+	"path"
+	"testing"
 )
 
-type testKernel interface {
-	HandleRequest(r *http.Request) *HttpResult
-	url(target string) string
-}
-
 type RequestBuilder struct {
-	kernel testKernel
-	ctx    context.Context
-	header http.Header
+	t       *testing.T
+	ctx     context.Context
+	handler http.Handler
+	header  http.Header
 }
 
-func NewRequestBuilder[T salusaconfig.Config](k *TestKernel[T]) *RequestBuilder {
+func New(ctx context.Context, t *testing.T, h http.Handler) *RequestBuilder {
 	return &RequestBuilder{
-		kernel: k,
-		ctx:    k.ctx,
-		header: http.Header{},
+		t:       t,
+		ctx:     ctx,
+		handler: h,
+		header:  http.Header{},
 	}
 }
 
@@ -38,51 +34,65 @@ func (rb *RequestBuilder) WithJSONHeaders() *RequestBuilder {
 	return rb.WithHeader("Accept", "application/json").
 		WithHeader("Content-Type", "application/json")
 }
-func (rb *RequestBuilder) NewRequest(method, target string, body io.Reader) *http.Request {
+func (rb *RequestBuilder) build(method, target string, body io.Reader) *http.Request {
 	req := httptest.NewRequest(method, target, body).WithContext(rb.ctx)
-	req.Header = rb.header
+	req.Header = rb.header.Clone()
 	return req
 }
 
 func jsonReader(body any) io.Reader {
-	b := &bytes.Buffer{}
-	err := json.NewEncoder(b).Encode(body)
-	if err != nil {
-		panic("body json: " + err.Error())
+	r, w := io.Pipe()
+	go func() {
+		err := json.NewEncoder(w).Encode(body)
+		r.CloseWithError(err)
+	}()
+	return r
+}
+func (rb *RequestBuilder) handle(r *http.Request) *HttpResult {
+
+	w := httptest.NewRecorder()
+
+	rb.handler.ServeHTTP(w, r)
+
+	return &HttpResult{
+		response: w.Result(),
+		t:        rb.t,
 	}
-	return b
 }
 
+func (rb *RequestBuilder) url(target string) string {
+	return "https://" + path.Join("example.com", target)
+}
 func (rb *RequestBuilder) Get(target string) *HttpResult {
-	return rb.kernel.HandleRequest(rb.NewRequest(http.MethodGet, rb.kernel.url(target), http.NoBody))
+	return rb.handle(rb.build(http.MethodGet, rb.url(target), http.NoBody))
 }
 func (rb *RequestBuilder) GetJSON(target string) *HttpResult {
 	return rb.WithJSONHeaders().Get(target)
 }
 
 func (rb *RequestBuilder) Post(target string, body io.Reader) *HttpResult {
-	return rb.kernel.HandleRequest(rb.NewRequest(http.MethodPost, rb.kernel.url(target), body))
+	return rb.handle(rb.build(http.MethodPost, rb.url(target), body))
 }
 func (rb *RequestBuilder) PostJSON(target string, body any) *HttpResult {
 	return rb.WithJSONHeaders().Post(target, jsonReader(body))
 }
 
 func (rb *RequestBuilder) Put(target string, body io.Reader) *HttpResult {
-	return rb.kernel.HandleRequest(rb.NewRequest(http.MethodPut, rb.kernel.url(target), body))
+	return rb.handle(rb.build(http.MethodPut, rb.url(target), body))
 }
 func (rb *RequestBuilder) PutJSON(target string, body any) *HttpResult {
 	return rb.WithJSONHeaders().Put(target, jsonReader(body))
 }
 
 func (rb *RequestBuilder) Delete(target string, body io.Reader) *HttpResult {
-	return rb.kernel.HandleRequest(rb.NewRequest(http.MethodDelete, rb.kernel.url(target), body))
+	return rb.handle(rb.build(http.MethodDelete, rb.url(target), body))
 }
 func (rb *RequestBuilder) DeleteJSON(target string, body any) *HttpResult {
 	return rb.WithJSONHeaders().Delete(target, jsonReader(body))
 }
 
 func (rb *RequestBuilder) Patch(target string, body io.Reader) *HttpResult {
-	return rb.kernel.HandleRequest(rb.NewRequest(http.MethodPatch, rb.kernel.url(target), body))
+	return rb.handle(rb.build(http.MethodPatch, rb.url(target), body))
 }
 func (rb *RequestBuilder) PatchJSON(target string, body any) *HttpResult {
 	return rb.WithJSONHeaders().Patch(target, jsonReader(body))
