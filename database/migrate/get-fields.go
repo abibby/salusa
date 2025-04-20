@@ -40,7 +40,7 @@ func getFields(m model.Model) ([]*field, error) {
 
 		f := &field{
 			tag:      tag,
-			nullable: false,
+			nullable: tag.Nullable,
 		}
 		t := sf.Type
 		if t.Kind() == reflect.Pointer {

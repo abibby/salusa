@@ -10,7 +10,7 @@ func Each(v any, cb func(v reflect.Value, pointer bool) error) error {
 		pointer = true
 	}
 	if rv.Kind() == reflect.Slice {
-		for i := 0; i < rv.Len(); i++ {
+		for i := range rv.Len() {
 			err := Each(rv.Index(i).Interface(), cb)
 			if err != nil {
 				return err

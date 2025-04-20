@@ -21,7 +21,8 @@ type Kernel struct {
 
 	globalMiddleware []router.Middleware
 
-	docs *spec.Swagger
+	docs      *spec.Swagger
+	fetchAuth func(ctx context.Context, username string, r *http.Request) error
 
 	cfg salusaconfig.Config
 

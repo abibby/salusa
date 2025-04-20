@@ -127,7 +127,21 @@ func (b *Builder) LoadOne(tx database.DB, v any) error {
 }
 
 func (b *ModelBuilder[T]) Each(tx database.DB, cb func(v T) error) error {
-	limit := 1000
+	return b.Chunk(tx, func(models []T) error {
+		for _, model := range models {
+			err := cb(model)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (b *ModelBuilder[T]) Chunk(tx database.DB, cb func(v []T) error) error {
+	return b.ChunkN(tx, 1000, cb)
+}
+func (b *ModelBuilder[T]) ChunkN(tx database.DB, limit int, cb func(v []T) error) error {
 	offset := 0
 	for {
 		models, err := b.Limit(limit).Offset(offset).Get(tx)
@@ -138,11 +152,9 @@ func (b *ModelBuilder[T]) Each(tx database.DB, cb func(v T) error) error {
 		if len(models) == 0 {
 			return nil
 		}
-		for _, model := range models {
-			err = cb(model)
-			if err != nil {
-				return err
-			}
+		err = cb(models)
+		if err != nil {
+			return err
 		}
 	}
 }

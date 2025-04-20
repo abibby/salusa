@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"iter"
 	"reflect"
 	"strings"
 
@@ -11,30 +12,31 @@ import (
 	"github.com/abibby/salusa/internal/relationship"
 )
 
-func Load(tx database.DB, v any, relation string) error {
-	return LoadContext(context.Background(), tx, v, relation)
+func Load(tx database.DB, models any, relation string) error {
+	return LoadContext(context.Background(), tx, models, relation)
 }
-func LoadContext(ctx context.Context, tx database.DB, v any, relation string) error {
-	return loadContext(ctx, tx, v, relation, false)
+func LoadContext(ctx context.Context, tx database.DB, models any, relation string) error {
+	return loadContext(ctx, tx, models, relation, false)
 }
-func LoadMissing(tx database.DB, v any, relation string) error {
-	return LoadMissingContext(context.Background(), tx, v, relation)
+func LoadMissing(tx database.DB, models any, relation string) error {
+	return LoadMissingContext(context.Background(), tx, models, relation)
 }
-func LoadMissingContext(ctx context.Context, tx database.DB, v any, relation string) error {
-	return loadContext(ctx, tx, v, relation, true)
+func LoadMissingContext(ctx context.Context, tx database.DB, models any, relation string) error {
+	return loadContext(ctx, tx, models, relation, true)
 }
-func loadContext(ctx context.Context, tx database.DB, v any, relation string, onlyMissing bool) error {
-	err := relationship.InitializeRelationships(v)
+func loadContext(ctx context.Context, tx database.DB, models any, relationPath string, onlyMissing bool) error {
+	err := relationship.InitializeRelationships(models)
 	if err != nil {
 		return err
 	}
-	relations := strings.Split(relation, ".")
-	for i, rel := range relations {
+	relationNames := strings.Split(relationPath, ".")
+	currentModels := models
+	for i, relationName := range relationNames {
 		relations := []Relationship{}
-		err := helpers.Each(v, func(v reflect.Value, pointer bool) error {
-			r, ok := getRelation(v, rel)
+		err := helpers.Each(currentModels, func(v reflect.Value, pointer bool) error {
+			r, ok := getRelation(v, relationName)
 			if !ok {
-				return fmt.Errorf("%s has no relation %s: %w", v.Type().Name(), rel, ErrMissingRelationship)
+				return fmt.Errorf("%s has no relation %s: %w", v.Type().Name(), relationName, ErrMissingRelationship)
 			}
 
 			if onlyMissing && r.Loaded() {
@@ -56,10 +58,10 @@ func loadContext(ctx context.Context, tx database.DB, v any, relation string, on
 			return err
 		}
 
-		if i <= len(relations)-1 {
+		if i <= len(relationNames)-1 {
 			values := []any{}
-			err := helpers.Each(v, func(v reflect.Value, pointer bool) error {
-				related, ok := getValue(v, rel)
+			err = helpers.Each(currentModels, func(v reflect.Value, pointer bool) error {
+				related, ok := getValue(v, relationName)
 				if !ok {
 					return nil
 				}
@@ -75,7 +77,7 @@ func loadContext(ctx context.Context, tx database.DB, v any, relation string, on
 			if err != nil {
 				return err
 			}
-			v = values
+			currentModels = values
 		}
 	}
 
@@ -105,13 +107,16 @@ func getValue(rv reflect.Value, key string) (reflect.Value, bool) {
 	}
 	return reflect.Value{}, false
 }
-func ofType[T Relationship](relations []Relationship) []T {
-	relationsOfType := make([]T, 0, len(relations))
-	for _, r := range relations {
-		rOfType, ok := r.(T)
-		if ok {
-			relationsOfType = append(relationsOfType, rOfType)
+func ofType[T Relationship](relations []Relationship) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for _, r := range relations {
+			rOfType, ok := r.(T)
+			if !ok {
+				continue
+			}
+			if !yield(rOfType) {
+				return
+			}
 		}
 	}
-	return relationsOfType
 }

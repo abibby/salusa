@@ -32,6 +32,14 @@ func TestUpdateTable(t *testing.T) {
 			ExpectedBindings: []any{},
 		},
 		{
+			Name: "drop column",
+			Builder: schema.Table("foo", func(table *schema.Blueprint) {
+				table.DropColumn("id")
+			}),
+			ExpectedSQL:      "ALTER TABLE \"foo\" DROP COLUMN \"id\";",
+			ExpectedBindings: []any{},
+		},
+		{
 			Name: "add foreign key",
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.ForeignKey("id", "bar", "foo_id")

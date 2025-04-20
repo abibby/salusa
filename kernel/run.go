@@ -33,6 +33,7 @@ func (k *Kernel) Run(ctx context.Context) error {
 	method := pflag.StringP("method", "m", "get", "method for fetch")
 	headers := pflag.StringArrayP("header", "h", []string{}, "header")
 	body := pflag.StringP("body", "b", "", "body")
+	username := pflag.StringP("user", "u", "", "uername")
 
 	pflag.Parse()
 
@@ -48,7 +49,7 @@ func (k *Kernel) Run(ctx context.Context) error {
 	}
 
 	if *fetch != "" {
-		return k.runFetch(ctx, *fetch, *method, *headers, *body)
+		return k.runFetch(ctx, *fetch, *method, *headers, *body, *username)
 	}
 
 	go k.RunServices(ctx)

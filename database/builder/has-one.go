@@ -39,7 +39,7 @@ func (r *HasOne[T]) Load(ctx context.Context, tx database.DB, relations []Relati
 		return err
 	}
 
-	for _, relation := range ofType[*HasOne[T]](relations) {
+	for relation := range ofType[*HasOne[T]](relations) {
 		relation.value = rm.Single(relation.parentKeyValue())
 		relation.loaded = true
 	}

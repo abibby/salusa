@@ -153,6 +153,26 @@ func (c *Conditions) whereExists(query QueryBuilder, or bool) *Conditions {
 	})
 }
 
+// WhereExists add an exists clause to the query.
+func (c *Conditions) WhereNotExists(query QueryBuilder) *Conditions {
+	return c.whereNotExists(query, false)
+}
+
+// WhereExists add an exists clause to the query.
+func (c *Conditions) OrWhereNotExists(query QueryBuilder) *Conditions {
+	return c.whereNotExists(query, true)
+}
+
+func (c *Conditions) whereNotExists(query QueryBuilder, or bool) *Conditions {
+	return c.addWhere(&where{
+		Value: helpers.Join([]helpers.SQLStringer{
+			helpers.Raw("NOT EXISTS"),
+			helpers.Group(query),
+		}, " "),
+		Or: or,
+	})
+}
+
 // WhereSubquery adds a where clause to the query comparing a column and a subquery.
 func (c *Conditions) WhereSubquery(subquery QueryBuilder, operator string, value any) *Conditions {
 	return c.whereSubquery(subquery, operator, value, false)

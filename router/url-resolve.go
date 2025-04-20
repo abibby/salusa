@@ -164,3 +164,31 @@ func (r *SalusaResolver) resolve(name string, params ...any) string {
 	}
 	return u
 }
+
+type TestResolver struct{}
+
+func NewTestResolver() URLResolver {
+	return &TestResolver{}
+}
+
+var _ URLResolver = (*TestResolver)(nil)
+
+// Resolve implements URLResolver.
+func (t TestResolver) Resolve(name string, params ...any) string {
+	attrs, err := ToAttrs(params)
+	if err != nil {
+		panic(err)
+	}
+	query := url.Values{}
+
+	for _, attr := range attrs {
+		query.Add(attr.Key, attr.Value)
+	}
+
+	return name + "?" + query.Encode()
+}
+
+// ResolveHandler implements URLResolver.
+func (t TestResolver) ResolveHandler(h http.Handler, params ...any) string {
+	return ""
+}

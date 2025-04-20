@@ -97,12 +97,13 @@ func AddTypeRule(key string, rule *TypeRule) {
 			return true
 		}
 		val := reflect.ValueOf(options.Value)
-
-		if val.Kind() == reflect.Pointer {
+		typ := val.Type()
+		if typ.Kind() == reflect.Pointer {
 			val = val.Elem()
+			typ = typ.Elem()
 		}
 
-		if val.Type() == typeTime {
+		if typ == typeTime {
 			if rule.Time == nil {
 				log.Printf("no rule for int fields")
 				return true

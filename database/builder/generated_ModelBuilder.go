@@ -135,7 +135,7 @@ func (b *ModelBuilder[T]) Unordered() *ModelBuilder[T] {
 	return b
 }
 
-// WithScope adds a local scope to a query.
+// WithScope adds a local scope to a Delete.
 func (b *ModelBuilder[T]) WithScope(scope *Scope) *ModelBuilder[T] {
 	b = b.Clone()
 	b.builder = b.builder.WithScope(scope)
@@ -314,6 +314,34 @@ func (b *ModelBuilder[T]) OrWhereExists(query QueryBuilder) *ModelBuilder[T] {
 func (b *ModelBuilder[T]) OrHavingExists(query QueryBuilder) *ModelBuilder[T] {
 	b = b.Clone()
 	b.builder = b.builder.OrHavingExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) WhereNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.WhereNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) HavingNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.HavingNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) OrWhereNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.OrWhereNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) OrHavingNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.OrHavingNotExists(query)
 	return b
 }
 

@@ -22,13 +22,17 @@ func SwaggerUI() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/swagger.json") {
 			serveSwagger(w, r)
-		} else if strings.HasSuffix(r.URL.Path, "/redoc.standalone.js") {
-			serveBytes(w, r, redocSrc, "gz/application/json")
-		} else if !strings.HasSuffix(r.URL.Path, "/") {
-			http.Redirect(w, r, r.RequestURI+"/", http.StatusFound)
-		} else {
-			serveBytes(w, r, redocIndex, "text/html")
+			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/redoc.standalone.js") {
+			serveBytes(w, r, redocSrc, "gz/application/json")
+			return
+		}
+		if !strings.HasSuffix(r.URL.Path, "/") {
+			http.Redirect(w, r, r.RequestURI+"/", http.StatusFound)
+			return
+		}
+		serveBytes(w, r, redocIndex, "text/html")
 	})
 }
 

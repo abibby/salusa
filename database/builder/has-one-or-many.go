@@ -2,7 +2,9 @@ package builder
 
 import (
 	"context"
+	"encoding"
 	"fmt"
+	"log/slog"
 	"reflect"
 
 	"github.com/abibby/salusa/database"
@@ -139,6 +141,7 @@ func (r hasOneOrMany[T]) relatedMap(ctx context.Context, tx database.DB, relatio
 	if err != nil {
 		return nil, err
 	}
+
 	rm := newRelatedMap[T]()
 	for _, related := range relatedLists {
 		foreign, ok := helpers.GetValue(related, r.getRelatedKey())
@@ -158,6 +161,14 @@ func stringify(v any) any {
 	}
 	if str, ok := v.(fmt.Stringer); ok {
 		return str.String()
+	}
+	if txt, ok := v.(encoding.TextMarshaler); ok {
+		b, err := txt.MarshalText()
+		if err != nil {
+			slog.Error("Failed to marshal key", "err", err)
+		} else {
+			return string(b)
+		}
 	}
 	return v
 }
