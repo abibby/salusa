@@ -44,7 +44,7 @@ func (s *scopes) Clone() *scopes {
 	}
 }
 
-// WithScope adds a local scope to a Delete.
+// WithScope adds a local scope to a query.
 func (s *scopes) WithScope(scope *Scope) *scopes {
 	s.scopes = append(s.scopes, scope)
 	return s

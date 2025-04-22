@@ -135,7 +135,7 @@ func (b *ModelBuilder[T]) Unordered() *ModelBuilder[T] {
 	return b
 }
 
-// WithScope adds a local scope to a Delete.
+// WithScope adds a local scope to a query.
 func (b *ModelBuilder[T]) WithScope(scope *Scope) *ModelBuilder[T] {
 	b = b.Clone()
 	b.builder = b.builder.WithScope(scope)
