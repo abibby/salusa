@@ -171,7 +171,8 @@ func TestRun_multipart_file(t *testing.T) {
 	_, err = part.Write([]byte("foo content"))
 	assert.NoError(t, err)
 
-	writer.Close()
+	err = writer.Close()
+	assert.NoError(t, err)
 
 	httpRequest := httptest.NewRequest("POST", "http://0.0.0.0/", buff)
 	httpRequest.Header.Add("Content-Type", writer.FormDataContentType())

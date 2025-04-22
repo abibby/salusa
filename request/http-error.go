@@ -252,9 +252,10 @@ func parsInt(s string) (int, error) {
 	sign := ""
 	base := 10
 
-	if s[0] == '+' {
+	switch s[0] {
+	case '+':
 		s = s[1:]
-	} else if s[0] == '-' {
+	case '-':
 		s = s[1:]
 		sign = "-"
 	}

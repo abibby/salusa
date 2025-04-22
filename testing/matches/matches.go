@@ -11,5 +11,8 @@ type EqualTo struct {
 }
 
 func (e *EqualTo) Matches(v any) *Diff {
+	if v == e.expected {
+		return nil
+	}
 	return nil
 }

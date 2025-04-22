@@ -13,7 +13,10 @@ func TestHandlerTest(t *testing.T) {
 	responseBody := `{"foo":{"bar":1}}`
 	ctx := context.Background()
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, responseBody)
+		_, err := fmt.Fprint(w, responseBody)
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	handlertest.New(ctx, t, h).
