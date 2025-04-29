@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/set"
+	"github.com/abibby/salusa/extra/sets"
 	"github.com/abibby/salusa/slices"
 )
 
@@ -238,7 +238,7 @@ func (t *Blueprint) Merge(newBlueprint *Blueprint) {
 }
 
 func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
-	addedColumns := set.New[string]()
+	addedColumns := sets.New[string]()
 	hasChanges := false
 	for _, newColumn := range newBlueprint.columns {
 		oldColumn, ok := oldBlueprint.findColumn(newColumn.name)

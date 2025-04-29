@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type Sync[K, V any] struct {
+type Sync[K comparable, V any] struct {
 	m sync.Map
 }
 
