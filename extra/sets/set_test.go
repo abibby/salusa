@@ -29,6 +29,12 @@ func makeFactories[T cmp.Ordered]() []Factory[T] {
 			},
 		},
 		{
+			name: "Ordered",
+			fn: func(values ...T) Set[T] {
+				return NewOrderedSet(values...)
+			},
+		},
+		{
 			name: "Default",
 			fn: func(values ...T) Set[T] {
 				return New(values...)
