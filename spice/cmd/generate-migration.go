@@ -125,7 +125,12 @@ var generateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer os.Remove(outFile)
+		defer func() {
+			err = os.Remove(outFile)
+			if err != nil {
+				fmt.Printf("failed to remove temp file %s\n", outFile)
+			}
+		}()
 		err = run("go", "run", outFile)
 		if err != nil {
 			return err

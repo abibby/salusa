@@ -3,12 +3,11 @@ package dbtest
 import (
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/relationship"
 )
 
-type Factory[T model.Model] func() T
+type Factory[T model.Model] func(tx database.DB) T
 
-func NewFactory[T model.Model](cb func() T) Factory[T] {
+func NewFactory[T model.Model](cb func(tx database.DB) T) Factory[T] {
 	return Factory[T](cb)
 }
 
@@ -28,29 +27,28 @@ func (f Factory[T]) Count(count int) *CountFactory[T] {
 		count:   count,
 	}
 }
-func (f Factory[T]) State(s func(T) T) Factory[T] {
-	return func() T {
-		return s(f())
+func (f Factory[T]) State(s func(T)) Factory[T] {
+	return func(tx database.DB) T {
+		model := f(tx)
+		s(model)
+		return model
 	}
 }
 
 func (f Factory[T]) Create(tx database.DB) T {
-	m := f()
-	err := model.Save(tx, m)
-	if err != nil {
-		panic(err)
-	}
-	err = relationship.InitializeRelationships(m)
-	if err != nil {
-		panic(err)
-	}
+	m := f(tx)
+	model.MustSave(tx, m)
+	// err := relationship.InitializeRelationships(m)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	return m
 }
 
 func (f *CountFactory[T]) Create(tx database.DB) []T {
 	models := make([]T, f.count)
 	for i := 0; i < f.count; i++ {
-		m := f.factory()
+		m := f.factory(tx)
 		err := model.Save(tx, m)
 		if err != nil {
 			panic(err)

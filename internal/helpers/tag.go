@@ -10,6 +10,7 @@ import (
 type Tag struct {
 	Name          string
 	Primary       bool
+	Nullable      bool
 	AutoIncrement bool
 	Readonly      bool
 	Index         bool

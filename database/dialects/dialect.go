@@ -1,8 +1,6 @@
 package dialects
 
-import (
-	"github.com/abibby/salusa/set"
-)
+import "github.com/abibby/salusa/extra/sets"
 
 type DataType string
 
@@ -33,32 +31,32 @@ const (
 	DataTypeJSON = DataType("json")
 )
 
-var dataTypes = set.Set[DataType]{
-	DataTypeBlob:   struct{}{},
-	DataTypeString: struct{}{},
-	DataTypeText:   struct{}{},
-	DataTypeEnum:   struct{}{},
+var dataTypes = sets.New(
+	DataTypeBlob,
+	DataTypeString,
+	DataTypeText,
+	DataTypeEnum,
 
-	DataTypeBoolean: struct{}{},
+	DataTypeBoolean,
 
-	DataTypeDate:     struct{}{},
-	DataTypeDateTime: struct{}{},
+	DataTypeDate,
+	DataTypeDateTime,
 
-	DataTypeFloat32: struct{}{},
-	DataTypeFloat64: struct{}{},
+	DataTypeFloat32,
+	DataTypeFloat64,
 
-	DataTypeInt8:  struct{}{},
-	DataTypeInt16: struct{}{},
-	DataTypeInt32: struct{}{},
-	DataTypeInt64: struct{}{},
+	DataTypeInt8,
+	DataTypeInt16,
+	DataTypeInt32,
+	DataTypeInt64,
 
-	DataTypeUInt8:  struct{}{},
-	DataTypeUInt16: struct{}{},
-	DataTypeUInt32: struct{}{},
-	DataTypeUInt64: struct{}{},
+	DataTypeUInt8,
+	DataTypeUInt16,
+	DataTypeUInt32,
+	DataTypeUInt64,
 
-	DataTypeJSON: struct{}{},
-}
+	DataTypeJSON,
+)
 
 func (d DataType) IsValid() bool {
 	return dataTypes.Has(d)

@@ -43,6 +43,12 @@ func columnsAndValues(v reflect.Value) ([]string, []any) {
 	return columns, values
 }
 
+func MustSave(tx database.DB, v Model) {
+	err := Save(tx, v)
+	if err != nil {
+		panic(err)
+	}
+}
 func Save(tx database.DB, v Model) error {
 	ctx := context.Background()
 	if v, ok := v.(Contexter); ok {
@@ -52,6 +58,12 @@ func Save(tx database.DB, v Model) error {
 		}
 	}
 	return SaveContext(ctx, tx, v)
+}
+func MustSaveContext(ctx context.Context, tx database.DB, v Model) {
+	err := SaveContext(ctx, tx, v)
+	if err != nil {
+		panic(err)
+	}
 }
 func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 	inDB := v.InDatabase()

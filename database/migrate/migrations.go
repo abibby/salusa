@@ -11,7 +11,7 @@ import (
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/schema"
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/set"
+	"github.com/abibby/salusa/extra/sets"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -119,7 +119,7 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 		return err
 	}
 
-	runMigrations := set.New[string]()
+	runMigrations := sets.New[string]()
 	for _, migration := range migrations {
 		if migration.Run {
 			runMigrations.Add(migration.Name)

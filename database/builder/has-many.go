@@ -39,7 +39,7 @@ func (r *HasMany[T]) Load(ctx context.Context, tx database.DB, relations []Relat
 		return err
 	}
 
-	for _, relation := range ofType[*HasMany[T]](relations) {
+	for relation := range ofType[*HasMany[T]](relations) {
 		relation.value = rm.Multi(relation.parentKeyValue())
 		relation.loaded = true
 	}

@@ -2,7 +2,7 @@ package builder
 
 import (
 	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/set"
+	"github.com/abibby/salusa/extra/sets"
 )
 
 type Scoper interface {
@@ -21,13 +21,13 @@ type ScopeDeleteFunc func(next func(q *Builder, tx database.DB) error) func(q *B
 type scopes struct {
 	parent              any
 	scopes              []*Scope
-	withoutGlobalScopes set.Set[string]
+	withoutGlobalScopes sets.Set[string]
 }
 
 func newScopes() *scopes {
 	return &scopes{
 		scopes:              []*Scope{},
-		withoutGlobalScopes: set.New[string](),
+		withoutGlobalScopes: sets.New[string](),
 	}
 }
 
@@ -44,7 +44,7 @@ func (s *scopes) Clone() *scopes {
 	}
 }
 
-// WithScope adds a local scope to a Delete.
+// WithScope adds a local scope to a query.
 func (s *scopes) WithScope(scope *Scope) *scopes {
 	s.scopes = append(s.scopes, scope)
 	return s

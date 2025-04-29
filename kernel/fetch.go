@@ -14,17 +14,26 @@ import (
 	"github.com/abibby/salusa/salusaconfig"
 )
 
+func FetchAuth(cb func(ctx context.Context, username string, request *http.Request) error) KernelOption {
+	return func(k *Kernel) *Kernel {
+		k.fetchAuth = cb
+		return k
+	}
+}
+
 type ResponseWriter struct {
-	header http.Header
-	writer io.Writer
-	status int
+	header  http.Header
+	body    io.Writer
+	headers io.Writer
+	status  int
 }
 
 func NewStdoutResponseWriter() *ResponseWriter {
 	return &ResponseWriter{
-		header: http.Header{},
-		writer: os.Stdout,
-		status: 0,
+		header:  http.Header{},
+		body:    os.Stdout,
+		headers: os.Stderr,
+		status:  0,
 	}
 }
 
@@ -48,7 +57,7 @@ func (s *ResponseWriter) Write(b []byte) (int, error) {
 	if s.status == 0 {
 		s.WriteHeader(200)
 	}
-	return s.writer.Write(b)
+	return s.body.Write(b)
 }
 
 // WriteHeader implements http.ResponseWriter.
@@ -58,10 +67,10 @@ func (s *ResponseWriter) WriteHeader(statusCode int) {
 	}
 	for k, vs := range s.header {
 		for _, v := range vs {
-			fmt.Fprintf(s.writer, "< header: %s: %s\n", k, v)
+			fmt.Fprintf(s.headers, "< header: %s: %s\n", k, v)
 		}
 	}
-	fmt.Fprintf(s.writer, "< status: %d\n", statusCode)
+	fmt.Fprintf(s.headers, "< status: %d\n", statusCode)
 	s.status = statusCode
 }
 func newRequest(ctx context.Context, uri, method string, body string) (*http.Request, error) {
@@ -106,7 +115,7 @@ func newRequest(ctx context.Context, uri, method string, body string) (*http.Req
 	r.RequestURI = requestURI
 	return r.WithContext(ctx), nil
 }
-func (k *Kernel) runFetch(ctx context.Context, uri, method string, headers []string, body string) error {
+func (k *Kernel) runFetch(ctx context.Context, uri, method string, headers []string, body string, username string) error {
 	h := k.handlerWithMiddleware()
 
 	r, err := newRequest(ctx, uri, method, body)
@@ -118,10 +127,18 @@ func (k *Kernel) runFetch(ctx context.Context, uri, method string, headers []str
 	for _, header := range headers {
 		parts := strings.SplitN(header, ":", 2)
 		if len(parts) != 2 {
-			return fmt.Errorf("Invalid header %s", header)
+			return fmt.Errorf("invalid header %s", header)
 		}
 		r.Header.Add(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
 	}
+
+	if k.fetchAuth != nil {
+		err = k.fetchAuth(ctx, username, r)
+		if err != nil {
+			return err
+		}
+	}
+
 	w := NewStdoutResponseWriter()
 	h.ServeHTTP(w, r)
 	if !w.Ok() {

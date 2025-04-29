@@ -3,6 +3,7 @@ package dbtest_test
 import (
 	"testing"
 
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dbtest"
 	"github.com/abibby/salusa/internal/test"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestFactory(t *testing.T) {
-	fooFactory := dbtest.NewFactory(func() *test.Foo {
+	fooFactory := dbtest.NewFactory(func(tx database.DB) *test.Foo {
 		return &test.Foo{
 			Name: "foo",
 		}
@@ -33,9 +34,8 @@ func TestFactory(t *testing.T) {
 	})
 	test.Run(t, "state", func(t *testing.T, tx *sqlx.Tx) {
 		f := fooFactory.
-			State(func(f *test.Foo) *test.Foo {
+			State(func(f *test.Foo) {
 				f.Name = "bar"
-				return f
 			}).
 			Create(tx)
 		assert.Equal(t, "bar", f.Name)

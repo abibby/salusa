@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"embed"
-	_ "embed"
 	"errors"
 	"fmt"
 	"log/slog"

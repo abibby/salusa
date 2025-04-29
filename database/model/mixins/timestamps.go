@@ -18,7 +18,7 @@ var _ hooks.BeforeSaver = (*Timestamps)(nil)
 // BeforeSave implements hooks.BeforeSaver.
 func (t *Timestamps) BeforeSave(ctx context.Context, tx database.DB) error {
 	now := time.Now()
-	if (t.CreatedAt == time.Time{}) {
+	if (t.CreatedAt.Equal(time.Time{})) {
 		t.CreatedAt = now
 	}
 	t.UpdatedAt = now

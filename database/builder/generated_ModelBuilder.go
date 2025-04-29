@@ -317,6 +317,34 @@ func (b *ModelBuilder[T]) OrHavingExists(query QueryBuilder) *ModelBuilder[T] {
 	return b
 }
 
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) WhereNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.WhereNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) HavingNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.HavingNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) OrWhereNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.OrWhereNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *ModelBuilder[T]) OrHavingNotExists(query QueryBuilder) *ModelBuilder[T] {
+	b = b.Clone()
+	b.builder = b.builder.OrHavingNotExists(query)
+	return b
+}
+
 // WhereSubquery adds a where clause to the query comparing a column and a subquery.
 func (b *ModelBuilder[T]) WhereSubquery(subquery QueryBuilder, operator string, value any) *ModelBuilder[T] {
 	b = b.Clone()

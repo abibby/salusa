@@ -50,7 +50,7 @@ func (r *BelongsTo[T]) Load(ctx context.Context, tx database.DB, relations []Rel
 		return err
 	}
 
-	for _, relation := range ofType[*BelongsTo[T]](relations) {
+	for relation := range ofType[*BelongsTo[T]](relations) {
 		relation.value = rm.Single(relation.parentKeyValue())
 		relation.loaded = true
 	}

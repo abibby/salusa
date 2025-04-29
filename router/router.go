@@ -31,6 +31,7 @@ type Route struct {
 	name    string
 	handler http.Handler
 	router  *Router
+	route   *mux.Route
 }
 
 func (r *Route) GetMiddleware() []Middleware {
@@ -39,6 +40,7 @@ func (r *Route) GetMiddleware() []Middleware {
 
 func (r *Route) Name(name string) *Route {
 	r.name = name
+	r.route.Name(name)
 	return r
 }
 
@@ -95,12 +97,10 @@ func (r *Router) DeleteFunc(path string, handler http.HandlerFunc) *Route {
 }
 
 func (r *Router) handleMethod(method, path string, handler http.Handler) *Route {
-	r.router.Handle(path, handler).Methods(method)
-	return r.addRoute(handler, path, method)
+	return r.addRoute(r.router.Handle(path, handler).Methods(method), handler, path, method)
 }
 func (r *Router) Handle(p string, handler http.Handler) *Route {
-	r.router.PathPrefix(p).Handler(handler)
-	return r.addRoute(handler, path.Join(p, "*"), "ALL")
+	return r.addRoute(r.router.PathPrefix(p).Handler(handler), handler, path.Join(p, "*"), "ALL")
 }
 
 func (r *Router) UseFunc(middleware func(http.Handler) http.Handler) {
@@ -124,12 +124,13 @@ func (r *Router) Group(prefix string, cb func(r *Router)) {
 	})
 }
 
-func (r *Router) addRoute(handler http.Handler, pathName, method string) *Route {
+func (r *Router) addRoute(muxRoute *mux.Route, handler http.Handler, pathName, method string) *Route {
 	route := &Route{
 		Path:    path.Join(r.prefix, pathName),
 		Method:  method,
 		handler: handler,
 		router:  r,
+		route:   muxRoute,
 	}
 	r.routes.Routes = append(r.routes.Routes, route)
 	return route

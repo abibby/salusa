@@ -4,7 +4,6 @@ import (
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/helpers"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type Deleter struct {
@@ -36,7 +35,6 @@ func delete(b *Builder, tx database.DB) error {
 func (b *Builder) Delete(tx database.DB) error {
 	current := delete
 	for _, s := range b.ActiveScopes() {
-		spew.Dump(s.Delete)
 		if s.Delete != nil {
 			current = s.Delete(current)
 		}

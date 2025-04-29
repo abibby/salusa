@@ -308,6 +308,34 @@ func (b *Builder) OrHavingExists(query QueryBuilder) *Builder {
 	return b
 }
 
+// WhereExists add an exists clause to the query.
+func (b *Builder) WhereNotExists(query QueryBuilder) *Builder {
+	b = b.Clone()
+	b.wheres = b.wheres.WhereNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *Builder) HavingNotExists(query QueryBuilder) *Builder {
+	b = b.Clone()
+	b.havings = b.havings.WhereNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *Builder) OrWhereNotExists(query QueryBuilder) *Builder {
+	b = b.Clone()
+	b.wheres = b.wheres.OrWhereNotExists(query)
+	return b
+}
+
+// WhereExists add an exists clause to the query.
+func (b *Builder) OrHavingNotExists(query QueryBuilder) *Builder {
+	b = b.Clone()
+	b.havings = b.havings.OrWhereNotExists(query)
+	return b
+}
+
 // WhereSubquery adds a where clause to the query comparing a column and a subquery.
 func (b *Builder) WhereSubquery(subquery QueryBuilder, operator string, value any) *Builder {
 	b = b.Clone()

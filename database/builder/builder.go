@@ -5,9 +5,9 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
+	"github.com/abibby/salusa/extra/sets"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
-	"github.com/abibby/salusa/set"
 )
 
 // QueryBuilder is implemented by *ModelBuilder and *Builder
@@ -36,7 +36,7 @@ type Builder struct {
 type ModelBuilder[T model.Model] struct {
 	builder       *Builder
 	withs         []string
-	withoutScopes set.Set[string]
+	withoutScopes sets.Set[string]
 }
 
 // New creates a new Builder with * selected
@@ -64,7 +64,7 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	return &ModelBuilder[T]{
 		builder:       sb,
 		withs:         []string{},
-		withoutScopes: set.New[string](),
+		withoutScopes: sets.New[string](),
 	}
 }
 
