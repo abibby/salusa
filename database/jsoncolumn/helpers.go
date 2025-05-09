@@ -15,6 +15,8 @@ func Scan(dst, src any) error {
 	switch src := src.(type) {
 	case []byte:
 		return json.Unmarshal(src, dst)
+	case string:
+		return json.Unmarshal([]byte(src), dst)
 	case nil:
 		reflect.ValueOf(dst).Elem().Set(reflect.Zero(dstType.Elem()))
 		return nil
