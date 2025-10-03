@@ -238,6 +238,9 @@ func setJSON(sf reflect.StructField, fv reflect.Value, jsonBody map[string]json.
 	var v any
 	isPtr := sf.Type.Kind() == reflect.Pointer
 	if isPtr {
+		if bytes.Equal(b, []byte("null")) {
+			return nil
+		}
 		v = reflect.New(sf.Type.Elem()).Interface()
 	} else {
 		v = reflect.New(sf.Type).Interface()

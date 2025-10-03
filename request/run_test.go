@@ -206,6 +206,9 @@ type TimeReq struct {
 type TimePtrReq struct {
 	Time *time.Time `query:"time"`
 }
+type IntPtrJSON struct {
+	IntPtr *int `json:"int_ptr"`
+}
 
 func ptr[T any](v T) *T {
 	return &v
@@ -238,6 +241,24 @@ func TestRun(t *testing.T) {
 				&IntPtr{},
 			},
 			wantRequest: &IntPtr{IntPtr: nil},
+			wantErr:     false,
+		},
+		{
+			name: "int pointer json",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com", bytes.NewBufferString(`{"int_ptr": 1}`)),
+				&IntPtrJSON{},
+			},
+			wantRequest: &IntPtrJSON{IntPtr: ptr(1)},
+			wantErr:     false,
+		},
+		{
+			name: "int pointer json empty",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com", bytes.NewBufferString(`{"int_ptr": null}`)),
+				&IntPtrJSON{},
+			},
+			wantRequest: &IntPtrJSON{IntPtr: nil},
 			wantErr:     false,
 		},
 		{
@@ -274,6 +295,15 @@ func TestRun(t *testing.T) {
 				&TimePtrReq{},
 			},
 			wantRequest: &TimePtrReq{Time: ptr(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))},
+			wantErr:     false,
+		},
+		{
+			name: "json parameters are not added to query parameters",
+			args: args{
+				httptest.NewRequest("GET", "https://example.com", bytes.NewBufferString(`{"IntPtr": 1}`)),
+				&IntPtr{},
+			},
+			wantRequest: &IntPtr{IntPtr: nil},
 			wantErr:     false,
 		},
 	}
