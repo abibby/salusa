@@ -29,6 +29,10 @@ func NewResponse(body io.Reader) *ResponseBuilder {
 	}
 }
 
+func (r *ResponseBuilder) Build() *http.Response {
+	return r.Response
+}
+
 func (r *ResponseBuilder) Status() int {
 	return r.StatusCode
 }
