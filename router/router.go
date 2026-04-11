@@ -44,6 +44,11 @@ func (r *Route) Name(name string) *Route {
 	return r
 }
 
+func (r *Route) Middleware(middleware Middleware) *Route {
+	r.handler = middleware.Middleware(r.handler)
+	return r
+}
+
 type routeList struct {
 	Routes []*Route
 }
