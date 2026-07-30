@@ -10,10 +10,3 @@ func (g *Generic) EncodeFrom(from string) (dialects.SQLResult, error) {
 		Query: "FROM " + g.core.Identifier(from),
 	}, nil
 }
-
-func (g *Generic) EncodeLiteral(v any) (dialects.SQLResult, error) {
-	return dialects.SQLResult{
-		Query:    g.core.Binding(),
-		Bindings: []any{v},
-	}, nil
-}

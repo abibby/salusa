@@ -1,24 +1,23 @@
 package generic
 
-import "github.com/abibby/salusa/database/dialects"
+import (
+	"github.com/abibby/salusa/database/dialects"
+)
 
 func (g *Generic) EncodeQuery(q *dialects.Query) (dialects.SQLResult, error) {
-	// return helpers.Result().
-	// 	Add(b.selects).
-	// 	Add(b.from).
-	// 	Add(b.joins).
-	// 	Add(b.wheres).
-	// 	Add(b.groupBys).
-	// 	Add(b.havings).
-	// 	Add(b.orderBys).
-	// 	Add(b.limit).
-	// 	SQLString(d)
-	// JoinResults()
-
-	return ResultBuilder().
+	b := ResultBuilder().
 		Add(g.EncodeSelects(&q.Select)).
-		Add(g.EncodeFrom(q.From)).
+		Add(g.EncodeFrom(q.From))
+
+	for _, j := range q.Joins {
+		b.Add(g.EncodeJoin(&j))
+	}
+
+	return b.
 		Add(g.EncodeWheres(q.Wheres)).
+		Add(g.EncodeGroupBy(q.GroupBys)).
 		Add(g.EncodeHavings(q.Havings)).
+		Add(g.EncodeOrderBy(q.OrderBys)).
+		Add(g.EncodeLimit(&q.Limit)).
 		Build()
 }

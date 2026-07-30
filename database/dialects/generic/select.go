@@ -44,7 +44,7 @@ func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.SQLResult, error) {
 		b.AddString(g.core.Identifier(c.Column))
 	}
 	if c.As != "" {
-		b.AddString("AS").AddString(c.As)
+		b.AddString("AS").AddString(g.core.Identifier(c.As))
 	}
 	return b.Build()
 }

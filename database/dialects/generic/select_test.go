@@ -24,7 +24,7 @@ func TestGeneric_EncodeSelects(t *testing.T) {
 					{Column: "table.column"},
 				},
 			},
-			ExpectedSQL:      "SELECT table.column",
+			ExpectedSQL:      "SELECT `table`.`column`",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -35,7 +35,7 @@ func TestGeneric_EncodeSelects(t *testing.T) {
 					{Column: "table.column"},
 				},
 			},
-			ExpectedSQL:      "SELECT DISTINCT table.column",
+			ExpectedSQL:      "SELECT DISTINCT `table`.`column`",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -46,7 +46,7 @@ func TestGeneric_EncodeSelects(t *testing.T) {
 					{Column: "table2.column2"},
 				},
 			},
-			ExpectedSQL:      "SELECT table1.column1, table2.column2",
+			ExpectedSQL:      "SELECT `table1`.`column1`, `table2`.`column2`",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -56,7 +56,7 @@ func TestGeneric_EncodeSelects(t *testing.T) {
 					{Column: "table.column", As: "name"},
 				},
 			},
-			ExpectedSQL:      "SELECT table.column AS name",
+			ExpectedSQL:      "SELECT `table`.`column` AS `name`",
 			ExpectedBindings: []any{},
 		},
 		{

@@ -1,11 +1,22 @@
 package generic_test
 
-import "github.com/abibby/salusa/database/dialects"
+import (
+	"strings"
+
+	"github.com/abibby/salusa/database/dialects"
+)
 
 type testCore struct{}
 
 func (*testCore) Identifier(s string) string {
-	return s
+	if s == "*" {
+		return s
+	}
+	parts := strings.Split(s, ".")
+	for i, p := range parts {
+		parts[i] = "`" + p + "`"
+	}
+	return strings.Join(parts, ".")
 }
 
 func (*testCore) DataType(t dialects.DataType) string {

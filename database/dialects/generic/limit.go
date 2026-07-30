@@ -1,0 +1,17 @@
+package generic
+
+import "github.com/abibby/salusa/database/dialects"
+
+func (g *Generic) EncodeLimit(l *dialects.Limit) (dialects.SQLResult, error) {
+	if l.Limit == 0 && l.Offset == 0 {
+		return dialects.SQLResult{}, nil
+	}
+	b := ResultBuilder()
+	if l.Limit != 0 {
+		b.AddString("LIMIT").Add(g.EncodeLiteral(l.Limit))
+	}
+	if l.Offset != 0 {
+		b.AddString("OFFSET").Add(g.EncodeLiteral(l.Offset))
+	}
+	return b.Build()
+}

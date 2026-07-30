@@ -51,13 +51,7 @@ func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.SQLResult, 
 			if c.Operator != "" {
 				b.AddString(c.Operator)
 			}
-			if sb, ok := c.Value.(dialects.QueryBuilder); ok {
-				b.Add(Group(g.EncodeQuery(sb.Query())))
-			} else if sb, ok := c.Value.([]dialects.Condition); ok {
-				b.Add(Group(g.EncodeConditions(sb)))
-			} else {
-				b.Add(g.EncodeLiteral(c.Value))
-			}
+			b.Add(g.EncodeAny(c.Value))
 		}
 	}
 

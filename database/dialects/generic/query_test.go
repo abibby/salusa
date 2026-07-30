@@ -1,0 +1,65 @@
+package generic_test
+
+import (
+	"testing"
+
+	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/generic"
+	"github.com/abibby/salusa/internal/test"
+)
+
+func TestGeneric_EncodeQuery(t *testing.T) {
+	g := generic.New(&testCore{})
+	test.EncoderTest(t, g.EncodeQuery, []test.EncoderTestCase[*dialects.Query]{
+		{
+			Name:             "empty",
+			Builder:          &dialects.Query{},
+			ExpectedSQL:      "",
+			ExpectedBindings: []any{},
+		},
+		{
+			Name: "simple",
+			Builder: &dialects.Query{
+				Select: dialects.Select{
+					Columns: []dialects.Column{{Column: "foo"}},
+				},
+				From: "bar",
+				Joins: []dialects.Join{
+					{
+						Direction: "LEFT",
+						Table:     "joined_table",
+						Conditions: []dialects.Condition{
+							{
+								Column:   dialects.Column{Column: "joined_table_id"},
+								Operator: "=",
+								Value:    dialects.Column{Column: "id"},
+							},
+						},
+					},
+				},
+				Wheres: []dialects.Condition{
+					{
+						Column:   dialects.Column{Column: "foo"},
+						Operator: "=",
+						Value:    "baz",
+					},
+				},
+				GroupBys: []string{"foo"},
+				Havings: []dialects.Condition{
+					{
+						Column:   dialects.Column{Column: "foo"},
+						Operator: "=",
+						Value:    "baz",
+					},
+				},
+				OrderBys: []string{"foo"},
+				Limit: dialects.Limit{
+					Limit:  5,
+					Offset: 10,
+				},
+			},
+			ExpectedSQL:      "SELECT `foo` FROM `bar` LEFT JOIN `joined_table` ON `joined_table_id` = `id` WHERE `foo` = ? GROUP BY `foo` HAVING `foo` = ? ORDER BY `foo` LIMIT ? OFFSET ?",
+			ExpectedBindings: []any{"baz", "baz", 5, 10},
+		},
+	})
+}
