@@ -1,23 +1,35 @@
 package dialects
 
+type QueryBuilder interface {
+	Query() *Query
+}
+
 type Query struct {
-	Selects Selects
-	From    string
+	Select Select
+	From   string
 	// Joins    []Join
-	// Wheres   Conditions
-	// Havings  Conditions
+	Wheres  []Condition
+	Havings []Condition
 	// GroupBys []string
 	// OrderBys orderBys
 	// Limit    int
 	// Offset   int
 }
 
-type Selects struct {
+type Select struct {
 	Distinct bool
 	Columns  []Column
 }
 
 type Column struct {
-	Expr Expr
-	As   string
+	Column   string
+	Function *FunctionCall
+	SubQuery QueryBuilder
+
+	As string
+}
+
+type FunctionCall struct {
+	Name      string
+	Arguments string
 }

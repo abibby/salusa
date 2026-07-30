@@ -35,6 +35,26 @@ func QueryTest(t *testing.T, testCases []Case) {
 	}
 }
 
+type EncoderTestCase[T any] struct {
+	Name             string
+	Builder          T
+	ExpectedSQL      string
+	ExpectedBindings []any
+	ExpectedError    error
+}
+
+func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.SQLResult, error), testCases []EncoderTestCase[T]) {
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			result, err := encoder(tc.Builder)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.ExpectedSQL, result.Query)
+				assert.Equal(t, tc.ExpectedBindings, result.Bindings)
+			}
+		})
+	}
+}
+
 var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 	cfg := sqlite.NewConfig(":memory:")
 	cfg.SetDialect()
