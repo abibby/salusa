@@ -11,14 +11,13 @@ import (
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/model/mixins"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
 type Case struct {
 	Name             string
-	Builder          helpers.SQLStringer
+	Builder          dialects.QueryBuilder
 	ExpectedSQL      string
 	ExpectedBindings []any
 }
@@ -26,11 +25,11 @@ type Case struct {
 func QueryTest(t *testing.T, testCases []Case) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			q, bindings, err := tc.Builder.SQLString(dialects.New())
-			assert.NoError(t, err)
-
-			assert.Equal(t, tc.ExpectedSQL, q)
-			assert.Equal(t, tc.ExpectedBindings, bindings)
+			result, err := dialects.New().EncodeQuery(tc.Builder.Query())
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.ExpectedSQL, result.Query)
+				assert.Equal(t, tc.ExpectedBindings, result.Bindings)
+			}
 		})
 	}
 }

@@ -15,9 +15,31 @@ type Query struct {
 	Limit    Limit
 }
 
+func NewQuery() Query {
+	return Query{
+		Select:   NewSelect(),
+		Joins:    []Join{},
+		Wheres:   []Condition{},
+		GroupBys: []string{},
+		Havings:  []Condition{},
+		OrderBys: []string{},
+	}
+}
+
+func (q *Query) Clone() *Query {
+	// TODO implement clone
+	return q
+}
+
 type Select struct {
 	Distinct bool
 	Columns  []Column
+}
+
+func NewSelect() Select {
+	return Select{
+		Columns: []Column{},
+	}
 }
 
 type Join struct {
@@ -51,4 +73,11 @@ type Limit struct {
 	Offset int
 }
 
-type Raw string
+type RawString string
+
+func Raw(sql string, bindings ...any) SQLResult {
+	return SQLResult{
+		Query:    sql,
+		Bindings: bindings,
+	}
+}

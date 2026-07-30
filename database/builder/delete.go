@@ -13,7 +13,7 @@ type Deleter struct {
 func (d *Deleter) SQLString(dialect dialects.Dialect) (string, []any, error) {
 	return helpers.Concat(
 		helpers.Raw("DELETE "),
-		d.builder.Select(),
+		// d.builder.Select(),
 	).SQLString(dialect)
 }
 

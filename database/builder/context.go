@@ -6,8 +6,6 @@ import "context"
 func (b *Builder) WithContext(ctx context.Context) *Builder {
 	b = b.Clone()
 	b.ctx = ctx
-	b.wheres.ctx = ctx
-	b.havings.ctx = ctx
 	return b
 }
 

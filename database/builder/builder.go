@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/abibby/salusa/database"
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/extra/sets"
 	"github.com/abibby/salusa/internal/helpers"
@@ -16,18 +17,34 @@ type QueryBuilder interface {
 	imALittleQueryBuilderShortAndStout()
 }
 
-//go:generate go run ../../internal/build/build.go
 type Builder struct {
-	selects  *selects
-	from     fromTable
-	joins    joins
-	wheres   *Conditions
-	groupBys groupBys
-	havings  *Conditions
-	limit    *limit
-	orderBys orderBys
-	scopes   *scopes
-	ctx      context.Context
+	query dialects.Query
+	// selects  *selects
+	// from     fromTable
+	// joins    joins
+	// wheres   *Conditions
+	// groupBys groupBys
+	// havings  *Conditions
+	// limit    *limit
+	// orderBys orderBys
+	scopes *scopes
+	ctx    context.Context
+}
+
+var _ dialects.QueryBuilder = (*Builder)(nil)
+
+// NewBuilder creates a new SubBuilder without anything selected
+func NewBuilder() *Builder {
+	return &Builder{
+		query:  dialects.NewQuery(),
+		scopes: newScopes(),
+		ctx:    context.Background(),
+	}
+}
+
+// Query implements [dialects.QueryBuilder].
+func (b *Builder) Query() *dialects.Query {
+	return &b.query
 }
 
 // ModelBuilder represents an sql query and any bindings needed to run it.
@@ -58,8 +75,6 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	_ = relationship.InitializeRelationships(m)
 
 	sb := NewBuilder()
-	sb.wheres.withParent(m)
-	sb.havings.withParent(m)
 	sb.scopes.withParent(m)
 	return &ModelBuilder[T]{
 		builder:       sb,
@@ -68,18 +83,9 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	}
 }
 
-// NewBuilder creates a new SubBuilder without anything selected
-func NewBuilder() *Builder {
-	return &Builder{
-		selects:  NewSelects(),
-		from:     "",
-		wheres:   newConditions().withPrefix("WHERE"),
-		groupBys: groupBys{},
-		havings:  newConditions().withPrefix("HAVING"),
-		limit:    &limit{},
-		scopes:   newScopes(),
-		ctx:      context.Background(),
-	}
+// Query implements [dialects.QueryBuilder].
+func (b *ModelBuilder[T]) Query() *dialects.Query {
+	return b.builder.Query()
 }
 
 func (*ModelBuilder[T]) imALittleQueryBuilderShortAndStout() {}

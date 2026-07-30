@@ -17,6 +17,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	wd, _ := os.Getwd()
 	file := os.Getenv("GOFILE")
 	pkg := os.Getenv("GOPACKAGE")
 
@@ -32,7 +33,7 @@ func main() {
 	// matches := regexp.MustCompile(`\nfunc \((\w+ +)?([^)]+)\) ([\w)]+)\((.*)\) (\*?\w+(?:\[.+\])?) {`).FindAllStringSubmatch(goSrc, -1)
 	matches := regexp.MustCompile(`((?:\/\/[^\n]+\n)*)func \((\w+ +)?([^)]+)\) ([\w)]+)\((.*)\) (\*?\w+(?:\[.+\])?) {`).FindAllStringSubmatch(goSrc, -1)
 
-	fmt.Printf("Generating code for %s in %s:%d\n", structName, file, line)
+	fmt.Printf("Generating code for %s in %s:%d\n", structName, path.Join(wd, file), line)
 
 	src := "package " + pkg + "\n\n"
 	for _, match := range matches {
@@ -45,6 +46,7 @@ func main() {
 		if methodName == "Clone" || methodName == "SQLString" || !IsUppercase(methodName[0]) || returnType != fieldType {
 			continue
 		}
+		fmt.Printf("%s %s\n", fieldType, methodName)
 
 		if fieldNames, ok := structFields[fieldType]; ok {
 			for _, fieldName := range fieldNames {

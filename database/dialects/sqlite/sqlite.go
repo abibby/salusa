@@ -8,11 +8,16 @@ import (
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/generic"
 )
 
-type SQLite struct{}
+type SQLiteCore struct{}
 
-func (*SQLite) Identifier(s string) string {
+func New() dialects.Dialect {
+	return generic.New(&SQLiteCore{})
+}
+
+func (*SQLiteCore) Identifier(s string) string {
 	parts := strings.Split(s, ".")
 	for i, p := range parts {
 		parts[i] = "\"" + p + "\""
@@ -20,7 +25,7 @@ func (*SQLite) Identifier(s string) string {
 	return strings.Join(parts, ".")
 }
 
-func (*SQLite) DataType(t dialects.DataType) string {
+func (*SQLiteCore) DataType(t dialects.DataType) string {
 	switch t {
 	case dialects.DataTypeString, dialects.DataTypeText, dialects.DataTypeJSON:
 		return "TEXT"
@@ -34,15 +39,15 @@ func (*SQLite) DataType(t dialects.DataType) string {
 	return string(t)
 }
 
-func (*SQLite) CurrentTime() string {
+func (*SQLiteCore) CurrentTime() string {
 	return "CURRENT_TIMESTAMP"
 }
 
-func (*SQLite) AutoIncrement() string {
+func (*SQLiteCore) AutoIncrement() string {
 	return "AUTOINCREMENT"
 }
 
-func (s *SQLite) Escape(v any) string {
+func (s *SQLiteCore) Escape(v any) string {
 	if marshaler, ok := v.(encoding.TextMarshaler); ok {
 		str, err := marshaler.MarshalText()
 		if err != nil {
@@ -73,13 +78,13 @@ func (s *SQLite) Escape(v any) string {
 	return s.Escape(string(b))
 }
 
-func (*SQLite) Binding() string {
+func (*SQLiteCore) Binding() string {
 	return "?"
 }
 
 func UseSQLite() {
 	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return &SQLite{}
+		return New()
 	})
 }
 func init() {

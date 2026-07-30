@@ -1,30 +1,14 @@
 package builder
 
-import (
-	"github.com/abibby/salusa/database/dialects"
-)
-
-type fromTable string
-
-func (f fromTable) Clone() fromTable {
-	return f
-}
-func (f fromTable) SQLString(d dialects.Dialect) (string, []any, error) {
-	if f == "" {
-		return "", nil, nil
-	}
-
-	return "FROM " + d.Identifier(string(f)), nil, nil
-}
-
 // From sets the table which the query is targeting.
-func (f fromTable) From(table string) fromTable {
-	return fromTable(table)
+func (b *Builder) From(table string) *Builder {
+	b.query.From = table
+	return b
 }
 
 // GetTable returns the table the query is targeting
 func (b *Builder) GetTable() string {
-	return string(b.from)
+	return string(b.query.From)
 }
 
 // GetTable returns the table the query is targeting

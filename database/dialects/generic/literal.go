@@ -18,7 +18,9 @@ func (g *Generic) EncodeAny(v any) (dialects.SQLResult, error) {
 		b.Add(Group(g.EncodeConditions(v)))
 	case dialects.Column:
 		b.Add(g.EncodeColumn(&v))
-	case dialects.Raw:
+	case dialects.SQLResult:
+		b.Add(v, nil)
+	case dialects.RawString:
 		b.AddString(string(v))
 	default:
 		b.Add(g.EncodeLiteral(v))

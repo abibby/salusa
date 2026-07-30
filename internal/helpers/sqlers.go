@@ -15,9 +15,7 @@ func (f SQLStringFunc) SQLString(d dialects.Dialect) (string, []any, error) {
 }
 
 func Identifier(i string) SQLStringer {
-	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
-		return d.Identifier(i), nil, nil
-	})
+	panic("to be removed")
 }
 
 func IdentifierList(strs []string) []SQLStringer {
@@ -67,9 +65,7 @@ func Concat(sqlers ...SQLStringer) SQLStringer {
 }
 
 func Literal(v any) SQLStringer {
-	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
-		return d.Binding(), []any{v}, nil
-	})
+	panic("to be removed")
 }
 
 func LiteralList(values []any) []SQLStringer {

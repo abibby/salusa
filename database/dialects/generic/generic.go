@@ -18,14 +18,8 @@ type Core interface {
 }
 type Generic struct {
 	core Core
-	// Identifier    func(string) string
-	// DataType      func(dialects.DataType) string
-	// CurrentTime   func() string
-	// AutoIncrement func() string
-	// Escape        func(v any) string
-	// Binding       func() string
 }
 
-func New(c Core) Generic {
-	return Generic{core: c}
+func New(c Core) *Generic {
+	return &Generic{core: c}
 }

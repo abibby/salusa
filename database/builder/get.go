@@ -78,10 +78,13 @@ func (b *ModelBuilder[T]) Load(tx database.DB, v any) error {
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *Builder) Load(tx database.DB, v any) (err error) {
-	q, bindings, err := b.SQLString(dialects.New())
+	r, err := dialects.New().EncodeQuery(b.Query())
 	if err != nil {
 		return err
 	}
+	q := r.Query
+	bindings := r.Bindings
+
 	defer func() {
 		if err == nil {
 			return
@@ -91,6 +94,7 @@ func (b *Builder) Load(tx database.DB, v any) (err error) {
 			query: q,
 		}
 	}()
+
 	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
 		err = sqlx.SelectContext(b.Context(), tx, v, q, bindings...)
 	} else {
