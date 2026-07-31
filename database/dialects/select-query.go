@@ -15,7 +15,7 @@ type SelectQuery struct {
 	Limit    Limit
 }
 
-func NewQuery() SelectQuery {
+func NewSelectQuery() SelectQuery {
 	return SelectQuery{
 		Select:   NewSelect(),
 		Joins:    []Join{},

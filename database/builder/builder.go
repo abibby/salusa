@@ -32,7 +32,7 @@ var _ dialects.QueryBuilder = (*Builder)(nil)
 // NewBuilder creates a new SubBuilder without anything selected
 func NewBuilder() *Builder {
 	return &Builder{
-		query:   dialects.NewQuery(),
+		query:   dialects.NewSelectQuery(),
 		wheres:  newConditions(),
 		havings: newConditions(),
 		scopes:  newScopes(),
