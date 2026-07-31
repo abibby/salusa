@@ -17,16 +17,12 @@ type QueryBuilder interface {
 	imALittleQueryBuilderShortAndStout()
 }
 
+//go:generate go run ../../internal/build/build.go
 type Builder struct {
-	query dialects.Query
-	// selects  *selects
-	// from     fromTable
-	// joins    joins
-	// wheres   *Conditions
-	// groupBys groupBys
-	// havings  *Conditions
-	// limit    *limit
-	// orderBys orderBys
+	query   dialects.SelectQuery
+	wheres  *Conditions
+	havings *Conditions
+
 	scopes *scopes
 	ctx    context.Context
 }
@@ -36,15 +32,20 @@ var _ dialects.QueryBuilder = (*Builder)(nil)
 // NewBuilder creates a new SubBuilder without anything selected
 func NewBuilder() *Builder {
 	return &Builder{
-		query:  dialects.NewQuery(),
-		scopes: newScopes(),
-		ctx:    context.Background(),
+		query:   dialects.NewQuery(),
+		wheres:  newConditions(),
+		havings: newConditions(),
+		scopes:  newScopes(),
+		ctx:     context.Background(),
 	}
 }
 
 // Query implements [dialects.QueryBuilder].
-func (b *Builder) Query() *dialects.Query {
-	return &b.query
+func (b *Builder) Query() *dialects.SelectQuery {
+	q := &b.query
+	q.Wheres = b.wheres.conditions
+	q.Havings = b.havings.conditions
+	return q
 }
 
 // ModelBuilder represents an sql query and any bindings needed to run it.
@@ -75,7 +76,10 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	_ = relationship.InitializeRelationships(m)
 
 	sb := NewBuilder()
+	sb.wheres.withParent(m)
+	sb.havings.withParent(m)
 	sb.scopes.withParent(m)
+
 	return &ModelBuilder[T]{
 		builder:       sb,
 		withs:         []string{},
@@ -84,7 +88,7 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 }
 
 // Query implements [dialects.QueryBuilder].
-func (b *ModelBuilder[T]) Query() *dialects.Query {
+func (b *ModelBuilder[T]) Query() *dialects.SelectQuery {
 	return b.builder.Query()
 }
 

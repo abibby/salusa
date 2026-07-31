@@ -25,7 +25,7 @@ type Case struct {
 func QueryTest(t *testing.T, testCases []Case) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			result, err := dialects.New().EncodeQuery(tc.Builder.Query())
+			result, err := dialects.New().EncodeSelectQuery(tc.Builder.Query())
 			if assert.NoError(t, err) {
 				assert.Equal(t, tc.ExpectedSQL, result.Query)
 				assert.Equal(t, tc.ExpectedBindings, result.Bindings)

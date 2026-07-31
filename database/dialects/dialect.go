@@ -1,7 +1,7 @@
 package dialects
 
 type Dialect interface {
-	EncodeQuery(q *Query) (SQLResult, error)
+	EncodeSelectQuery(q *SelectQuery) (SQLResult, error)
 }
 
 func SetDefaultDialect(dialectFactory func() Dialect) {

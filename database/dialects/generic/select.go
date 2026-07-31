@@ -11,7 +11,7 @@ func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.SQLResult, error) 
 		}, nil
 	}
 
-	b := ResultBuilder()
+	b := resultBuilder()
 	b.AddString("SELECT")
 	if s.Distinct {
 		b.AddString("DISTINCT")
@@ -25,23 +25,26 @@ func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.SQLResult, error) 
 			return dialects.SQLResult{}, err
 		}
 	}
-	b.Add(JoinResults(columns, ", "), nil)
+	b.Add(joinResults(columns, ", "), nil)
 
 	return b.Build()
 }
 
 func (g *Generic) EncodeFunctionCall(fc *dialects.FunctionCall) (dialects.SQLResult, error) {
-	return ResultBuilder().
+	return resultBuilder().
 		AddString(fc.Name + "(" + g.core.Identifier(fc.Arguments) + ")").
 		Build()
 }
 
 func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.SQLResult, error) {
-	b := ResultBuilder()
-	if c.Function != nil {
-		b.Add(g.EncodeFunctionCall(c.Function))
-	} else {
+	b := resultBuilder()
+	if c.Column != "" {
 		b.AddString(g.core.Identifier(c.Column))
+	} else if c.Function != nil {
+		b.Add(g.EncodeFunctionCall(c.Function))
+	} else if c.SubQuery != nil {
+		b.Add(group(g.EncodeSelectQuery(c.SubQuery.Query())))
+	} else {
 	}
 	if c.As != "" {
 		b.AddString("AS").AddString(g.core.Identifier(c.As))

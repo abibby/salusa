@@ -4,16 +4,11 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-func (g *Generic) EncodeQuery(q *dialects.Query) (dialects.SQLResult, error) {
-	b := ResultBuilder().
+func (g *Generic) EncodeSelectQuery(q *dialects.SelectQuery) (dialects.SQLResult, error) {
+	return resultBuilder().
 		Add(g.EncodeSelects(&q.Select)).
-		Add(g.EncodeFrom(q.From))
-
-	for _, j := range q.Joins {
-		b.Add(g.EncodeJoin(&j))
-	}
-
-	return b.
+		Add(g.EncodeFrom(q.From)).
+		Add(g.EncodeJoins(q.Joins)).
 		Add(g.EncodeWheres(q.Wheres)).
 		Add(g.EncodeGroupBy(q.GroupBys)).
 		Add(g.EncodeHavings(q.Havings)).

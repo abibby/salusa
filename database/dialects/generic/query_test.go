@@ -8,18 +8,18 @@ import (
 	"github.com/abibby/salusa/internal/test"
 )
 
-func TestGeneric_EncodeQuery(t *testing.T) {
+func TestGeneric_EncodeSelectQuery(t *testing.T) {
 	g := generic.New(&testCore{})
-	test.EncoderTest(t, g.EncodeQuery, []test.EncoderTestCase[*dialects.Query]{
+	test.EncoderTest(t, g.EncodeSelectQuery, []test.EncoderTestCase[*dialects.SelectQuery]{
 		{
 			Name:             "empty",
-			Builder:          &dialects.Query{},
+			Builder:          &dialects.SelectQuery{},
 			ExpectedSQL:      "",
 			ExpectedBindings: []any{},
 		},
 		{
 			Name: "simple",
-			Builder: &dialects.Query{
+			Builder: &dialects.SelectQuery{
 				Select: dialects.Select{
 					Columns: []dialects.Column{{Column: "foo"}},
 				},

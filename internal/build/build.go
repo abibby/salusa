@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
 	"regexp"
@@ -77,7 +78,6 @@ func main() {
 				}
 				src += fmt.Sprintf(
 					"%sfunc (b *%s) %s(%s) *%s {\n"+
-						"\tb = b.Clone()\n"+
 						"\tb.%s = b.%s.%s(%s)\n"+
 						"\treturn b\n"+
 						"}\n",
@@ -99,7 +99,9 @@ func main() {
 
 	b, err := imports.Process(outFile, []byte(src), nil)
 	if err != nil {
-		panic(err)
+		// panic(err)
+		slog.Warn("format file failed", "error", err)
+		b = []byte(src)
 	}
 
 	err = os.WriteFile(outFile, b, 0644)

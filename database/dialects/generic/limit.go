@@ -6,7 +6,7 @@ func (g *Generic) EncodeLimit(l *dialects.Limit) (dialects.SQLResult, error) {
 	if l.Limit == 0 && l.Offset == 0 {
 		return dialects.SQLResult{}, nil
 	}
-	b := ResultBuilder()
+	b := resultBuilder()
 	if l.Limit != 0 {
 		b.AddString("LIMIT").Add(g.EncodeLiteral(l.Limit))
 	}

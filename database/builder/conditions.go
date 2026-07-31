@@ -1,12 +1,28 @@
 package builder
 
 import (
+	"context"
+	"reflect"
+
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 type Conditions struct {
 	conditions []dialects.Condition
+	parent     any
+	ctx        context.Context
+}
+
+func (c *Conditions) Clone() *Conditions {
+	return &Conditions{
+		conditions: cloneSlice(c.conditions),
+		parent:     c.parent,
+		ctx:        c.ctx,
+	}
+}
+func (c *Conditions) withParent(parent any) *Conditions {
+	c.parent = parent
+	return c
 }
 
 func newConditions() *Conditions {
@@ -27,12 +43,12 @@ func (b *Conditions) OrWhere(column, operator string, value any) *Conditions {
 
 // WhereColumn adds a where clause to the query comparing two columns.
 func (b *Conditions) WhereColumn(column, operator string, valueColumn string) *Conditions {
-	return b.where(column, operator, helpers.Identifier(valueColumn), false)
+	return b.where(column, operator, dialects.Column{Column: valueColumn}, false)
 }
 
 // OrWhereColumn adds an or where clause to the query comparing two columns.
 func (b *Conditions) OrWhereColumn(column, operator string, valueColumn string) *Conditions {
-	return b.where(column, operator, helpers.Identifier(valueColumn), true)
+	return b.where(column, operator, dialects.Column{Column: valueColumn}, true)
 }
 
 // WhereIn adds a where in clause to the query.
@@ -46,7 +62,7 @@ func (b *Conditions) OrWhereIn(column string, values []any) *Conditions {
 }
 
 func (b *Conditions) whereIn(column string, values []any, or bool) *Conditions {
-	return b.where(column, "in", helpers.Group(helpers.Join(helpers.LiteralList(values), ", ")), or)
+	return b.where(column, "in", values, or)
 }
 
 // WhereExists add an exists clause to the query.
@@ -60,7 +76,12 @@ func (b *Conditions) OrWhereExists(query dialects.QueryBuilder) *Conditions {
 }
 
 func (b *Conditions) whereExists(query dialects.QueryBuilder, or bool) *Conditions {
-	panic("not implemented")
+	b.conditions = append(b.conditions, dialects.Condition{
+		Operator: "EXISTS",
+		Value:    query,
+		Or:       or,
+	})
+	return b
 }
 
 // WhereExists add an exists clause to the query.
@@ -74,7 +95,12 @@ func (b *Conditions) OrWhereNotExists(query dialects.QueryBuilder) *Conditions {
 }
 
 func (b *Conditions) whereNotExists(query dialects.QueryBuilder, or bool) *Conditions {
-	panic("not implemented")
+	b.conditions = append(b.conditions, dialects.Condition{
+		Operator: "NOT EXISTS",
+		Value:    query,
+		Or:       or,
+	})
+	return b
 }
 
 // WhereSubquery adds a where clause to the query comparing a column and a subquery.
@@ -108,22 +134,21 @@ func (b *Conditions) where(column, operator string, value any, or bool) *Conditi
 }
 
 // WhereHas adds a relationship exists condition to the query with where clauses.
-func (b *Conditions) WhereHas(relation string, cb func(q *Conditions) *Conditions) *Conditions {
+func (b *Conditions) WhereHas(relation string, cb func(q *Builder) *Builder) *Conditions {
 	return b.whereHas(relation, cb, false)
 }
 
 // OrWhereHas adds a relationship exists condition to the query with where clauses and an or.
-func (b *Conditions) OrWhereHas(relation string, cb func(q *Conditions) *Conditions) *Conditions {
+func (b *Conditions) OrWhereHas(relation string, cb func(q *Builder) *Builder) *Conditions {
 	return b.whereHas(relation, cb, true)
 }
-func (b *Conditions) whereHas(relation string, cb func(q *Conditions) *Conditions, or bool) *Conditions {
-	// r, ok := getRelation(reflect.ValueOf(b.parent), relation)
-	// if !ok {
-	// 	return b
-	// }
+func (b *Conditions) whereHas(relation string, cb func(b *Builder) *Builder, or bool) *Conditions {
+	r, ok := getRelation(reflect.ValueOf(b.parent), relation)
+	if !ok {
+		return b
+	}
 
-	// return b.whereExists(cb(r.Subquery().WithContext(b.ctx)), or)
-	panic("not implemented")
+	return b.whereExists(cb(r.Subquery().WithContext(b.ctx)), or)
 }
 
 // WhereRaw adds a raw where clause to the query.

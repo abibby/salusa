@@ -17,11 +17,11 @@ func (g *Generic) encodeConditionsPrefix(prefix string, c []dialects.Condition) 
 	if len(c) == 0 {
 		return dialects.SQLResult{}, nil
 	}
-	return ResultBuilder().AddString(prefix).Add(g.EncodeConditions(c)).Build()
+	return resultBuilder().AddString(prefix).Add(g.EncodeConditions(c)).Build()
 }
 
 func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.SQLResult, error) {
-	b := ResultBuilder()
+	b := resultBuilder()
 	for i, c := range c {
 		if i != 0 {
 			if c.Or {
@@ -51,7 +51,13 @@ func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.SQLResult, 
 			if c.Operator != "" {
 				b.AddString(c.Operator)
 			}
-			b.Add(g.EncodeAny(c.Value))
+			if inList, ok := c.Value.([]any); ok {
+				b.Add(group(mapJoinResults(inList, ", ", func(v any) (dialects.SQLResult, error) {
+					return g.EncodeAny(v)
+				})))
+			} else {
+				b.Add(g.EncodeAny(c.Value))
+			}
 		}
 	}
 

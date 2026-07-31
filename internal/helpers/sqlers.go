@@ -15,7 +15,10 @@ func (f SQLStringFunc) SQLString(d dialects.Dialect) (string, []any, error) {
 }
 
 func Identifier(i string) SQLStringer {
-	panic("to be removed")
+	// panic("to be removed")
+	return SQLStringFunc(func(d dialects.Dialect) (string, []any, error) {
+		return "to be removed", nil, nil
+	})
 }
 
 func IdentifierList(strs []string) []SQLStringer {

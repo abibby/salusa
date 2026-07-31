@@ -6,18 +6,18 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-type SQLResultBuilder struct {
+type sqlResultBuilder struct {
 	results []dialects.SQLResult
 	err     error
 }
 
-func ResultBuilder() *SQLResultBuilder {
-	return &SQLResultBuilder{
+func resultBuilder() *sqlResultBuilder {
+	return &sqlResultBuilder{
 		results: []dialects.SQLResult{},
 	}
 }
 
-func (b *SQLResultBuilder) Add(r dialects.SQLResult, err error) *SQLResultBuilder {
+func (b *sqlResultBuilder) Add(r dialects.SQLResult, err error) *sqlResultBuilder {
 	if b.err != nil || r.Query == "" {
 		return b
 	}
@@ -26,20 +26,20 @@ func (b *SQLResultBuilder) Add(r dialects.SQLResult, err error) *SQLResultBuilde
 	return b
 }
 
-func (b *SQLResultBuilder) AddString(s string) *SQLResultBuilder {
+func (b *sqlResultBuilder) AddString(s string) *sqlResultBuilder {
 	return b.Add(dialects.SQLResult{
 		Query: s,
 	}, nil)
 }
 
-func (b *SQLResultBuilder) Build() (dialects.SQLResult, error) {
+func (b *sqlResultBuilder) Build() (dialects.SQLResult, error) {
 	if b.err != nil {
 		return dialects.SQLResult{}, b.err
 	}
-	return JoinResults(b.results, " "), nil
+	return joinResults(b.results, " "), nil
 }
 
-func JoinResults(results []dialects.SQLResult, sep string) dialects.SQLResult {
+func joinResults(results []dialects.SQLResult, sep string) dialects.SQLResult {
 	if len(results) == 0 {
 		return dialects.SQLResult{
 			Query:    "",
@@ -75,4 +75,16 @@ func JoinResults(results []dialects.SQLResult, sep string) dialects.SQLResult {
 		Query:    query.String(),
 		Bindings: bindings,
 	}
+}
+
+func mapJoinResults[T any](arr []T, sep string, fn func(v T) (dialects.SQLResult, error)) (dialects.SQLResult, error) {
+	results := make([]dialects.SQLResult, len(arr))
+	var err error
+	for i, v := range arr {
+		results[i], err = fn(v)
+		if err != nil {
+			return dialects.SQLResult{}, err
+		}
+	}
+	return joinResults(results, sep), nil
 }

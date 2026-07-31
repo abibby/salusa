@@ -9,9 +9,11 @@ func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 }
 func (b *Builder) Clone() *Builder {
 	return &Builder{
-		query:  *b.query.Clone(),
-		scopes: b.scopes.Clone(),
-		ctx:    b.ctx,
+		query:   *b.query.Clone(),
+		scopes:  b.scopes.Clone(),
+		wheres:  b.wheres.Clone(),
+		havings: b.havings.Clone(),
+		ctx:     b.ctx,
 	}
 }
 

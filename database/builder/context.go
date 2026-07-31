@@ -4,7 +4,6 @@ import "context"
 
 // WithContext adds a context to the query that will be used when fetching results.
 func (b *Builder) WithContext(ctx context.Context) *Builder {
-	b = b.Clone()
 	b.ctx = ctx
 	return b
 }

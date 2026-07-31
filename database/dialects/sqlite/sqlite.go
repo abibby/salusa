@@ -18,9 +18,15 @@ func New() dialects.Dialect {
 }
 
 func (*SQLiteCore) Identifier(s string) string {
+	if s == "*" {
+		return s
+	}
 	parts := strings.Split(s, ".")
 	for i, p := range parts {
-		parts[i] = "\"" + p + "\""
+		if p == "*" {
+			continue
+		}
+		parts[i] = `"` + p + `"`
 	}
 	return strings.Join(parts, ".")
 }

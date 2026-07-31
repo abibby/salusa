@@ -13,16 +13,16 @@ func ExampleBuilder() {
 		From[*test.Foo]().
 		Where("column", "=", "value")
 
-	r, err := sqlite.New().EncodeQuery(q.Query())
+	r, err := sqlite.New().EncodeSelectQuery(q.Query())
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(r.Bindings)
 	fmt.Println(r.Query)
+	fmt.Println(r.Bindings)
 	// Output:
-	// [value]
 	// SELECT "foos".* FROM "foos" WHERE "column" = ?
+	// [value]
 }
 
 func ExampleBuilder_WhereHas() {
@@ -31,14 +31,14 @@ func ExampleBuilder_WhereHas() {
 		WhereHas("Bar", func(q *builder.Builder) *builder.Builder {
 			return q.Where("id", "=", 7)
 		})
-	r, err := sqlite.New().EncodeQuery(q.Query())
+	r, err := sqlite.New().EncodeSelectQuery(q.Query())
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(r.Bindings)
 	fmt.Println(r.Query)
+	fmt.Println(r.Bindings)
 	// Output:
-	// [7]
 	// SELECT "foos".* FROM "foos" WHERE EXISTS (SELECT "bars".* FROM "bars" WHERE "foo_id" = "foos"."id" AND "id" = ?)
+	// [7]
 }

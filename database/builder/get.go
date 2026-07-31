@@ -78,7 +78,7 @@ func (b *ModelBuilder[T]) Load(tx database.DB, v any) error {
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *Builder) Load(tx database.DB, v any) (err error) {
-	r, err := dialects.New().EncodeQuery(b.Query())
+	r, err := dialects.New().EncodeSelectQuery(b.Query())
 	if err != nil {
 		return err
 	}

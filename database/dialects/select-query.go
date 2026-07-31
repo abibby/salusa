@@ -1,10 +1,10 @@
 package dialects
 
 type QueryBuilder interface {
-	Query() *Query
+	Query() *SelectQuery
 }
 
-type Query struct {
+type SelectQuery struct {
 	Select   Select
 	From     string
 	Joins    []Join
@@ -15,8 +15,8 @@ type Query struct {
 	Limit    Limit
 }
 
-func NewQuery() Query {
-	return Query{
+func NewQuery() SelectQuery {
+	return SelectQuery{
 		Select:   NewSelect(),
 		Joins:    []Join{},
 		Wheres:   []Condition{},
@@ -26,7 +26,7 @@ func NewQuery() Query {
 	}
 }
 
-func (q *Query) Clone() *Query {
+func (q *SelectQuery) Clone() *SelectQuery {
 	// TODO implement clone
 	return q
 }

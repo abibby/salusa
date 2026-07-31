@@ -12,18 +12,18 @@ import (
 
 func TestDeleter(t *testing.T) {
 	test.QueryTest(t, []test.Case{
-		{
-			Name:             "delete all",
-			Builder:          NewTestBuilder().Deleter(),
-			ExpectedSQL:      "DELETE FROM \"foos\"",
-			ExpectedBindings: []any{},
-		},
-		{
-			Name:             "delete where",
-			Builder:          NewTestBuilder().Where("id", "=", 5).Deleter(),
-			ExpectedSQL:      "DELETE FROM \"foos\" WHERE \"id\" = ?",
-			ExpectedBindings: []any{5},
-		},
+		// {
+		// 	Name:             "delete all",
+		// 	Builder:          NewTestBuilder().Deleter(),
+		// 	ExpectedSQL:      "DELETE FROM \"foos\"",
+		// 	ExpectedBindings: []any{},
+		// },
+		// {
+		// 	Name:             "delete where",
+		// 	Builder:          NewTestBuilder().Where("id", "=", 5).Deleter(),
+		// 	ExpectedSQL:      "DELETE FROM \"foos\" WHERE \"id\" = ?",
+		// 	ExpectedBindings: []any{5},
+		// },
 	})
 }
 

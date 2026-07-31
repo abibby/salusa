@@ -17,8 +17,8 @@ func TestLimit(t *testing.T) {
 		{
 			Name:             "offset",
 			Builder:          NewTestBuilder().Offset(1),
-			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\" LIMIT ? OFFSET ?",
-			ExpectedBindings: []any{0, 1},
+			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\" OFFSET ?",
+			ExpectedBindings: []any{1},
 		},
 		{
 			Name:             "limit and offset",

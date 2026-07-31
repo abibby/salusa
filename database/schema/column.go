@@ -89,30 +89,32 @@ func (b *ColumnBuilder) Index() *ColumnBuilder {
 	return b
 }
 func (b *ColumnBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
-	r := helpers.Result()
-	r.Add(helpers.Identifier(b.name))
-	r.AddString(d.DataType(b.datatype))
+	// r := helpers.Result()
+	// r.Add(helpers.Identifier(b.name))
+	// r.AddString(d.DataType(b.datatype))
 
-	if b.autoIncrement {
-		r.AddString("PRIMARY KEY " + d.AutoIncrement())
-	} else if b.primary {
-		r.AddString("PRIMARY KEY")
-	}
-	if !b.nullable {
-		r.AddString("NOT NULL")
-	}
-	if b.unique {
-		r.AddString("UNIQUE")
-	}
+	// if b.autoIncrement {
+	// 	r.AddString("PRIMARY KEY " + d.AutoIncrement())
+	// } else if b.primary {
+	// 	r.AddString("PRIMARY KEY")
+	// }
+	// if !b.nullable {
+	// 	r.AddString("NOT NULL")
+	// }
+	// if b.unique {
+	// 	r.AddString("UNIQUE")
+	// }
 
-	if b.defaultValue != nil {
-		r.AddString("DEFAULT").
-			AddString(d.Escape(b.defaultValue))
-	} else if b.defaultCurrentTime {
-		r.AddString("DEFAULT").
-			AddString(d.CurrentTime())
-	}
-	return r.SQLString(d)
+	// if b.defaultValue != nil {
+	// 	r.AddString("DEFAULT").
+	// 		AddString(d.Escape(b.defaultValue))
+	// } else if b.defaultCurrentTime {
+	// 	r.AddString("DEFAULT").
+	// 		AddString(d.CurrentTime())
+	// }
+	// return r.SQLString(d)
+	// panic("not implemented")
+	return "", nil, nil
 }
 
 func (b *ColumnBuilder) GoString() string {

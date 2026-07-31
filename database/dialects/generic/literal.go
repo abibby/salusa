@@ -10,12 +10,12 @@ func (g *Generic) EncodeLiteral(v any) (dialects.SQLResult, error) {
 }
 
 func (g *Generic) EncodeAny(v any) (dialects.SQLResult, error) {
-	b := ResultBuilder()
+	b := resultBuilder()
 	switch v := v.(type) {
 	case dialects.QueryBuilder:
-		b.Add(Group(g.EncodeQuery(v.Query())))
+		b.Add(group(g.EncodeSelectQuery(v.Query())))
 	case []dialects.Condition:
-		b.Add(Group(g.EncodeConditions(v)))
+		b.Add(group(g.EncodeConditions(v)))
 	case dialects.Column:
 		b.Add(g.EncodeColumn(&v))
 	case dialects.SQLResult:
