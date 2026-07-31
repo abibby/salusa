@@ -42,7 +42,7 @@ func NewBlueprint(name string) *Blueprint {
 
 func (b *Blueprint) findColumn(name string) (*ColumnBuilder, bool) {
 	return slices.Find(b.columns, func(c *ColumnBuilder) bool {
-		return c.name == name
+		return c.def.Name == name
 	})
 }
 
@@ -180,7 +180,7 @@ func (b *Blueprint) GoString() string {
 			dialects.DataTypeUInt32:   "UInt",
 			dialects.DataTypeUInt64:   "UInt64",
 		}
-		src += fmt.Sprintf("\ttable.%s(%#v)%s\n", m[c.datatype], c.name, c.GoString())
+		src += fmt.Sprintf("\ttable.%s(%#v)%s\n", m[c.def.Datatype], c.def.Name, c.GoString())
 	}
 
 	for _, index := range b.indexes {
@@ -216,7 +216,7 @@ func (t *Blueprint) Merge(newBlueprint *Blueprint) {
 	for _, newColumn := range newBlueprint.columns {
 		if newColumn.change {
 			for i, c := range t.columns {
-				if c.name == newColumn.name {
+				if c.def.Name == newColumn.def.Name {
 					t.columns[i] = newColumn
 					break
 				}
@@ -227,7 +227,7 @@ func (t *Blueprint) Merge(newBlueprint *Blueprint) {
 	}
 
 	t.columns = slices.Filter(t.columns, func(c *ColumnBuilder) bool {
-		return !slices.Has(newBlueprint.dropColumns, c.name)
+		return !slices.Has(newBlueprint.dropColumns, c.def.Name)
 	})
 
 	t.foreignKeys = append(t.foreignKeys, newBlueprint.foreignKeys...)
@@ -241,9 +241,9 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 	addedColumns := sets.New[string]()
 	hasChanges := false
 	for _, newColumn := range newBlueprint.columns {
-		oldColumn, ok := oldBlueprint.findColumn(newColumn.name)
+		oldColumn, ok := oldBlueprint.findColumn(newColumn.def.Name)
 		if ok {
-			addedColumns.Add(newColumn.name)
+			addedColumns.Add(newColumn.def.Name)
 			if newColumn.Equals(oldColumn) {
 				continue
 			}
@@ -254,9 +254,9 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 		t.AddColumn(newColumn)
 	}
 	for _, oldColumn := range oldBlueprint.columns {
-		if !addedColumns.Has(oldColumn.name) {
+		if !addedColumns.Has(oldColumn.def.Name) {
 			hasChanges = true
-			t.DropColumn(oldColumn.name)
+			t.DropColumn(oldColumn.def.Name)
 		}
 	}
 

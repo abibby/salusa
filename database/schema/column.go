@@ -4,60 +4,51 @@ import (
 	"fmt"
 
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 type ColumnBuilder struct {
-	name     string
-	datatype dialects.DataType
-
-	nullable           bool
-	primary            bool
-	autoIncrement      bool
-	change             bool
-	defaultValue       any
-	afterColumn        string
-	unique             bool
-	defaultCurrentTime bool
-	index              bool
+	def         dialects.ColumnDefinition
+	index       bool
+	change      bool
+	afterColumn string
 }
 
 func NewColumn(name string, datatype dialects.DataType) *ColumnBuilder {
 	return &ColumnBuilder{
-		name:     name,
-		datatype: datatype,
+		def: dialects.ColumnDefinition{
+			Name:     name,
+			Datatype: datatype,
+		},
 	}
 }
 
-var _ helpers.SQLStringer = &ColumnBuilder{}
-
 func (b *ColumnBuilder) Equals(newB *ColumnBuilder) bool {
-	return b.datatype == newB.datatype &&
-		b.nullable == newB.nullable &&
-		b.autoIncrement == newB.autoIncrement &&
+	return b.def.Datatype == newB.def.Datatype &&
+		b.def.Nullable == newB.def.Nullable &&
+		b.def.AutoIncrement == newB.def.AutoIncrement &&
 		b.index == newB.index &&
-		b.name == newB.name &&
-		b.primary == newB.primary
+		b.def.Name == newB.def.Name &&
+		b.def.Primary == newB.def.Primary
 }
 
 func (b *ColumnBuilder) Name() string {
-	return b.name
+	return b.def.Name
 }
 
 func (b *ColumnBuilder) Nullable() *ColumnBuilder {
-	b.nullable = true
+	b.def.Nullable = true
 	return b
 }
 func (b *ColumnBuilder) NotNullable() *ColumnBuilder {
-	b.nullable = false
+	b.def.Nullable = false
 	return b
 }
 func (b *ColumnBuilder) Primary() *ColumnBuilder {
-	b.primary = true
+	b.def.Primary = true
 	return b
 }
 func (b *ColumnBuilder) AutoIncrement() *ColumnBuilder {
-	b.autoIncrement = true
+	b.def.AutoIncrement = true
 	return b
 }
 func (b *ColumnBuilder) After(column string) *ColumnBuilder {
@@ -69,72 +60,44 @@ func (b *ColumnBuilder) Change() *ColumnBuilder {
 	return b
 }
 func (b *ColumnBuilder) Default(v any) *ColumnBuilder {
-	b.defaultValue = v
+	b.def.DefaultValue = v
 	return b
 }
 func (b *ColumnBuilder) Type(datatype dialects.DataType) *ColumnBuilder {
-	b.datatype = datatype
+	b.def.Datatype = datatype
 	return b
 }
 func (b *ColumnBuilder) Unique() *ColumnBuilder {
-	b.unique = true
+	b.def.Unique = true
 	return b
 }
 func (b *ColumnBuilder) DefaultCurrentTime() *ColumnBuilder {
-	b.defaultCurrentTime = true
+	b.def.DefaultCurrentTime = true
 	return b
 }
 func (b *ColumnBuilder) Index() *ColumnBuilder {
 	b.index = true
 	return b
 }
-func (b *ColumnBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
-	// r := helpers.Result()
-	// r.Add(helpers.Identifier(b.name))
-	// r.AddString(d.DataType(b.datatype))
-
-	// if b.autoIncrement {
-	// 	r.AddString("PRIMARY KEY " + d.AutoIncrement())
-	// } else if b.primary {
-	// 	r.AddString("PRIMARY KEY")
-	// }
-	// if !b.nullable {
-	// 	r.AddString("NOT NULL")
-	// }
-	// if b.unique {
-	// 	r.AddString("UNIQUE")
-	// }
-
-	// if b.defaultValue != nil {
-	// 	r.AddString("DEFAULT").
-	// 		AddString(d.Escape(b.defaultValue))
-	// } else if b.defaultCurrentTime {
-	// 	r.AddString("DEFAULT").
-	// 		AddString(d.CurrentTime())
-	// }
-	// return r.SQLString(d)
-	// panic("not implemented")
-	return "", nil, nil
-}
 
 func (b *ColumnBuilder) GoString() string {
 	src := ""
-	if b.primary {
+	if b.def.Primary {
 		src += ".Primary()"
 	}
-	if b.autoIncrement {
+	if b.def.AutoIncrement {
 		src += ".AutoIncrement()"
 	}
-	if b.nullable {
+	if b.def.Nullable {
 		src += ".Nullable()"
 	}
-	if b.defaultValue != nil {
-		src += fmt.Sprintf(".Default(%#v)", b.defaultValue)
+	if b.def.DefaultValue != nil {
+		src += fmt.Sprintf(".Default(%#v)", b.def.DefaultValue)
 	}
-	if b.defaultCurrentTime {
+	if b.def.DefaultCurrentTime {
 		src += ".DefaultCurrentTime()"
 	}
-	if b.unique {
+	if b.def.Unique {
 		src += ".Unique()"
 	}
 	if b.index {

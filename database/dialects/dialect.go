@@ -3,6 +3,7 @@ package dialects
 type Dialect interface {
 	EncodeSelectQuery(q *SelectQuery) (SQLResult, error)
 	EncodeUpdateQuery(q *UopdateQuery) (SQLResult, error)
+	EncodeCreateTableQuery(q *CreateTableQuery) (SQLResult, error)
 }
 
 func SetDefaultDialect(dialectFactory func() Dialect) {
