@@ -75,6 +75,9 @@ func (b *UpdateTableBuilder) SQLString(d dialects.Dialect) (string, []any, error
 	return "", nil, nil
 }
 
+func (b *UpdateTableBuilder) AlterTableQuery() *dialects.AlterTableQuery {
+	return &dialects.AlterTableQuery{}
+}
 func (b *UpdateTableBuilder) GoString() string {
 	return fmt.Sprintf(
 		"schema.Table(%#v, %#v)",
@@ -84,5 +87,10 @@ func (b *UpdateTableBuilder) GoString() string {
 }
 
 func (b *UpdateTableBuilder) Run(ctx context.Context, tx database.DB) error {
-	return runQuery(ctx, tx, b)
+	result, err := dialects.New().EncodeAlterTableQuery(b.AlterTableQuery())
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, result.Query, result.Bindings...)
+	return err
 }

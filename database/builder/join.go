@@ -59,7 +59,7 @@ func (b *Builder) CrossJoinOn(table string, cb func(q *Conditions)) *Builder {
 	return b.joinOn("CROSS", table, cb)
 }
 func (b *Builder) joinOn(direction string, table string, cb func(q *Conditions)) *Builder {
-	c := newConditions()
+	c := NewConditionBuilder()
 	cb(c)
 	b.query.Joins = append(b.query.Joins, dialects.Join{
 		Direction:  direction,

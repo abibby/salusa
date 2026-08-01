@@ -20,7 +20,7 @@ func (b *Builder) Update(tx database.DB, updates Updates) error {
 	if len(updates) == 0 {
 		return nil
 	}
-	r, err := dialects.New().EncodeUpdateQuery(&dialects.UopdateQuery{
+	r, err := dialects.New().EncodeUpdateQuery(&dialects.UpdateQuery{
 		Table:  b.GetTable(),
 		Values: updates,
 		Wheres: b.wheres.conditions,

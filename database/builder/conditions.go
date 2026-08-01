@@ -25,10 +25,14 @@ func (c *Conditions) withParent(parent any) *Conditions {
 	return c
 }
 
-func newConditions() *Conditions {
+func NewConditionBuilder() *Conditions {
 	return &Conditions{
 		conditions: []dialects.Condition{},
 	}
+}
+
+func (c *Conditions) Build() []dialects.Condition {
+	return c.conditions
 }
 
 // Where adds a basic where clause to the query.

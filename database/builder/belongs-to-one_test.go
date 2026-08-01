@@ -59,7 +59,7 @@ func ExampleBelongsTo() {
 }
 
 func TestBelongsToLoad(t *testing.T) {
-	test.Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+	test.Run(t, "ints", func(t *testing.T, tx *sqlx.Tx) {
 		foos := []*test.Foo{
 			{ID: 1},
 			{ID: 2},

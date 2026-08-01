@@ -10,10 +10,10 @@ import (
 
 func TestGeneric_EncodeUpdateQuery(t *testing.T) {
 	g := generic.New(&testCore{})
-	test.EncoderTest(t, g.EncodeUpdateQuery, []test.EncoderTestCase[*dialects.UopdateQuery]{
+	test.EncoderTest(t, g.EncodeUpdateQuery, []test.EncoderTestCase[*dialects.UpdateQuery]{
 		{
 			Name: "single",
-			Builder: &dialects.UopdateQuery{
+			Builder: &dialects.UpdateQuery{
 				Table:  "foo",
 				Values: map[string]any{"a": "b"},
 			},
@@ -22,7 +22,7 @@ func TestGeneric_EncodeUpdateQuery(t *testing.T) {
 		},
 		{
 			Name: "where",
-			Builder: &dialects.UopdateQuery{
+			Builder: &dialects.UpdateQuery{
 				Table:  "foo",
 				Values: map[string]any{"a": "b"},
 				Wheres: []dialects.Condition{

@@ -7,13 +7,15 @@ import (
 )
 
 type sqlResultBuilder struct {
-	results []dialects.SQLResult
-	err     error
+	query    strings.Builder
+	bindings []any
+	err      error
 }
 
 func resultBuilder() *sqlResultBuilder {
 	return &sqlResultBuilder{
-		results: []dialects.SQLResult{},
+		query:    strings.Builder{},
+		bindings: []any{},
 	}
 }
 
@@ -21,8 +23,16 @@ func (b *sqlResultBuilder) Add(r dialects.SQLResult, err error) *sqlResultBuilde
 	if b.err != nil || r.Query == "" {
 		return b
 	}
-	b.results = append(b.results, r)
-	b.err = err
+	if err != nil {
+		b.err = err
+		return b
+	} else {
+		if b.query.Len() > 0 {
+			b.query.WriteString(" ")
+		}
+		b.query.WriteString(r.Query)
+		b.bindings = append(b.bindings, r.Bindings...)
+	}
 	return b
 }
 
@@ -32,11 +42,19 @@ func (b *sqlResultBuilder) AddString(s string) *sqlResultBuilder {
 	}, nil)
 }
 
+func (b *sqlResultBuilder) AddStringNoSpace(s string) *sqlResultBuilder {
+	b.query.WriteString(s)
+	return b
+}
+
 func (b *sqlResultBuilder) Build() (dialects.SQLResult, error) {
 	if b.err != nil {
 		return dialects.SQLResult{}, b.err
 	}
-	return joinResults(b.results, " "), nil
+	return dialects.SQLResult{
+		Query:    b.query.String(),
+		Bindings: b.bindings,
+	}, nil
 }
 
 func joinResults(results []dialects.SQLResult, sep string) dialects.SQLResult {

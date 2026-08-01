@@ -42,7 +42,7 @@ func NewBlueprint(name string) *Blueprint {
 
 func (b *Blueprint) findColumn(name string) (*ColumnBuilder, bool) {
 	return slices.Find(b.columns, func(c *ColumnBuilder) bool {
-		return c.def.Name == name
+		return c.name == name
 	})
 }
 
@@ -159,8 +159,23 @@ func (t *Blueprint) DropColumn(column string) {
 	t.dropColumns = append(t.dropColumns, column)
 }
 
+func (b *Blueprint) CreateTableQuery() *dialects.CreateTableQuery {
+	columns := make([]dialects.ColumnDefinition, len(b.columns))
+
+	for i, c := range b.columns {
+		columns[i] = *c.ColumnDefinition()
+	}
+
+	return &dialects.CreateTableQuery{
+		IfNotExists: true,
+		Table:       b.TableName(),
+		Columns:     columns,
+	}
+}
+
 func (b *Blueprint) GoString() string {
-	src := "func(table *schema.Blueprint) {\n"
+	src := strings.Builder{}
+	src.WriteString("func(table *schema.Blueprint) {\n")
 	for _, c := range b.columns {
 		m := map[dialects.DataType]string{
 			dialects.DataTypeBlob:     "Blob",
@@ -180,19 +195,19 @@ func (b *Blueprint) GoString() string {
 			dialects.DataTypeUInt32:   "UInt",
 			dialects.DataTypeUInt64:   "UInt64",
 		}
-		src += fmt.Sprintf("\ttable.%s(%#v)%s\n", m[c.def.Datatype], c.def.Name, c.GoString())
+		fmt.Fprintf(&src, "\ttable.%s(%#v)%s\n", m[c.datatype], c.name, c.GoString())
 	}
 
 	for _, index := range b.indexes {
-		src += fmt.Sprintf("\ttable.Index(%#v)%s\n", index.name, index.GoString())
+		fmt.Fprintf(&src, "\ttable.Index(%#v)%s\n", index.name, index.GoString())
 	}
 
 	for _, c := range b.dropColumns {
-		src += fmt.Sprintf("\ttable.DropColumn(%#v)\n", c)
+		fmt.Fprintf(&src, "\ttable.DropColumn(%#v)\n", c)
 	}
 
 	for _, foreignKey := range b.foreignKeys {
-		src += fmt.Sprintf("\ttable.ForeignKey(%#v, %#v, %#v)\n", foreignKey.localKey, foreignKey.relatedTable, foreignKey.relatedKey)
+		fmt.Fprintf(&src, "\ttable.ForeignKey(%#v, %#v, %#v)\n", foreignKey.localKey, foreignKey.relatedTable, foreignKey.relatedKey)
 	}
 
 	if len(b.primaryKeys) > 1 {
@@ -202,10 +217,11 @@ func (b *Blueprint) GoString() string {
 			}),
 			", ",
 		)
-		src += fmt.Sprintf("\ttable.PrimaryKey(%s)\n", args)
+		fmt.Fprintf(&src, "\ttable.PrimaryKey(%s)\n", args)
 	}
 
-	return src + "}"
+	src.WriteString("}")
+	return src.String()
 }
 
 func (t *Blueprint) Merge(newBlueprint *Blueprint) {
@@ -216,7 +232,7 @@ func (t *Blueprint) Merge(newBlueprint *Blueprint) {
 	for _, newColumn := range newBlueprint.columns {
 		if newColumn.change {
 			for i, c := range t.columns {
-				if c.def.Name == newColumn.def.Name {
+				if c.name == newColumn.name {
 					t.columns[i] = newColumn
 					break
 				}
@@ -227,7 +243,7 @@ func (t *Blueprint) Merge(newBlueprint *Blueprint) {
 	}
 
 	t.columns = slices.Filter(t.columns, func(c *ColumnBuilder) bool {
-		return !slices.Has(newBlueprint.dropColumns, c.def.Name)
+		return !slices.Has(newBlueprint.dropColumns, c.name)
 	})
 
 	t.foreignKeys = append(t.foreignKeys, newBlueprint.foreignKeys...)
@@ -241,9 +257,9 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 	addedColumns := sets.New[string]()
 	hasChanges := false
 	for _, newColumn := range newBlueprint.columns {
-		oldColumn, ok := oldBlueprint.findColumn(newColumn.def.Name)
+		oldColumn, ok := oldBlueprint.findColumn(newColumn.name)
 		if ok {
-			addedColumns.Add(newColumn.def.Name)
+			addedColumns.Add(newColumn.name)
 			if newColumn.Equals(oldColumn) {
 				continue
 			}
@@ -254,9 +270,9 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 		t.AddColumn(newColumn)
 	}
 	for _, oldColumn := range oldBlueprint.columns {
-		if !addedColumns.Has(oldColumn.def.Name) {
+		if !addedColumns.Has(oldColumn.name) {
 			hasChanges = true
-			t.DropColumn(oldColumn.def.Name)
+			t.DropColumn(oldColumn.name)
 		}
 	}
 

@@ -33,8 +33,8 @@ var _ dialects.QueryBuilder = (*Builder)(nil)
 func NewBuilder() *Builder {
 	return &Builder{
 		query:   dialects.NewSelectQuery(),
-		wheres:  newConditions(),
-		havings: newConditions(),
+		wheres:  NewConditionBuilder(),
+		havings: NewConditionBuilder(),
 		scopes:  newScopes(),
 		ctx:     context.Background(),
 	}

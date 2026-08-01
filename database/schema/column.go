@@ -7,48 +7,54 @@ import (
 )
 
 type ColumnBuilder struct {
-	def         dialects.ColumnDefinition
-	index       bool
-	change      bool
-	afterColumn string
+	name     string
+	datatype dialects.DataType
+
+	nullable           bool
+	primary            bool
+	autoIncrement      bool
+	change             bool
+	defaultValue       any
+	afterColumn        string
+	unique             bool
+	defaultCurrentTime bool
+	index              bool
 }
 
 func NewColumn(name string, datatype dialects.DataType) *ColumnBuilder {
 	return &ColumnBuilder{
-		def: dialects.ColumnDefinition{
-			Name:     name,
-			Datatype: datatype,
-		},
+		name:     name,
+		datatype: datatype,
 	}
 }
 
 func (b *ColumnBuilder) Equals(newB *ColumnBuilder) bool {
-	return b.def.Datatype == newB.def.Datatype &&
-		b.def.Nullable == newB.def.Nullable &&
-		b.def.AutoIncrement == newB.def.AutoIncrement &&
+	return b.datatype == newB.datatype &&
+		b.nullable == newB.nullable &&
+		b.autoIncrement == newB.autoIncrement &&
 		b.index == newB.index &&
-		b.def.Name == newB.def.Name &&
-		b.def.Primary == newB.def.Primary
+		b.name == newB.name &&
+		b.primary == newB.primary
 }
 
 func (b *ColumnBuilder) Name() string {
-	return b.def.Name
+	return b.name
 }
 
 func (b *ColumnBuilder) Nullable() *ColumnBuilder {
-	b.def.Nullable = true
+	b.nullable = true
 	return b
 }
 func (b *ColumnBuilder) NotNullable() *ColumnBuilder {
-	b.def.Nullable = false
+	b.nullable = false
 	return b
 }
 func (b *ColumnBuilder) Primary() *ColumnBuilder {
-	b.def.Primary = true
+	b.primary = true
 	return b
 }
 func (b *ColumnBuilder) AutoIncrement() *ColumnBuilder {
-	b.def.AutoIncrement = true
+	b.autoIncrement = true
 	return b
 }
 func (b *ColumnBuilder) After(column string) *ColumnBuilder {
@@ -60,44 +66,56 @@ func (b *ColumnBuilder) Change() *ColumnBuilder {
 	return b
 }
 func (b *ColumnBuilder) Default(v any) *ColumnBuilder {
-	b.def.DefaultValue = v
+	b.defaultValue = v
 	return b
 }
 func (b *ColumnBuilder) Type(datatype dialects.DataType) *ColumnBuilder {
-	b.def.Datatype = datatype
+	b.datatype = datatype
 	return b
 }
 func (b *ColumnBuilder) Unique() *ColumnBuilder {
-	b.def.Unique = true
+	b.unique = true
 	return b
 }
 func (b *ColumnBuilder) DefaultCurrentTime() *ColumnBuilder {
-	b.def.DefaultCurrentTime = true
+	b.defaultCurrentTime = true
 	return b
 }
 func (b *ColumnBuilder) Index() *ColumnBuilder {
 	b.index = true
 	return b
 }
+func (b *ColumnBuilder) ColumnDefinition() *dialects.ColumnDefinition {
+	return &dialects.ColumnDefinition{
+		Name:               b.name,
+		Datatype:           b.datatype,
+		Nullable:           b.nullable,
+		Primary:            b.primary,
+		AutoIncrement:      b.autoIncrement,
+		DefaultValue:       b.defaultValue,
+		Unique:             b.unique,
+		DefaultCurrentTime: b.defaultCurrentTime,
+	}
+}
 
 func (b *ColumnBuilder) GoString() string {
 	src := ""
-	if b.def.Primary {
+	if b.primary {
 		src += ".Primary()"
 	}
-	if b.def.AutoIncrement {
+	if b.autoIncrement {
 		src += ".AutoIncrement()"
 	}
-	if b.def.Nullable {
+	if b.nullable {
 		src += ".Nullable()"
 	}
-	if b.def.DefaultValue != nil {
-		src += fmt.Sprintf(".Default(%#v)", b.def.DefaultValue)
+	if b.defaultValue != nil {
+		src += fmt.Sprintf(".Default(%#v)", b.defaultValue)
 	}
-	if b.def.DefaultCurrentTime {
+	if b.defaultCurrentTime {
 		src += ".DefaultCurrentTime()"
 	}
-	if b.def.Unique {
+	if b.unique {
 		src += ".Unique()"
 	}
 	if b.index {

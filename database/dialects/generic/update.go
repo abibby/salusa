@@ -2,7 +2,7 @@ package generic
 
 import "github.com/abibby/salusa/database/dialects"
 
-func (g *Generic) EncodeUpdateQuery(q *dialects.UopdateQuery) (dialects.SQLResult, error) {
+func (g *Generic) EncodeUpdateQuery(q *dialects.UpdateQuery) (dialects.SQLResult, error) {
 	return resultBuilder().
 		AddString("UPDATE").
 		AddString(g.core.Identifier(q.Table)).

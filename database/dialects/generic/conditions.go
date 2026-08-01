@@ -52,9 +52,7 @@ func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.SQLResult, 
 				b.AddString(c.Operator)
 			}
 			if inList, ok := c.Value.([]any); ok {
-				b.Add(group(mapJoinResults(inList, ", ", func(v any) (dialects.SQLResult, error) {
-					return g.EncodeAny(v)
-				})))
+				b.Add(group(mapJoinResults(inList, ", ", g.EncodeAny)))
 			} else {
 				b.Add(g.EncodeAny(c.Value))
 			}

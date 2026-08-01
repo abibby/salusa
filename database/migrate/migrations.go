@@ -97,14 +97,16 @@ func (m *Migrations) Blueprint(tableName string) *schema.Blueprint {
 }
 
 func (m *Migrations) Up(ctx context.Context, db database.DB) error {
-	sql, bindings, err := schema.Create(m.table, func(b *schema.Blueprint) {
+	q := schema.Create(m.table, func(b *schema.Blueprint) {
 		b.String("name")
 		b.Bool("run")
-	}).IfNotExists().SQLString(dialects.New())
+	}).IfNotExists()
+
+	result, err := dialects.New().EncodeCreateTableQuery(q.GetBlueprint().CreateTableQuery())
 	if err != nil {
 		return err
 	}
-	_, err = database.Exec(ctx, db, sql, bindings)
+	_, err = database.Exec(ctx, db, result.Query, result.Bindings)
 	if err != nil {
 		return err
 	}

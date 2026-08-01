@@ -67,14 +67,14 @@ func Concat(sqlers ...SQLStringer) SQLStringer {
 	return Join(sqlers, "")
 }
 
-func Literal(v any) SQLStringer {
-	panic("to be removed")
-}
+// func Literal(v any) SQLStringer {
+// 	panic("to be removed")
+// }
 
-func LiteralList(values []any) []SQLStringer {
-	literals := make([]SQLStringer, len(values))
-	for i, s := range values {
-		literals[i] = Literal(s)
-	}
-	return literals
-}
+// func LiteralList(values []any) []SQLStringer {
+// 	literals := make([]SQLStringer, len(values))
+// 	for i, s := range values {
+// 		literals[i] = Literal(s)
+// 	}
+// 	return literals
+// }
