@@ -11,7 +11,7 @@ type SelectQuery struct {
 	Wheres   []Condition
 	Havings  []Condition
 	GroupBys []string
-	OrderBys []string
+	OrderBys []OrderColumn
 	Limit    Limit
 }
 
@@ -22,13 +22,18 @@ func NewSelectQuery() SelectQuery {
 		Wheres:   []Condition{},
 		GroupBys: []string{},
 		Havings:  []Condition{},
-		OrderBys: []string{},
+		OrderBys: []OrderColumn{},
 	}
 }
 
 func (q *SelectQuery) Clone() *SelectQuery {
 	// TODO implement clone
 	return q
+}
+
+type OrderColumn struct {
+	Column     string
+	Descending bool
 }
 
 type Select struct {

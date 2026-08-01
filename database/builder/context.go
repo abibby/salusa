@@ -5,6 +5,8 @@ import "context"
 // WithContext adds a context to the query that will be used when fetching results.
 func (b *Builder) WithContext(ctx context.Context) *Builder {
 	b.ctx = ctx
+	b.wheres.ctx = ctx
+	b.havings.ctx = ctx
 	return b
 }
 

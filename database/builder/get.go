@@ -82,8 +82,6 @@ func (b *Builder) Load(tx database.DB, v any) (err error) {
 	if err != nil {
 		return err
 	}
-	q := r.Query
-	bindings := r.Bindings
 
 	defer func() {
 		if err == nil {
@@ -91,14 +89,14 @@ func (b *Builder) Load(tx database.DB, v any) (err error) {
 		}
 		err = &QueryError{
 			err:   err,
-			query: q,
+			query: r.Query,
 		}
 	}()
 
 	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
-		err = sqlx.SelectContext(b.Context(), tx, v, q, bindings...)
+		err = sqlx.SelectContext(b.Context(), tx, v, r.Query, r.Bindings...)
 	} else {
-		err = sqlx.GetContext(b.Context(), tx, v, q, bindings...)
+		err = sqlx.GetContext(b.Context(), tx, v, r.Query, r.Bindings...)
 	}
 	if err != nil {
 		return err

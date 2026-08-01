@@ -6,16 +6,17 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-func (g *Generic) EncodeOrderBy(orderBys []string) (dialects.SQLResult, error) {
+func (g *Generic) EncodeOrderBy(orderBys []dialects.OrderColumn) (dialects.SQLResult, error) {
 	if len(orderBys) == 0 {
 		return dialects.SQLResult{}, nil
 	}
-	b := resultBuilder()
-	b.AddString("ORDER BY")
 
 	identifiers := make([]string, len(orderBys))
 	for i, group := range orderBys {
-		identifiers[i] = g.core.Identifier(group)
+		identifiers[i] = g.core.Identifier(group.Column)
+		if group.Descending {
+			identifiers[i] += " DESC"
+		}
 	}
-	return b.AddString(strings.Join(identifiers, ", ")).Build()
+	return dialects.Raw("ORDER BY " + strings.Join(identifiers, ", ")), nil
 }

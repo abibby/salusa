@@ -149,7 +149,7 @@ func (b *Conditions) OrWhereHas(relation string, cb func(q *Builder) *Builder) *
 func (b *Conditions) whereHas(relation string, cb func(b *Builder) *Builder, or bool) *Conditions {
 	r, ok := getRelation(reflect.ValueOf(b.parent), relation)
 	if !ok {
-		return b
+		return b.whereExists(cb(NewBuilder().WithContext(b.ctx)), or)
 	}
 
 	return b.whereExists(cb(r.Subquery().WithContext(b.ctx)), or)

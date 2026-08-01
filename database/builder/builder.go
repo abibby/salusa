@@ -42,9 +42,15 @@ func NewBuilder() *Builder {
 
 // Query implements [dialects.QueryBuilder].
 func (b *Builder) Query() *dialects.SelectQuery {
-	q := &b.query
-	q.Wheres = b.wheres.conditions
-	q.Havings = b.havings.conditions
+	current := b.Clone()
+	for _, s := range b.ActiveScopes() {
+		if s.Query != nil {
+			current = s.Query(current)
+		}
+	}
+	q := &current.query
+	q.Wheres = current.wheres.conditions
+	q.Havings = current.havings.conditions
 	return q
 }
 

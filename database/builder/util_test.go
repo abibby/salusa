@@ -15,11 +15,12 @@ func NewTestBuilder() *builder.ModelBuilder[*test.Foo] {
 	return builder.From[*test.Foo]()
 }
 
-func MustSave(tx database.DB, v model.Model) {
+func MustSave[T model.Model](tx database.DB, v T) T {
 	err := model.Save(tx, v)
 	if err != nil {
 		panic(err)
 	}
+	return v
 }
 
 func assertJsonEqual(t *testing.T, rawJson string, v any) bool {

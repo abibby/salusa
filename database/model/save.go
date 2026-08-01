@@ -215,9 +215,10 @@ func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T)
 		return fmt.Errorf("insert: %w", err)
 	}
 	for _, v := range models {
-		if err != nil {
-			return fmt.Errorf("initialize relationships: %w", err)
-		}
+		// err = relationship.InitializeRelationships(v)
+		// if err != nil {
+		// 	return fmt.Errorf("initialize relationships: %w", err)
+		// }
 		err := hooks.AfterSave(ctx, tx, v)
 		if err != nil {
 			return fmt.Errorf("before save hooks: %w", err)
@@ -227,6 +228,13 @@ func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T)
 }
 
 func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, maps []map[string]any) error {
+
+	rPKey, pKey, isAuto := isAutoIncrementing(v)
+	if isAuto {
+		for i, _ := range maps {
+			delete(maps[i], pKey)
+		}
+	}
 	sql, err := dialects.New().EncodeInsertQuery(&dialects.InsertQuery{
 		Table:  database.GetTable(v),
 		Values: maps,
@@ -240,7 +248,6 @@ func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, 
 		return fmt.Errorf("failed to insert model: %w", err)
 	}
 
-	rPKey, _, isAuto := isAutoIncrementing(v)
 	if isAuto {
 		id, err := result.LastInsertId()
 		if err != nil {

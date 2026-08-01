@@ -52,7 +52,7 @@ func TestGeneric_EncodeSelectQuery(t *testing.T) {
 						Value:    "baz",
 					},
 				},
-				OrderBys: []string{"foo"},
+				OrderBys: []dialects.OrderColumn{{Column: "foo"}},
 				Limit: dialects.Limit{
 					Limit:  5,
 					Offset: 10,
