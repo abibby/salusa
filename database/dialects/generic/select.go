@@ -4,9 +4,9 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.SQLResult, error) {
+func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.RawQuery, error) {
 	if len(s.Columns) == 0 {
-		return dialects.SQLResult{
+		return dialects.RawQuery{
 			Bindings: []any{},
 		}, nil
 	}
@@ -17,12 +17,12 @@ func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.SQLResult, error) 
 		b.AddString("DISTINCT")
 	}
 
-	columns := make([]dialects.SQLResult, len(s.Columns))
+	columns := make([]dialects.RawQuery, len(s.Columns))
 	var err error
 	for i, c := range s.Columns {
 		columns[i], err = g.EncodeColumn(&c)
 		if err != nil {
-			return dialects.SQLResult{}, err
+			return dialects.RawQuery{}, err
 		}
 	}
 	b.Add(joinResults(columns, ", "), nil)
@@ -30,13 +30,13 @@ func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.SQLResult, error) 
 	return b.Build()
 }
 
-func (g *Generic) EncodeFunctionCall(fc *dialects.FunctionCall) (dialects.SQLResult, error) {
+func (g *Generic) EncodeFunctionCall(fc *dialects.FunctionCall) (dialects.RawQuery, error) {
 	return resultBuilder().
 		AddString(fc.Name + "(" + g.core.Identifier(fc.Arguments) + ")").
 		Build()
 }
 
-func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.SQLResult, error) {
+func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.RawQuery, error) {
 	b := resultBuilder()
 	if c.Column != "" {
 		b.AddString(g.core.Identifier(c.Column))
@@ -51,24 +51,3 @@ func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.SQLResult, error) {
 	}
 	return b.Build()
 }
-
-// func columnIdentifier(column string) helpers.SQLStringer {
-// 	var identifier helpers.SQLStringer
-// 	parts := strings.SplitN(column, " as ", 2)
-// 	c := parts[0]
-// 	if c == "*" {
-// 		identifier = helpers.Raw("*")
-// 	} else if strings.HasSuffix(c, ".*") {
-// 		identifier = helpers.Concat(helpers.Identifier(c[:len(c)-2]), helpers.Raw(".*"))
-// 	} else {
-// 		identifier = helpers.Identifier(c)
-// 	}
-// 	if len(parts) > 1 {
-// 		identifier = helpers.Concat(
-// 			identifier,
-// 			helpers.Raw(" as "),
-// 			helpers.Identifier(parts[1]),
-// 		)
-// 	}
-// 	return identifier
-// }

@@ -6,20 +6,20 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-type sqlResultBuilder struct {
+type rawQueryBuilder struct {
 	query    strings.Builder
 	bindings []any
 	err      error
 }
 
-func resultBuilder() *sqlResultBuilder {
-	return &sqlResultBuilder{
+func resultBuilder() *rawQueryBuilder {
+	return &rawQueryBuilder{
 		query:    strings.Builder{},
 		bindings: []any{},
 	}
 }
 
-func (b *sqlResultBuilder) Add(r dialects.SQLResult, err error) *sqlResultBuilder {
+func (b *rawQueryBuilder) Add(r dialects.RawQuery, err error) *rawQueryBuilder {
 	if b.err != nil || r.Query == "" {
 		return b
 	}
@@ -36,30 +36,30 @@ func (b *sqlResultBuilder) Add(r dialects.SQLResult, err error) *sqlResultBuilde
 	return b
 }
 
-func (b *sqlResultBuilder) AddString(s string) *sqlResultBuilder {
-	return b.Add(dialects.SQLResult{
+func (b *rawQueryBuilder) AddString(s string) *rawQueryBuilder {
+	return b.Add(dialects.RawQuery{
 		Query: s,
 	}, nil)
 }
 
-func (b *sqlResultBuilder) AddStringNoSpace(s string) *sqlResultBuilder {
+func (b *rawQueryBuilder) AddStringNoSpace(s string) *rawQueryBuilder {
 	b.query.WriteString(s)
 	return b
 }
 
-func (b *sqlResultBuilder) Build() (dialects.SQLResult, error) {
+func (b *rawQueryBuilder) Build() (dialects.RawQuery, error) {
 	if b.err != nil {
-		return dialects.SQLResult{}, b.err
+		return dialects.RawQuery{}, b.err
 	}
-	return dialects.SQLResult{
+	return dialects.RawQuery{
 		Query:    b.query.String(),
 		Bindings: b.bindings,
 	}, nil
 }
 
-func joinResults(results []dialects.SQLResult, sep string) dialects.SQLResult {
+func joinResults(results []dialects.RawQuery, sep string) dialects.RawQuery {
 	if len(results) == 0 {
-		return dialects.SQLResult{
+		return dialects.RawQuery{
 			Query:    "",
 			Bindings: []any{},
 		}
@@ -89,19 +89,19 @@ func joinResults(results []dialects.SQLResult, sep string) dialects.SQLResult {
 		bindings = append(bindings, r.Bindings...)
 	}
 
-	return dialects.SQLResult{
+	return dialects.RawQuery{
 		Query:    query.String(),
 		Bindings: bindings,
 	}
 }
 
-func mapJoinResults[T any](arr []T, sep string, fn func(v T) (dialects.SQLResult, error)) (dialects.SQLResult, error) {
-	results := make([]dialects.SQLResult, len(arr))
+func mapJoinResults[T any](arr []T, sep string, fn func(v T) (dialects.RawQuery, error)) (dialects.RawQuery, error) {
+	results := make([]dialects.RawQuery, len(arr))
 	var err error
 	for i, v := range arr {
 		results[i], err = fn(v)
 		if err != nil {
-			return dialects.SQLResult{}, err
+			return dialects.RawQuery{}, err
 		}
 	}
 	return joinResults(results, sep), nil

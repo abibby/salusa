@@ -2,14 +2,14 @@ package generic
 
 import "github.com/abibby/salusa/database/dialects"
 
-func (g *Generic) EncodeLiteral(v any) (dialects.SQLResult, error) {
-	return dialects.SQLResult{
+func (g *Generic) EncodeLiteral(v any) (dialects.RawQuery, error) {
+	return dialects.RawQuery{
 		Query:    g.core.Binding(),
 		Bindings: []any{v},
 	}, nil
 }
 
-func (g *Generic) EncodeAny(v any) (dialects.SQLResult, error) {
+func (g *Generic) EncodeAny(v any) (dialects.RawQuery, error) {
 	b := resultBuilder()
 	switch v := v.(type) {
 	case dialects.QueryBuilder:
@@ -18,7 +18,7 @@ func (g *Generic) EncodeAny(v any) (dialects.SQLResult, error) {
 		b.Add(group(g.EncodeConditions(v)))
 	case dialects.Column:
 		b.Add(g.EncodeColumn(&v))
-	case dialects.SQLResult:
+	case dialects.RawQuery:
 		b.Add(v, nil)
 	case dialects.RawString:
 		b.AddString(string(v))

@@ -11,12 +11,6 @@ import (
 	"github.com/abibby/salusa/internal/relationship"
 )
 
-// QueryBuilder is implemented by *ModelBuilder and *Builder
-type QueryBuilder interface {
-	helpers.SQLStringer
-	imALittleQueryBuilderShortAndStout()
-}
-
 //go:generate go run ../../internal/build/build.go
 type Builder struct {
 	query   dialects.SelectQuery
@@ -97,6 +91,3 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 func (b *ModelBuilder[T]) Query() *dialects.SelectQuery {
 	return b.builder.Query()
 }
-
-func (*ModelBuilder[T]) imALittleQueryBuilderShortAndStout() {}
-func (*Builder) imALittleQueryBuilderShortAndStout()         {}

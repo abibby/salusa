@@ -2,11 +2,11 @@ package generic
 
 import "github.com/abibby/salusa/database/dialects"
 
-func (g *Generic) EncodeFrom(from string) (dialects.SQLResult, error) {
+func (g *Generic) EncodeFrom(from string) (dialects.RawQuery, error) {
 	if from == "" {
-		return dialects.SQLResult{}, nil
+		return dialects.RawQuery{}, nil
 	}
-	return dialects.SQLResult{
+	return dialects.RawQuery{
 		Query: "FROM " + g.core.Identifier(from),
 	}, nil
 }

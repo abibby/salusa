@@ -42,7 +42,7 @@ type EncoderTestCase[T any] struct {
 	ExpectedError    error
 }
 
-func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.SQLResult, error), testCases []EncoderTestCase[T]) {
+func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.RawQuery, error), testCases []EncoderTestCase[T]) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			result, err := encoder(tc.Builder)

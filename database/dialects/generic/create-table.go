@@ -4,7 +4,7 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.SQLResult, error) {
+func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {
 	b := resultBuilder().AddString("CREATE TABLE")
 	if q.IfNotExists {
 		b.AddString("IF NOT EXISTS")
@@ -12,11 +12,11 @@ func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects
 	b.AddString(g.core.Identifier(q.Table))
 
 	var err error
-	columns := make([]dialects.SQLResult, len(q.Columns))
+	columns := make([]dialects.RawQuery, len(q.Columns))
 	for i, c := range q.Columns {
 		columns[i], err = g.EncodeColumnDefinition(&c)
 		if err != nil {
-			return dialects.SQLResult{}, err
+			return dialects.RawQuery{}, err
 		}
 		columns[i].Query = "\n\t" + columns[i].Query
 		if i == len(q.Columns)-1 {
@@ -29,7 +29,7 @@ func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects
 	return b.Build()
 }
 
-func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects.SQLResult, error) {
+func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects.RawQuery, error) {
 	r := resultBuilder()
 	r.AddString(g.core.Identifier(c.Name))
 	r.AddString(g.core.DataType(c.Datatype))

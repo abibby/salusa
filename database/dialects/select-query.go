@@ -80,8 +80,8 @@ type Limit struct {
 
 type RawString string
 
-func Raw(sql string, bindings ...any) SQLResult {
-	return SQLResult{
+func Raw(sql string, bindings ...any) RawQuery {
+	return RawQuery{
 		Query:    sql,
 		Bindings: bindings,
 	}

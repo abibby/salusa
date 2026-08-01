@@ -6,9 +6,9 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-func (g *Generic) EncodeOrderBy(orderBys []dialects.OrderColumn) (dialects.SQLResult, error) {
+func (g *Generic) EncodeOrderBy(orderBys []dialects.OrderColumn) (dialects.RawQuery, error) {
 	if len(orderBys) == 0 {
-		return dialects.SQLResult{}, nil
+		return dialects.RawQuery{}, nil
 	}
 
 	identifiers := make([]string, len(orderBys))

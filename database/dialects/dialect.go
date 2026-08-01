@@ -1,13 +1,13 @@
 package dialects
 
 type Dialect interface {
-	EncodeSelectQuery(q *SelectQuery) (SQLResult, error)
-	EncodeInsertQuery(q *InsertQuery) (SQLResult, error)
-	EncodeUpdateQuery(q *UpdateQuery) (SQLResult, error)
-	EncodeDeleteQuery(q *DeleteQuery) (SQLResult, error)
-	EncodeCreateTableQuery(q *CreateTableQuery) (SQLResult, error)
-	EncodeDropTableQuery(q *DropTableQuery) (SQLResult, error)
-	EncodeAlterTableQuery(q *AlterTableQuery) (SQLResult, error)
+	EncodeSelectQuery(q *SelectQuery) (RawQuery, error)
+	EncodeInsertQuery(q *InsertQuery) (RawQuery, error)
+	EncodeUpdateQuery(q *UpdateQuery) (RawQuery, error)
+	EncodeDeleteQuery(q *DeleteQuery) (RawQuery, error)
+	EncodeCreateTableQuery(q *CreateTableQuery) (RawQuery, error)
+	EncodeDropTableQuery(q *DropTableQuery) (RawQuery, error)
+	EncodeAlterTableQuery(q *AlterTableQuery) (RawQuery, error)
 }
 
 func SetDefaultDialect(dialectFactory func() Dialect) {

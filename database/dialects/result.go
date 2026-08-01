@@ -2,46 +2,14 @@ package dialects
 
 import "strings"
 
-type SQLResult struct {
+type RawQuery struct {
 	Query    string
 	Bindings []any
 }
-type SQLResultBuilder struct {
-	results []SQLResult
-	err     error
-}
 
-func ResultBuilder() *SQLResultBuilder {
-	return &SQLResultBuilder{
-		results: []SQLResult{},
-	}
-}
-
-func (b *SQLResultBuilder) Add(r SQLResult, err error) *SQLResultBuilder {
-	if b.err != nil || r.Query == "" {
-		return b
-	}
-	b.results = append(b.results, r)
-	b.err = err
-	return b
-}
-
-func (b *SQLResultBuilder) AddString(s string) *SQLResultBuilder {
-	return b.Add(SQLResult{
-		Query: s,
-	}, nil)
-}
-
-func (b *SQLResultBuilder) Build() (SQLResult, error) {
-	if b.err != nil {
-		return SQLResult{}, b.err
-	}
-	return JoinResults(b.results, " "), nil
-}
-
-func JoinResults(results []SQLResult, sep string) SQLResult {
+func JoinQueries(results []RawQuery) RawQuery {
 	if len(results) == 0 {
-		return SQLResult{
+		return RawQuery{
 			Query:    "",
 			Bindings: []any{},
 		}
@@ -49,8 +17,8 @@ func JoinResults(results []SQLResult, sep string) SQLResult {
 	if len(results) == 1 {
 		return results[1]
 	}
-
-	queryLen := len(sep) * (len(results) - 1)
+	sep := "; "
+	queryLen := len(sep) * len(results)
 	bindingCount := 0
 
 	for _, r := range results {
@@ -62,16 +30,13 @@ func JoinResults(results []SQLResult, sep string) SQLResult {
 	query.Grow(queryLen)
 	bindings := make([]any, 0, bindingCount)
 
-	query.WriteString(results[0].Query)
-	bindings = append(bindings, results[0].Bindings...)
-
-	for _, r := range results[1:] {
-		query.WriteString(sep)
+	for _, r := range results {
 		query.WriteString(r.Query)
+		query.WriteString(sep)
 		bindings = append(bindings, r.Bindings...)
 	}
 
-	return SQLResult{
+	return RawQuery{
 		Query:    query.String(),
 		Bindings: bindings,
 	}

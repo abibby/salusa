@@ -6,9 +6,9 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-func (g *Generic) EncodeGroupBy(groups []string) (dialects.SQLResult, error) {
+func (g *Generic) EncodeGroupBy(groups []string) (dialects.RawQuery, error) {
 	if len(groups) == 0 {
-		return dialects.SQLResult{}, nil
+		return dialects.RawQuery{}, nil
 	}
 	b := resultBuilder()
 	b.AddString("GROUP BY")

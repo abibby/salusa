@@ -11,9 +11,9 @@ import (
 var ErrInsertNoRows = errors.New("no rows to insert")
 var ErrInsertMismatchedValueKeys = errors.New("mismatched value keys")
 
-func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.SQLResult, error) {
+func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.RawQuery, error) {
 	if len(q.Values) == 0 {
-		return dialects.SQLResult{}, ErrInsertNoRows
+		return dialects.RawQuery{}, ErrInsertNoRows
 	}
 	numColumns := len(q.Values[0])
 
@@ -22,7 +22,7 @@ func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.SQLResult
 
 	for i, m := range q.Values {
 		if len(q.Values[i]) != numColumns {
-			return dialects.SQLResult{}, ErrInsertMismatchedValueKeys
+			return dialects.RawQuery{}, ErrInsertMismatchedValueKeys
 		}
 		values[i] = make([]any, 0, numColumns)
 		for k, v := range m {

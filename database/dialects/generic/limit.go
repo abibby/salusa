@@ -2,9 +2,9 @@ package generic
 
 import "github.com/abibby/salusa/database/dialects"
 
-func (g *Generic) EncodeLimit(l *dialects.Limit) (dialects.SQLResult, error) {
+func (g *Generic) EncodeLimit(l *dialects.Limit) (dialects.RawQuery, error) {
 	if l.Limit == 0 && l.Offset == 0 {
-		return dialects.SQLResult{}, nil
+		return dialects.RawQuery{}, nil
 	}
 	b := resultBuilder()
 	if l.Limit != 0 {

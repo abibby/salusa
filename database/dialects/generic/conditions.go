@@ -6,21 +6,21 @@ import (
 	"github.com/abibby/salusa/database/dialects"
 )
 
-func (g *Generic) EncodeWheres(c []dialects.Condition) (dialects.SQLResult, error) {
+func (g *Generic) EncodeWheres(c []dialects.Condition) (dialects.RawQuery, error) {
 	return g.encodeConditionsPrefix("WHERE", c)
 }
-func (g *Generic) EncodeHavings(c []dialects.Condition) (dialects.SQLResult, error) {
+func (g *Generic) EncodeHavings(c []dialects.Condition) (dialects.RawQuery, error) {
 	return g.encodeConditionsPrefix("HAVING", c)
 }
 
-func (g *Generic) encodeConditionsPrefix(prefix string, c []dialects.Condition) (dialects.SQLResult, error) {
+func (g *Generic) encodeConditionsPrefix(prefix string, c []dialects.Condition) (dialects.RawQuery, error) {
 	if len(c) == 0 {
-		return dialects.SQLResult{}, nil
+		return dialects.RawQuery{}, nil
 	}
 	return resultBuilder().AddString(prefix).Add(g.EncodeConditions(c)).Build()
 }
 
-func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.SQLResult, error) {
+func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.RawQuery, error) {
 	b := resultBuilder()
 	for i, c := range c {
 		if i != 0 {
@@ -34,7 +34,7 @@ func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.SQLResult, 
 			b.Add(g.EncodeColumn(&c.Column))
 
 			if c.Operator == "" {
-				return dialects.SQLResult{}, fmt.Errorf("the operator must be set when the column is set")
+				return dialects.RawQuery{}, fmt.Errorf("the operator must be set when the column is set")
 			}
 		}
 
@@ -45,7 +45,7 @@ func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.SQLResult, 
 			case "!=":
 				b.AddString("IS NOT NULL")
 			default:
-				return dialects.SQLResult{}, fmt.Errorf("wheres checking nil only support = and !=")
+				return dialects.RawQuery{}, fmt.Errorf("wheres checking nil only support = and !=")
 			}
 		} else {
 			if c.Operator != "" {
