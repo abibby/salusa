@@ -44,7 +44,6 @@ func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.RawQuery, error) {
 		b.Add(g.EncodeFunctionCall(c.Function))
 	} else if c.SubQuery != nil {
 		b.Add(group(g.EncodeSelectQuery(c.SubQuery.Query())))
-	} else {
 	}
 	if c.As != "" {
 		b.AddString("AS").AddString(g.core.Identifier(c.As))

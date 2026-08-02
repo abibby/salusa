@@ -231,7 +231,7 @@ func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, 
 
 	rPKey, pKey, isAuto := isAutoIncrementing(v)
 	if isAuto {
-		for i, _ := range maps {
+		for i := range maps {
 			delete(maps[i], pKey)
 		}
 	}

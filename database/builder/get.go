@@ -31,7 +31,7 @@ func (e *QueryError) Unwrap() error {
 func (b *ModelBuilder[T]) Get(tx database.DB) ([]T, error) {
 	v := []T{}
 	err := b.builder.Load(tx, &v)
-	if errors.Is(sql.ErrNoRows, err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return v, nil
 	}
 	if err != nil {
