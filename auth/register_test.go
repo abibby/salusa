@@ -91,4 +91,52 @@ func TestRegister(t *testing.T) {
 		assert.ErrorIs(t, err, auth.Err401Unauthorized)
 		assert.Nil(t, u)
 	})
+
+	t.Run("invalid numeric subject", func(t *testing.T) {
+		db := sqlx.MustOpen("sqlite3", ":memory:")
+		defer db.Close()
+		migrate.MustMigrateModel(db, &AutoIncrementUser{})
+		createdUser := &AutoIncrementUser{
+			Username:     "user",
+			PasswordHash: []byte{},
+		}
+		err := model.Save(db, createdUser)
+		assert.NoError(t, err)
+
+		ctx := di.TestDependencyProviderContext()
+		_ = databasedi.Register(db)(ctx)
+		err = auth.Register[*AutoIncrementUser](ctx)
+		assert.NoError(t, err)
+
+		ctx = auth.SetClaims(ctx, &auth.Claims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				Subject: "not-a-number",
+			},
+		})
+
+		u, err := di.Resolve[*AutoIncrementUser](ctx)
+		assert.Error(t, err)
+		assert.Nil(t, u)
+	})
+
+	t.Run("user not found", func(t *testing.T) {
+		db := sqlx.MustOpen("sqlite3", ":memory:")
+		defer db.Close()
+		migrate.MustMigrateModel(db, &auth.UsernameUser{})
+
+		ctx := di.TestDependencyProviderContext()
+		_ = databasedi.Register(db)(ctx)
+		err := auth.Register[*auth.UsernameUser](ctx)
+		assert.NoError(t, err)
+
+		ctx = auth.SetClaims(ctx, &auth.Claims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				Subject: uuid.New().String(),
+			},
+		})
+
+		u, err := di.Resolve[*auth.UsernameUser](ctx)
+		assert.ErrorIs(t, err, auth.Err401Unauthorized)
+		assert.Nil(t, u)
+	})
 }
