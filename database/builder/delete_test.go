@@ -12,19 +12,19 @@ import (
 )
 
 func TestDeleter(t *testing.T) {
-	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
-		// {
-		// 	Name:             "delete all",
-		// 	Builder:          NewTestBuilder().Deleter(),
-		// 	ExpectedSQL:      "DELETE FROM \"foos\"",
-		// 	ExpectedBindings: []any{},
-		// },
-		// {
-		// 	Name:             "delete where",
-		// 	Builder:          NewTestBuilder().Where("id", "=", 5).Deleter(),
-		// 	ExpectedSQL:      "DELETE FROM \"foos\" WHERE \"id\" = ?",
-		// 	ExpectedBindings: []any{5},
-		// },
+	test.DeleteQueryTest(t, []test.Case[dialects.DeleteQueryBuilder]{
+		{
+			Name:             "delete all",
+			Builder:          NewTestBuilder(),
+			ExpectedSQL:      "DELETE FROM \"foos\"",
+			ExpectedBindings: []any{},
+		},
+		{
+			Name:             "delete where",
+			Builder:          NewTestBuilder().Where("id", "=", 5),
+			ExpectedSQL:      "DELETE FROM \"foos\" WHERE \"id\" = ?",
+			ExpectedBindings: []any{5},
+		},
 	})
 }
 

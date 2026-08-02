@@ -20,11 +20,7 @@ func (b *Builder) Update(tx database.DB, updates Updates) error {
 	if len(updates) == 0 {
 		return nil
 	}
-	r, err := dialects.New().EncodeUpdateQuery(&dialects.UpdateQuery{
-		Table:  b.GetTable(),
-		Values: updates,
-		Wheres: b.wheres.conditions,
-	})
+	r, err := dialects.New().EncodeUpdateQuery(b.UpdateQuery(updates))
 	if err != nil {
 		return err
 	}
@@ -35,4 +31,16 @@ func (b *Builder) Update(tx database.DB, updates Updates) error {
 	}
 
 	return nil
+}
+
+func (b *ModelBuilder[T]) UpdateQuery(updates Updates) *dialects.UpdateQuery {
+	return b.builder.UpdateQuery(updates)
+}
+
+func (b *Builder) UpdateQuery(updates Updates) *dialects.UpdateQuery {
+	return &dialects.UpdateQuery{
+		Table:  b.GetTable(),
+		Values: updates,
+		Wheres: b.wheres.conditions,
+	}
 }

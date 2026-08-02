@@ -12,31 +12,31 @@ import (
 )
 
 func TestUpdater(t *testing.T) {
-	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
-		// {
-		// 	Name:             "Update all",
-		// 	Builder:          NewTestBuilder().Updater(builder.Updates{"id": 1}),
-		// 	ExpectedSQL:      `UPDATE "foos" SET "id"=?`,
-		// 	ExpectedBindings: []any{1},
-		// },
-		// {
-		// 	Name:             "Update all multi",
-		// 	Builder:          NewTestBuilder().Updater(builder.Updates{"id": 1, "foo": "bar"}),
-		// 	ExpectedSQL:      `UPDATE "foos" SET "foo"=?, "id"=?`,
-		// 	ExpectedBindings: []any{"bar", 1},
-		// },
-		// {
-		// 	Name:             "Update where",
-		// 	Builder:          NewTestBuilder().Where("id", "=", 5).Updater(builder.Updates{"id": 1}),
-		// 	ExpectedSQL:      `UPDATE "foos" SET "id"=? WHERE "id" = ?`,
-		// 	ExpectedBindings: []any{1, 5},
-		// },
-		// {
-		// 	Name:             "Update where multi",
-		// 	Builder:          NewTestBuilder().Where("id", "=", 5).Updater(builder.Updates{"id": 1, "foo": "bar"}),
-		// 	ExpectedSQL:      `UPDATE "foos" SET "foo"=?, "id"=? WHERE "id" = ?`,
-		// 	ExpectedBindings: []any{"bar", 1, 5},
-		// },
+	test.UpdateQueryTest(t, []test.Case[*dialects.UpdateQuery]{
+		{
+			Name:             "Update all",
+			Builder:          NewTestBuilder().UpdateQuery(builder.Updates{"id": 1}),
+			ExpectedSQL:      `UPDATE "foos" SET "id" = ?`,
+			ExpectedBindings: []any{1},
+		},
+		{
+			Name:             "Update all multi",
+			Builder:          NewTestBuilder().UpdateQuery(builder.Updates{"id": 1, "foo": "bar"}),
+			ExpectedSQL:      `UPDATE "foos" SET "id" = ?, "foo" = ?`,
+			ExpectedBindings: []any{1, "bar"},
+		},
+		{
+			Name:             "Update where",
+			Builder:          NewTestBuilder().Where("id", "=", 5).UpdateQuery(builder.Updates{"id": 1}),
+			ExpectedSQL:      `UPDATE "foos" SET "id" = ? WHERE "id" = ?`,
+			ExpectedBindings: []any{1, 5},
+		},
+		{
+			Name:             "Update where multi",
+			Builder:          NewTestBuilder().Where("id", "=", 5).UpdateQuery(builder.Updates{"id": 1, "foo": "bar"}),
+			ExpectedSQL:      `UPDATE "foos" SET "id" = ?, "foo" = ? WHERE "id" = ?`,
+			ExpectedBindings: []any{1, "bar", 5},
+		},
 	})
 }
 

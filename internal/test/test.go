@@ -29,6 +29,18 @@ func QueryTest(t *testing.T, testCases []Case[dialects.QueryBuilder]) {
 		return d.EncodeSelectQuery(b.Query())
 	})
 }
+func DeleteQueryTest(t *testing.T, testCases []Case[dialects.DeleteQueryBuilder]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.DeleteQueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeDeleteQuery(b.DeleteQuery())
+	})
+}
+func UpdateQueryTest(t *testing.T, testCases []Case[*dialects.UpdateQuery]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b *dialects.UpdateQuery) (dialects.RawQuery, error) {
+		return d.EncodeUpdateQuery(b)
+	})
+}
 func CreateTableTest(t *testing.T, testCases []Case[dialects.CreateTableQueryBuilder]) {
 	t.Helper()
 	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.CreateTableQueryBuilder) (dialects.RawQuery, error) {
