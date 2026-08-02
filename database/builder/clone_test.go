@@ -8,7 +8,16 @@ import (
 )
 
 func TestBuilder_Clone(t *testing.T) {
-	b := builder.NewBuilder().Where("a", "!=", 5)
+	b := builder.NewBuilder().
+		Select("c1", "c2").Distinct().
+		Join("t1", "t1_id", "=", "id").
+		Where("a", "!=", 5).
+		GroupBy("c1").
+		Having("c1", "=", 7).
+		OrderBy("c2").
+		Limit(1).Offset(10)
 
-	assert.Equal(t, b, b.Clone())
+	clone := b.Clone()
+	assert.NotSame(t, b, clone)
+	assert.Equal(t, b, clone)
 }

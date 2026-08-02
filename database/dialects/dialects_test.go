@@ -114,8 +114,6 @@ func TestSelectQuery(t *testing.T) {
 	q := dialects.NewSelectQuery()
 	q.From = "foos"
 	q.Select.Columns = append(q.Select.Columns, dialects.Column{Column: "id"})
-	cloned := q.Clone()
-	assert.Same(t, &q, cloned)
 
 	s := dialects.NewSelect()
 	assert.Empty(t, s.Columns)
