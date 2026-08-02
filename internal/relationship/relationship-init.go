@@ -18,7 +18,7 @@ func initializeRelationships(v reflect.Value, pointer bool) error {
 		ft := t.Field(i)
 
 		if ft.Anonymous {
-			err := initializeRelationships(v.Field(i), ft.Type.Kind() == reflect.Ptr)
+			err := initializeRelationships(v.Field(i), ft.Type.Kind() == reflect.Pointer)
 			if err != nil {
 				return err
 			}
@@ -31,7 +31,7 @@ func initializeRelationships(v reflect.Value, pointer bool) error {
 				continue
 			}
 
-			if ft.Type.Kind() == reflect.Ptr {
+			if ft.Type.Kind() == reflect.Pointer {
 				fv.Set(reflect.New(ft.Type.Elem()))
 			} else {
 				fv.Set(reflect.New(ft.Type).Elem())

@@ -38,7 +38,7 @@ func decodeEvent(b []byte, events map[EventType]reflect.Type) (Event, error) {
 	}
 
 	dereferenced := false
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		dereferenced = true
 		t = t.Elem()
 	}
