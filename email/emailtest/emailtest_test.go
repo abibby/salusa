@@ -1,0 +1,37 @@
+package emailtest_test
+
+import (
+	"testing"
+
+	"github.com/abibby/salusa/email"
+	"github.com/abibby/salusa/email/emailtest"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestNewTestMailer(t *testing.T) {
+	var _ email.Mailer = (*emailtest.TestMailer)(nil)
+
+	m := emailtest.NewTestMailer()
+	assert.Empty(t, m.EmailsSent())
+
+	msg := &email.Message{
+		To:       []string{"a@example.com"},
+		Subject:  "hi",
+		HTMLBody: "<p>hello</p>",
+	}
+	err := m.Mail(msg)
+	assert.NoError(t, err)
+	err = m.Mail(&email.Message{To: []string{"b@example.com"}})
+	assert.NoError(t, err)
+
+	sent := m.EmailsSent()
+	assert.Len(t, sent, 2)
+	assert.Same(t, msg, sent[0])
+	assert.Equal(t, "b@example.com", sent[1].To[0])
+}
+
+func TestNewTestMailerConfig(t *testing.T) {
+	c := emailtest.NewTestMailerConfig()
+	mailer := c.Mailer()
+	assert.NotNil(t, mailer)
+}

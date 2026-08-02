@@ -171,3 +171,61 @@ func TestDelete(t *testing.T) {
 		}
 	}
 }
+
+func TestClone(t *testing.T) {
+	for _, fac := range makeFactories[string]() {
+		t.Run(fac.name, func(t *testing.T) {
+			s := fac.fn("a", "b", "c")
+			c := s.Clone()
+			assert.Equal(t, s.Len(), c.Len())
+			for _, v := range []string{"a", "b", "c"} {
+				assert.True(t, c.Has(v))
+			}
+			c.Add("d")
+			assert.False(t, s.Has("d"))
+			assert.Equal(t, 3, s.Len())
+		})
+	}
+}
+
+func TestAll(t *testing.T) {
+	for _, fac := range makeFactories[string]() {
+		t.Run(fac.name, func(t *testing.T) {
+			s := fac.fn("a", "b", "c")
+			got := map[string]bool{}
+			for v := range s.All() {
+				got[v] = true
+			}
+			assert.Equal(t, map[string]bool{"a": true, "b": true, "c": true}, got)
+		})
+	}
+}
+
+func TestAllEarlyExit(t *testing.T) {
+	for _, fac := range makeFactories[string]() {
+		t.Run(fac.name, func(t *testing.T) {
+			s := fac.fn("a", "b", "c")
+			count := 0
+			for range s.All() {
+				count++
+				if count == 1 {
+					break
+				}
+			}
+			assert.Equal(t, 1, count)
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	t.Run("Slice", func(t *testing.T) {
+		s := NewSliceSet("a", "b", "c")
+		assert.Equal(t, "a", s.Get(0))
+		assert.Equal(t, "c", s.Get(2))
+	})
+	t.Run("Ordered", func(t *testing.T) {
+		s := NewOrderedSet("a", "b", "c")
+		assert.Equal(t, "a", s.Get(0))
+		assert.Equal(t, "c", s.Get(2))
+	})
+}

@@ -7,6 +7,41 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type valEvent struct {
+	Foo string
+}
+
+func (valEvent) Type() EventType {
+	return "val-event"
+}
+
+func TestDecodeEventErrors(t *testing.T) {
+	t.Run("event type not found", func(t *testing.T) {
+		_, err := decodeEvent([]byte("unknown|data"), map[EventType]reflect.Type{})
+		assert.ErrorIs(t, err, ErrEventTypeNotFound)
+	})
+
+	t.Run("bad gob data", func(t *testing.T) {
+		_, err := decodeEvent([]byte("test-event:1|notgobdata"), map[EventType]reflect.Type{
+			(&TestEvent1{}).Type(): reflect.TypeOf(&TestEvent1{}),
+		})
+		assert.Error(t, err)
+	})
+
+	t.Run("value type event", func(t *testing.T) {
+		b, err := encodeEvent(valEvent{Foo: "bar"})
+		assert.NoError(t, err)
+
+		e, err := decodeEvent(b, map[EventType]reflect.Type{
+			"val-event": reflect.TypeOf(valEvent{}),
+		})
+		assert.NoError(t, err)
+		val, ok := e.(valEvent)
+		assert.True(t, ok)
+		assert.Equal(t, "bar", val.Foo)
+	})
+}
+
 type TestEvent1 struct {
 	Foo string
 }
