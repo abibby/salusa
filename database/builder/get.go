@@ -1,6 +1,8 @@
 package builder
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -29,6 +31,9 @@ func (e *QueryError) Unwrap() error {
 func (b *ModelBuilder[T]) Get(tx database.DB) ([]T, error) {
 	v := []T{}
 	err := b.builder.Load(tx, &v)
+	if errors.Is(sql.ErrNoRows, err) {
+		return v, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +179,7 @@ func (b *Builder) Count(tx database.DB) (int, error) {
 func (b *Builder) numericFunc(tx database.DB, function, column string) (int, error) {
 	var count int
 	err := b.
+		Clone().
 		Unordered().
 		SelectFunction(function, column).LoadOne(tx, &count)
 	if err != nil {
