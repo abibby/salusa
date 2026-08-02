@@ -1,6 +1,10 @@
 package generic
 
-import "github.com/abibby/salusa/database/dialects"
+import (
+	"sort"
+
+	"github.com/abibby/salusa/database/dialects"
+)
 
 func (g *Generic) EncodeUpdateQuery(q *dialects.UpdateQuery) (dialects.RawQuery, error) {
 	return newRawQueryBuilder().
@@ -14,11 +18,16 @@ func (g *Generic) EncodeUpdateQuery(q *dialects.UpdateQuery) (dialects.RawQuery,
 func (g *Generic) EncodeUpdateSet(values map[string]any) (dialects.RawQuery, error) {
 	b := newRawQueryBuilder().AddString("SET")
 	results := make([]dialects.RawQuery, 0, len(values))
-	for k, v := range values {
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
 		r, err := newRawQueryBuilder().
 			AddString(g.core.Identifier(k)).
 			AddString("=").
-			Add(g.EncodeAny(v)).
+			Add(g.EncodeAny(values[k])).
 			Build()
 		if err != nil {
 			return dialects.RawQuery{}, err
