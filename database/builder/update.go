@@ -29,7 +29,7 @@ func (b *Builder) Update(tx database.DB, updates Updates) error {
 		return err
 	}
 
-	_, err = tx.ExecContext(b.ctx, r.Query, r.Bindings...)
+	_, err = tx.ExecContext(b.ctx, r.SQL, r.Bindings...)
 	if err != nil {
 		return err
 	}

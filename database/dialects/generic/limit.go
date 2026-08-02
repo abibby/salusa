@@ -6,7 +6,7 @@ func (g *Generic) EncodeLimit(l *dialects.Limit) (dialects.RawQuery, error) {
 	if l.Limit == 0 && l.Offset == 0 {
 		return dialects.RawQuery{}, nil
 	}
-	b := resultBuilder()
+	b := newRawQueryBuilder()
 	if l.Limit != 0 {
 		b.AddString("LIMIT").Add(g.EncodeLiteral(l.Limit))
 	}

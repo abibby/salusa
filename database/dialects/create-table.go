@@ -1,5 +1,8 @@
 package dialects
 
+type CreateTableQueryBuilder interface {
+	CreateTableQuery() *CreateTableQuery
+}
 type CreateTableQuery struct {
 	IfNotExists bool
 	Table       string

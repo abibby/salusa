@@ -5,14 +5,14 @@ import (
 )
 
 func (g *Generic) EncodeJoins(joins []dialects.Join) (dialects.RawQuery, error) {
-	b := resultBuilder()
+	b := newRawQueryBuilder()
 	for _, j := range joins {
 		b.Add(g.EncodeJoin(&j))
 	}
 	return b.Build()
 }
 func (g *Generic) EncodeJoin(j *dialects.Join) (dialects.RawQuery, error) {
-	b := resultBuilder().
+	b := newRawQueryBuilder().
 		AddString(j.Direction).
 		AddString("JOIN").
 		AddString(g.core.Identifier(j.Table))

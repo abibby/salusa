@@ -22,6 +22,6 @@ func runDropTable(ctx context.Context, tx database.DB, q *dialects.DropTableQuer
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, result.Query, result.Bindings...)
+	_, err = tx.ExecContext(ctx, result.SQL, result.Bindings...)
 	return err
 }

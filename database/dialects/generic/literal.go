@@ -4,13 +4,13 @@ import "github.com/abibby/salusa/database/dialects"
 
 func (g *Generic) EncodeLiteral(v any) (dialects.RawQuery, error) {
 	return dialects.RawQuery{
-		Query:    g.core.Binding(),
+		SQL:      g.core.Binding(),
 		Bindings: []any{v},
 	}, nil
 }
 
 func (g *Generic) EncodeAny(v any) (dialects.RawQuery, error) {
-	b := resultBuilder()
+	b := newRawQueryBuilder()
 	switch v := v.(type) {
 	case dialects.QueryBuilder:
 		b.Add(group(g.EncodeSelectQuery(v.Query())))

@@ -33,7 +33,7 @@ func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.RawQuery,
 		}
 	}
 
-	b := resultBuilder().
+	b := newRawQueryBuilder().
 		AddString("INSERT INTO").
 		AddString(g.core.Identifier(q.Table)).
 		AddString("(" + strings.Join(slices.Map(columns, g.core.Identifier), ", ") + ")").
@@ -43,7 +43,7 @@ func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.RawQuery,
 		if i > 0 {
 			b.AddStringNoSpace(",")
 		}
-		b.Add(group(mapJoinResults(v, ", ", g.EncodeLiteral)))
+		b.Add(group(mapJoinRawQueries(v, ", ", g.EncodeLiteral)))
 	}
 	return b.Build()
 }

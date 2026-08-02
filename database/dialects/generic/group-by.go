@@ -10,7 +10,7 @@ func (g *Generic) EncodeGroupBy(groups []string) (dialects.RawQuery, error) {
 	if len(groups) == 0 {
 		return dialects.RawQuery{}, nil
 	}
-	b := resultBuilder()
+	b := newRawQueryBuilder()
 	b.AddString("GROUP BY")
 
 	identifiers := make([]string, len(groups))

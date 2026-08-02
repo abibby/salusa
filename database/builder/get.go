@@ -89,14 +89,14 @@ func (b *Builder) Load(tx database.DB, v any) (err error) {
 		}
 		err = &QueryError{
 			err:   err,
-			query: r.Query,
+			query: r.SQL,
 		}
 	}()
 
 	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
-		err = sqlx.SelectContext(b.Context(), tx, v, r.Query, r.Bindings...)
+		err = sqlx.SelectContext(b.Context(), tx, v, r.SQL, r.Bindings...)
 	} else {
-		err = sqlx.GetContext(b.Context(), tx, v, r.Query, r.Bindings...)
+		err = sqlx.GetContext(b.Context(), tx, v, r.SQL, r.Bindings...)
 	}
 	if err != nil {
 		return err

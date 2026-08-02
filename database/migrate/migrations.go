@@ -106,7 +106,7 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = database.Exec(ctx, db, result.Query, result.Bindings)
+	_, err = database.Exec(ctx, db, result.SQL, result.Bindings)
 	if err != nil {
 		return err
 	}

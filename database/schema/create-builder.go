@@ -30,6 +30,10 @@ func (b *CreateTableBuilder) Type() BlueprintType {
 	return BlueprintTypeCreate
 }
 
+func (b *CreateTableBuilder) CreateTableQuery() *dialects.CreateTableQuery {
+	return b.blueprint.CreateTableQuery()
+}
+
 func (b *CreateTableBuilder) GoString() string {
 	return fmt.Sprintf(
 		"schema.Create(%#v, %#v)",
@@ -43,7 +47,7 @@ func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, result.Query, result.Bindings...)
+	_, err = tx.ExecContext(ctx, result.SQL, result.Bindings...)
 	return err
 }
 func (b *CreateTableBuilder) IfNotExists() *CreateTableBuilder {

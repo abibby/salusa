@@ -18,7 +18,7 @@ func ExampleBuilder() {
 		panic(err)
 	}
 
-	fmt.Println(r.Query)
+	fmt.Println(r.SQL)
 	fmt.Println(r.Bindings)
 	// Output:
 	// SELECT "foos".* FROM "foos" WHERE "column" = ?
@@ -36,7 +36,7 @@ func ExampleBuilder_WhereHas() {
 		panic(err)
 	}
 
-	fmt.Println(r.Query)
+	fmt.Println(r.SQL)
 	fmt.Println(r.Bindings)
 	// Output:
 	// SELECT "foos".* FROM "foos" WHERE EXISTS (SELECT "bars".* FROM "bars" WHERE "foo_id" = "foos"."id" AND "id" = ?)

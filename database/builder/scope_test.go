@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/model/mixins"
 	"github.com/abibby/salusa/internal/test"
 )
@@ -38,7 +39,7 @@ func TestScope(t *testing.T) {
 			return b.Where("a", "=", foo)
 		},
 	}
-	test.QueryTest(t, []test.Case{
+	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
 		{
 			Name:             "scope",
 			Builder:          NewTestBuilder().WithScope(scopeA),

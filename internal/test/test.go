@@ -7,6 +7,7 @@ import (
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dbtest"
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/generic"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
@@ -15,19 +16,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type Case struct {
+type Case[T any] struct {
 	Name             string
-	Builder          dialects.QueryBuilder
+	Builder          T
 	ExpectedSQL      string
 	ExpectedBindings []any
 }
 
-func QueryTest(t *testing.T, testCases []Case) {
+func QueryTest(t *testing.T, testCases []Case[dialects.QueryBuilder]) {
+	queryTest(t, testCases, func(d dialects.Dialect, b dialects.QueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeSelectQuery(b.Query())
+	})
+}
+func CreateTableTest(t *testing.T, testCases []Case[dialects.CreateTableQueryBuilder]) {
+	queryTest(t, testCases, func(d dialects.Dialect, b dialects.CreateTableQueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeCreateTableQuery(b.CreateTableQuery())
+	})
+}
+func AlterTableTest(t *testing.T, testCases []Case[dialects.AlterTableQueryBuilder]) {
+	queryTest(t, testCases, func(d dialects.Dialect, b dialects.AlterTableQueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeAlterTableQuery(b.AlterTableQuery())
+	})
+}
+func ColumnDefinitionTest(t *testing.T, testCases []Case[*dialects.ColumnDefinition]) {
+	queryTest(t, testCases, func(d dialects.Dialect, b *dialects.ColumnDefinition) (dialects.RawQuery, error) {
+		return d.(*generic.Generic).EncodeColumnDefinition(b)
+	})
+}
+func queryTest[T any](t *testing.T, testCases []Case[T], encoder func(d dialects.Dialect, b T) (dialects.RawQuery, error)) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			result, err := dialects.New().EncodeSelectQuery(tc.Builder.Query())
+			result, err := encoder(dialects.New(), tc.Builder)
 			if assert.NoError(t, err) {
-				assert.Equal(t, tc.ExpectedSQL, result.Query)
+				assert.Equal(t, tc.ExpectedSQL, result.SQL)
 				assert.Equal(t, tc.ExpectedBindings, result.Bindings)
 			}
 		})
@@ -47,7 +68,7 @@ func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.RawQuery, erro
 		t.Run(tc.Name, func(t *testing.T) {
 			result, err := encoder(tc.Builder)
 			if assert.NoError(t, err) {
-				assert.Equal(t, tc.ExpectedSQL, result.Query)
+				assert.Equal(t, tc.ExpectedSQL, result.SQL)
 				assert.Equal(t, tc.ExpectedBindings, result.Bindings)
 			}
 		})

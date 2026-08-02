@@ -14,7 +14,7 @@ func delete(b *Builder, tx database.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(b.ctx, result.Query, result.Bindings...)
+	_, err = tx.ExecContext(b.ctx, result.SQL, result.Bindings...)
 	if err != nil {
 		return err
 	}

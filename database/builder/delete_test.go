@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeleter(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
 		// {
 		// 	Name:             "delete all",
 		// 	Builder:          NewTestBuilder().Deleter(),

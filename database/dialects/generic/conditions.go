@@ -17,11 +17,11 @@ func (g *Generic) encodeConditionsPrefix(prefix string, c []dialects.Condition) 
 	if len(c) == 0 {
 		return dialects.RawQuery{}, nil
 	}
-	return resultBuilder().AddString(prefix).Add(g.EncodeConditions(c)).Build()
+	return newRawQueryBuilder().AddString(prefix).Add(g.EncodeConditions(c)).Build()
 }
 
 func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.RawQuery, error) {
-	b := resultBuilder()
+	b := newRawQueryBuilder()
 	for i, c := range c {
 		if i != 0 {
 			if c.Or {
@@ -52,7 +52,7 @@ func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.RawQuery, e
 				b.AddString(c.Operator)
 			}
 			if inList, ok := c.Value.([]any); ok {
-				b.Add(group(mapJoinResults(inList, ", ", g.EncodeAny)))
+				b.Add(group(mapJoinRawQueries(inList, ", ", g.EncodeAny)))
 			} else {
 				b.Add(g.EncodeAny(c.Value))
 			}

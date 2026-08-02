@@ -109,7 +109,7 @@ func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, m ma
 		return err
 	}
 
-	result, err := tx.ExecContext(ctx, sql.Query, sql.Bindings...)
+	result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
 	if err != nil {
 		return fmt.Errorf("failed to insert model: %w", err)
 	}
@@ -187,7 +187,7 @@ func update(ctx context.Context, tx database.DB, d dialects.Dialect, v any, m ma
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, result.Query, result.Bindings...)
+	_, err = tx.ExecContext(ctx, result.SQL, result.Bindings...)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, 
 		return err
 	}
 
-	result, err := tx.ExecContext(ctx, sql.Query, sql.Bindings...)
+	result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
 	if err != nil {
 		return fmt.Errorf("failed to insert model: %w", err)
 	}

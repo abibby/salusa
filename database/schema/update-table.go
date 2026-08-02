@@ -30,7 +30,7 @@ func (b *UpdateTableBuilder) Type() BlueprintType {
 }
 
 func (b *UpdateTableBuilder) AlterTableQuery() *dialects.AlterTableQuery {
-	return &dialects.AlterTableQuery{}
+	return b.blueprint.AlterTableQuery()
 }
 func (b *UpdateTableBuilder) GoString() string {
 	return fmt.Sprintf(
@@ -45,6 +45,6 @@ func (b *UpdateTableBuilder) Run(ctx context.Context, tx database.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, result.Query, result.Bindings...)
+	_, err = tx.ExecContext(ctx, result.SQL, result.Bindings...)
 	return err
 }

@@ -3,11 +3,12 @@ package builder_test
 import (
 	"testing"
 
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 )
 
 func TestLimit(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
 		{
 			Name:             "limit",
 			Builder:          NewTestBuilder().Limit(1),

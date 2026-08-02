@@ -12,7 +12,7 @@ type rawQueryBuilder struct {
 	err      error
 }
 
-func resultBuilder() *rawQueryBuilder {
+func newRawQueryBuilder() *rawQueryBuilder {
 	return &rawQueryBuilder{
 		query:    strings.Builder{},
 		bindings: []any{},
@@ -20,7 +20,7 @@ func resultBuilder() *rawQueryBuilder {
 }
 
 func (b *rawQueryBuilder) Add(r dialects.RawQuery, err error) *rawQueryBuilder {
-	if b.err != nil || r.Query == "" {
+	if b.err != nil || r.SQL == "" {
 		return b
 	}
 	if err != nil {
@@ -30,7 +30,7 @@ func (b *rawQueryBuilder) Add(r dialects.RawQuery, err error) *rawQueryBuilder {
 		if b.query.Len() > 0 {
 			b.query.WriteString(" ")
 		}
-		b.query.WriteString(r.Query)
+		b.query.WriteString(r.SQL)
 		b.bindings = append(b.bindings, r.Bindings...)
 	}
 	return b
@@ -38,7 +38,7 @@ func (b *rawQueryBuilder) Add(r dialects.RawQuery, err error) *rawQueryBuilder {
 
 func (b *rawQueryBuilder) AddString(s string) *rawQueryBuilder {
 	return b.Add(dialects.RawQuery{
-		Query: s,
+		SQL: s,
 	}, nil)
 }
 
@@ -52,15 +52,15 @@ func (b *rawQueryBuilder) Build() (dialects.RawQuery, error) {
 		return dialects.RawQuery{}, b.err
 	}
 	return dialects.RawQuery{
-		Query:    b.query.String(),
+		SQL:      b.query.String(),
 		Bindings: b.bindings,
 	}, nil
 }
 
-func joinResults(results []dialects.RawQuery, sep string) dialects.RawQuery {
+func joinRawQueries(results []dialects.RawQuery, sep string) dialects.RawQuery {
 	if len(results) == 0 {
 		return dialects.RawQuery{
-			Query:    "",
+			SQL:      "",
 			Bindings: []any{},
 		}
 	}
@@ -72,7 +72,7 @@ func joinResults(results []dialects.RawQuery, sep string) dialects.RawQuery {
 	bindingCount := 0
 
 	for _, r := range results {
-		queryLen += len(r.Query)
+		queryLen += len(r.SQL)
 		bindingCount += len(r.Bindings)
 	}
 
@@ -80,22 +80,22 @@ func joinResults(results []dialects.RawQuery, sep string) dialects.RawQuery {
 	query.Grow(queryLen)
 	bindings := make([]any, 0, bindingCount)
 
-	query.WriteString(results[0].Query)
+	query.WriteString(results[0].SQL)
 	bindings = append(bindings, results[0].Bindings...)
 
 	for _, r := range results[1:] {
 		query.WriteString(sep)
-		query.WriteString(r.Query)
+		query.WriteString(r.SQL)
 		bindings = append(bindings, r.Bindings...)
 	}
 
 	return dialects.RawQuery{
-		Query:    query.String(),
+		SQL:      query.String(),
 		Bindings: bindings,
 	}
 }
 
-func mapJoinResults[T any](arr []T, sep string, fn func(v T) (dialects.RawQuery, error)) (dialects.RawQuery, error) {
+func mapJoinRawQueries[T any](arr []T, sep string, fn func(v T) (dialects.RawQuery, error)) (dialects.RawQuery, error) {
 	results := make([]dialects.RawQuery, len(arr))
 	var err error
 	for i, v := range arr {
@@ -104,5 +104,5 @@ func mapJoinResults[T any](arr []T, sep string, fn func(v T) (dialects.RawQuery,
 			return dialects.RawQuery{}, err
 		}
 	}
-	return joinResults(results, sep), nil
+	return joinRawQueries(results, sep), nil
 }

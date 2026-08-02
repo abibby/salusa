@@ -82,7 +82,7 @@ type RawString string
 
 func Raw(sql string, bindings ...any) RawQuery {
 	return RawQuery{
-		Query:    sql,
+		SQL:      sql,
 		Bindings: bindings,
 	}
 }

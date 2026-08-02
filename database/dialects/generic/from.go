@@ -7,6 +7,6 @@ func (g *Generic) EncodeFrom(from string) (dialects.RawQuery, error) {
 		return dialects.RawQuery{}, nil
 	}
 	return dialects.RawQuery{
-		Query: "FROM " + g.core.Identifier(from),
+		SQL: "FROM " + g.core.Identifier(from),
 	}, nil
 }

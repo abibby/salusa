@@ -3,26 +3,25 @@ package dialects
 import "strings"
 
 type RawQuery struct {
-	Query    string
+	SQL      string
 	Bindings []any
 }
 
 func JoinQueries(results []RawQuery) RawQuery {
 	if len(results) == 0 {
 		return RawQuery{
-			Query:    "",
+			SQL:      "",
 			Bindings: []any{},
 		}
 	}
 	if len(results) == 1 {
 		return results[1]
 	}
-	sep := "; "
-	queryLen := len(sep) * len(results)
+	queryLen := 2*len(results) - 1
 	bindingCount := 0
 
 	for _, r := range results {
-		queryLen += len(r.Query)
+		queryLen += len(r.SQL)
 		bindingCount += len(r.Bindings)
 	}
 
@@ -30,14 +29,17 @@ func JoinQueries(results []RawQuery) RawQuery {
 	query.Grow(queryLen)
 	bindings := make([]any, 0, bindingCount)
 
-	for _, r := range results {
-		query.WriteString(r.Query)
-		query.WriteString(sep)
+	for i, r := range results {
+		if i > 0 {
+			query.WriteString(" ")
+		}
+		query.WriteString(r.SQL)
+		query.WriteString(";")
 		bindings = append(bindings, r.Bindings...)
 	}
 
 	return RawQuery{
-		Query:    query.String(),
+		SQL:      query.String(),
 		Bindings: bindings,
 	}
 }

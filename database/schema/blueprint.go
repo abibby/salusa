@@ -167,10 +167,19 @@ func (b *Blueprint) CreateTableQuery() *dialects.CreateTableQuery {
 	}
 
 	return &dialects.CreateTableQuery{
-		IfNotExists: true,
-		Table:       b.TableName(),
-		Columns:     columns,
+		// IfNotExists: true,
+		Table:   b.TableName(),
+		Columns: columns,
 	}
+}
+func (b *Blueprint) AlterTableQuery() *dialects.AlterTableQuery {
+	columns := make([]dialects.ColumnDefinition, len(b.columns))
+
+	for i, c := range b.columns {
+		columns[i] = *c.ColumnDefinition()
+	}
+
+	return &dialects.AlterTableQuery{}
 }
 
 func (b *Blueprint) GoString() string {

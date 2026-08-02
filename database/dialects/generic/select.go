@@ -11,7 +11,7 @@ func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.RawQuery, error) {
 		}, nil
 	}
 
-	b := resultBuilder()
+	b := newRawQueryBuilder()
 	b.AddString("SELECT")
 	if s.Distinct {
 		b.AddString("DISTINCT")
@@ -25,19 +25,19 @@ func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.RawQuery, error) {
 			return dialects.RawQuery{}, err
 		}
 	}
-	b.Add(joinResults(columns, ", "), nil)
+	b.Add(joinRawQueries(columns, ", "), nil)
 
 	return b.Build()
 }
 
 func (g *Generic) EncodeFunctionCall(fc *dialects.FunctionCall) (dialects.RawQuery, error) {
-	return resultBuilder().
+	return newRawQueryBuilder().
 		AddString(fc.Name + "(" + g.core.Identifier(fc.Arguments) + ")").
 		Build()
 }
 
 func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.RawQuery, error) {
-	b := resultBuilder()
+	b := newRawQueryBuilder()
 	if c.Column != "" {
 		b.AddString(g.core.Identifier(c.Column))
 	} else if c.Function != nil {

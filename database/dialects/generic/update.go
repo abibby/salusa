@@ -3,7 +3,7 @@ package generic
 import "github.com/abibby/salusa/database/dialects"
 
 func (g *Generic) EncodeUpdateQuery(q *dialects.UpdateQuery) (dialects.RawQuery, error) {
-	return resultBuilder().
+	return newRawQueryBuilder().
 		AddString("UPDATE").
 		AddString(g.core.Identifier(q.Table)).
 		Add(g.EncodeUpdateSet(q.Values)).
@@ -12,10 +12,10 @@ func (g *Generic) EncodeUpdateQuery(q *dialects.UpdateQuery) (dialects.RawQuery,
 }
 
 func (g *Generic) EncodeUpdateSet(values map[string]any) (dialects.RawQuery, error) {
-	b := resultBuilder().AddString("SET")
+	b := newRawQueryBuilder().AddString("SET")
 	results := make([]dialects.RawQuery, 0, len(values))
 	for k, v := range values {
-		r, err := resultBuilder().
+		r, err := newRawQueryBuilder().
 			AddString(g.core.Identifier(k)).
 			AddString("=").
 			Add(g.EncodeAny(v)).
@@ -25,5 +25,5 @@ func (g *Generic) EncodeUpdateSet(values map[string]any) (dialects.RawQuery, err
 		}
 		results = append(results, r)
 	}
-	return b.Add(joinResults(results, ", "), nil).Build()
+	return b.Add(joinRawQueries(results, ", "), nil).Build()
 }

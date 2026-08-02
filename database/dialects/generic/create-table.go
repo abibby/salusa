@@ -5,7 +5,7 @@ import (
 )
 
 func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {
-	b := resultBuilder().AddString("CREATE TABLE")
+	b := newRawQueryBuilder().AddString("CREATE TABLE")
 	if q.IfNotExists {
 		b.AddString("IF NOT EXISTS")
 	}
@@ -18,19 +18,19 @@ func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects
 		if err != nil {
 			return dialects.RawQuery{}, err
 		}
-		columns[i].Query = "\n\t" + columns[i].Query
-		if i == len(q.Columns)-1 {
-			columns[i].Query += "\n"
-		}
+		// columns[i].SQL = "\n\t" + columns[i].SQL
+		// if i == len(q.Columns)-1 {
+		// 	columns[i].SQL += "\n"
+		// }
 
 	}
-	b.Add(group(joinResults(columns, ","), nil))
+	b.Add(group(joinRawQueries(columns, ","), nil))
 
 	return b.Build()
 }
 
 func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects.RawQuery, error) {
-	r := resultBuilder()
+	r := newRawQueryBuilder()
 	r.AddString(g.core.Identifier(c.Name))
 	r.AddString(g.core.DataType(c.Datatype))
 
