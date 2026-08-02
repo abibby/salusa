@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/abibby/salusa/auth"
@@ -41,4 +42,23 @@ func TestParse(t *testing.T) {
 			assert.Equal(t, tc.Claims, newClaims)
 		})
 	}
+}
+
+func TestParseMalformedToken(t *testing.T) {
+	_, err := auth.Parse("not.a.token")
+	assert.Error(t, err)
+}
+
+func TestParseWrongAlgorithm(t *testing.T) {
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{}`))
+	token := header + "." + payload + ".signature"
+
+	_, err := auth.Parse(token)
+	assert.ErrorIs(t, err, auth.ErrUnexpectedAlgorithm)
+}
+
+func TestParseOfInterface(t *testing.T) {
+	_, err := auth.ParseOf[jwt.Claims]("token")
+	assert.Error(t, err)
 }
