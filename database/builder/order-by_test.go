@@ -3,11 +3,12 @@ package builder_test
 import (
 	"testing"
 
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 )
 
 func TestOrderBy(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
 		{
 			Name:             "one group",
 			Builder:          NewTestBuilder().OrderBy("a"),

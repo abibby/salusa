@@ -82,7 +82,7 @@ func primaryKeyName(field reflect.StructField, tag string, tableType any) (strin
 }
 
 func getRelation(rv reflect.Value, relation string) (Relationship, bool) {
-	if rv.Kind() == reflect.Ptr {
+	if rv.Kind() == reflect.Pointer {
 		if rv.IsZero() {
 			rv = reflect.New(rv.Type().Elem())
 			err := relationship.InitializeRelationships(rv.Interface())

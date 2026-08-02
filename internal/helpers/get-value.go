@@ -18,7 +18,7 @@ func GetValue(v any, key string) (any, bool) {
 	return result.Interface(), err == nil
 }
 func RGetValue(v reflect.Value, key string) (reflect.Value, error) {
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return reflect.Value{}, fmt.Errorf("v must not be nil")
 		}

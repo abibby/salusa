@@ -3,11 +3,12 @@ package builder_test
 import (
 	"testing"
 
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 )
 
 func TestSelect(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
 		{
 			Name:             "one select",
 			Builder:          NewTestBuilder().Select("a"),
@@ -35,7 +36,7 @@ func TestSelect(t *testing.T) {
 		{
 			Name:             "subquery",
 			Builder:          NewTestBuilder().SelectSubquery(NewTestBuilder().Select("a"), "test"),
-			ExpectedSQL:      "SELECT (SELECT \"a\" FROM \"foos\") as \"test\" FROM \"foos\"",
+			ExpectedSQL:      "SELECT (SELECT \"a\" FROM \"foos\") AS \"test\" FROM \"foos\"",
 			ExpectedBindings: []any{},
 		},
 		{

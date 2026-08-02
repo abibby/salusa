@@ -6,7 +6,6 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 type CreateTableBuilder struct {
@@ -14,7 +13,6 @@ type CreateTableBuilder struct {
 	ifNotExists bool
 }
 
-var _ helpers.SQLStringer = &CreateTableBuilder{}
 var _ Blueprinter = &CreateTableBuilder{}
 
 func Create(name string, cb func(b *Blueprint)) *CreateTableBuilder {
@@ -31,49 +29,31 @@ func (b *CreateTableBuilder) GetBlueprint() *Blueprint {
 func (b *CreateTableBuilder) Type() BlueprintType {
 	return BlueprintTypeCreate
 }
-func (b *CreateTableBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
-	r := helpers.Result()
-	r.AddString("CREATE TABLE")
-	if b.ifNotExists {
-		r.AddString("IF NOT EXISTS")
-	}
-	r.Add(helpers.Identifier(b.blueprint.name))
 
-	// primaryKeyColumns := slices.Filter(b.blueprint.columns, func(column *ColumnBuilder) bool {
-	// 	return column.primary
-	// })
-	// primaryKeys := slices.Map(primaryKeyColumns, func(column *ColumnBuilder) string {
-	// 	return column.name
-	// })
-	columns := make([]helpers.SQLStringer, len(b.blueprint.columns))
+func (b *CreateTableBuilder) CreateTableQuery() *dialects.CreateTableQuery {
+	columns := make([]dialects.ColumnDefinition, len(b.blueprint.columns))
 	for i, c := range b.blueprint.columns {
-		columns[i] = c
+		columns[i] = *c.ColumnDefinition()
 	}
-	if len(b.blueprint.primaryKeys) > 0 {
-		columns = append(columns, helpers.Concat(
-			helpers.Raw("PRIMARY KEY "),
-			helpers.Group(
-				helpers.Join(helpers.IdentifierList(b.blueprint.primaryKeys), ", "),
-			),
-		))
-	}
-	for _, foreignKey := range b.blueprint.foreignKeys {
-		columns = append(columns, foreignKey)
-		// r.Add(builder.Concat(foreignKey, builder.Raw(";")))
-	}
-	r.Add(helpers.Concat(
-		helpers.Group(
-			helpers.Concat(
-				helpers.Join(columns, ", "),
-			),
-		),
-		helpers.Raw(";"),
-	))
 
-	for _, index := range b.blueprint.indexes {
-		r.Add(helpers.Concat(index, helpers.Raw(";")))
+	foreignKeys := make([]dialects.ForeignKey, len(b.blueprint.foreignKeys))
+	for i, fk := range b.blueprint.foreignKeys {
+		foreignKeys[i] = *fk.ForeignKey()
 	}
-	return r.SQLString(d)
+
+	indexes := make([]dialects.Index, len(b.blueprint.indexes))
+	for i, fk := range b.blueprint.indexes {
+		indexes[i] = *fk.Index()
+	}
+
+	return &dialects.CreateTableQuery{
+		IfNotExists: b.ifNotExists,
+		Table:       b.blueprint.TableName(),
+		Columns:     columns,
+		PrimaryKeys: b.blueprint.primaryKeys,
+		ForeignKeys: foreignKeys,
+		Indexes:     indexes,
+	}
 }
 
 func (b *CreateTableBuilder) GoString() string {
@@ -84,7 +64,13 @@ func (b *CreateTableBuilder) GoString() string {
 	)
 }
 func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {
-	return runQuery(ctx, tx, b)
+	q := b.CreateTableQuery()
+	result, err := dialects.New().EncodeCreateTableQuery(q)
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, result.SQL, result.Bindings...)
+	return err
 }
 func (b *CreateTableBuilder) IfNotExists() *CreateTableBuilder {
 	b.ifNotExists = true

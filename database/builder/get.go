@@ -1,6 +1,8 @@
 package builder
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -29,6 +31,9 @@ func (e *QueryError) Unwrap() error {
 func (b *ModelBuilder[T]) Get(tx database.DB) ([]T, error) {
 	v := []T{}
 	err := b.builder.Load(tx, &v)
+	if errors.Is(err, sql.ErrNoRows) {
+		return v, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -78,23 +83,25 @@ func (b *ModelBuilder[T]) Load(tx database.DB, v any) error {
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *Builder) Load(tx database.DB, v any) (err error) {
-	q, bindings, err := b.SQLString(dialects.New())
+	r, err := dialects.New().EncodeSelectQuery(b.Query())
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		if err == nil {
 			return
 		}
 		err = &QueryError{
 			err:   err,
-			query: q,
+			query: r.SQL,
 		}
 	}()
+
 	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
-		err = sqlx.SelectContext(b.Context(), tx, v, q, bindings...)
+		err = sqlx.SelectContext(b.Context(), tx, v, r.SQL, r.Bindings...)
 	} else {
-		err = sqlx.GetContext(b.Context(), tx, v, q, bindings...)
+		err = sqlx.GetContext(b.Context(), tx, v, r.SQL, r.Bindings...)
 	}
 	if err != nil {
 		return err
@@ -172,6 +179,7 @@ func (b *Builder) Count(tx database.DB) (int, error) {
 func (b *Builder) numericFunc(tx database.DB, function, column string) (int, error) {
 	var count int
 	err := b.
+		Clone().
 		Unordered().
 		SelectFunction(function, column).LoadOne(tx, &count)
 	if err != nil {

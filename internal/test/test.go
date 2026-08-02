@@ -7,30 +7,88 @@ import (
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dbtest"
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/generic"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/model/mixins"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
-type Case struct {
+type Case[T any] struct {
 	Name             string
-	Builder          helpers.SQLStringer
+	Builder          T
 	ExpectedSQL      string
 	ExpectedBindings []any
 }
 
-func QueryTest(t *testing.T, testCases []Case) {
+func QueryTest(t *testing.T, testCases []Case[dialects.QueryBuilder]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.QueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeSelectQuery(b.Query())
+	})
+}
+func DeleteQueryTest(t *testing.T, testCases []Case[dialects.DeleteQueryBuilder]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.DeleteQueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeDeleteQuery(b.DeleteQuery())
+	})
+}
+func UpdateQueryTest(t *testing.T, testCases []Case[*dialects.UpdateQuery]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b *dialects.UpdateQuery) (dialects.RawQuery, error) {
+		return d.EncodeUpdateQuery(b)
+	})
+}
+func CreateTableTest(t *testing.T, testCases []Case[dialects.CreateTableQueryBuilder]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.CreateTableQueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeCreateTableQuery(b.CreateTableQuery())
+	})
+}
+func AlterTableTest(t *testing.T, testCases []Case[dialects.AlterTableQueryBuilder]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.AlterTableQueryBuilder) (dialects.RawQuery, error) {
+		return d.EncodeAlterTableQuery(b.AlterTableQuery())
+	})
+}
+func ColumnDefinitionTest(t *testing.T, testCases []Case[*dialects.ColumnDefinition]) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b *dialects.ColumnDefinition) (dialects.RawQuery, error) {
+		return d.(*generic.Generic).EncodeColumnDefinition(b)
+	})
+}
+func RawQueryTest[T any](t *testing.T, testCases []Case[T], encoder func(d dialects.Dialect, b T) (dialects.RawQuery, error)) {
+	t.Helper()
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			q, bindings, err := tc.Builder.SQLString(dialects.New())
-			assert.NoError(t, err)
+			result, err := encoder(dialects.New(), tc.Builder)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.ExpectedSQL, result.SQL)
+				assert.Equal(t, tc.ExpectedBindings, result.Bindings)
+			}
+		})
+	}
+}
 
-			assert.Equal(t, tc.ExpectedSQL, q)
-			assert.Equal(t, tc.ExpectedBindings, bindings)
+type EncoderTestCase[T any] struct {
+	Name             string
+	Builder          T
+	ExpectedSQL      string
+	ExpectedBindings []any
+	ExpectedError    error
+}
+
+func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.RawQuery, error), testCases []EncoderTestCase[T]) {
+	t.Helper()
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			result, err := encoder(tc.Builder)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.ExpectedSQL, result.SQL)
+				assert.Equal(t, tc.ExpectedBindings, result.Bindings)
+			}
 		})
 	}
 }

@@ -3,30 +3,18 @@ package builder
 import (
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/internal/helpers"
 )
-
-type Deleter struct {
-	builder *Builder
-}
-
-func (d *Deleter) SQLString(dialect dialects.Dialect) (string, []any, error) {
-	return helpers.Concat(
-		helpers.Raw("DELETE "),
-		d.builder.Select(),
-	).SQLString(dialect)
-}
 
 func (b *ModelBuilder[T]) Delete(tx database.DB) error {
 	return b.builder.Delete(tx)
 }
 
 func delete(b *Builder, tx database.DB) error {
-	q, bindings, err := b.Deleter().SQLString(dialects.New())
+	result, err := dialects.New().EncodeDeleteQuery(b.DeleteQuery())
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(b.ctx, q, bindings...)
+	_, err = tx.ExecContext(b.ctx, result.SQL, result.Bindings...)
 	if err != nil {
 		return err
 	}
@@ -42,11 +30,12 @@ func (b *Builder) Delete(tx database.DB) error {
 	return current(b, tx)
 }
 
-func (b *ModelBuilder[T]) Deleter() *Deleter {
-	return b.builder.Deleter()
+func (b *ModelBuilder[T]) DeleteQuery() *dialects.DeleteQuery {
+	return b.builder.DeleteQuery()
 }
-func (b *Builder) Deleter() *Deleter {
-	return &Deleter{
-		builder: b,
+func (b *Builder) DeleteQuery() *dialects.DeleteQuery {
+	return &dialects.DeleteQuery{
+		Table:  b.GetTable(),
+		Wheres: b.wheres.conditions,
 	}
 }

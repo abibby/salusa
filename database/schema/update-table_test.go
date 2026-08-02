@@ -3,12 +3,13 @@ package schema_test
 import (
 	"testing"
 
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/schema"
 	"github.com/abibby/salusa/internal/test"
 )
 
 func TestUpdateTable(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.AlterTableTest(t, []test.Case[dialects.AlterTableQueryBuilder]{
 		{
 			Name:             "empty update",
 			Builder:          schema.Table("foo", func(table *schema.Blueprint) {}),
@@ -44,7 +45,7 @@ func TestUpdateTable(t *testing.T) {
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.ForeignKey("id", "bar", "foo_id")
 			}),
-			ExpectedSQL:      "ALTER TABLE \"foo\" ADD CONSTRAINT \"id-bar-foo_id\" FOREIGN KEY (\"id\") REFERENCES \"bar\"(\"foo_id\");",
+			ExpectedSQL:      "ALTER TABLE \"foo\" ADD CONSTRAINT \"id-bar-foo_id\" FOREIGN KEY (\"id\") REFERENCES \"bar\" (\"foo_id\");",
 			ExpectedBindings: []any{},
 		},
 		// {

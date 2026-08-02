@@ -4,30 +4,48 @@ import (
 	"context"
 
 	"github.com/abibby/salusa/database"
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/extra/sets"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
 )
 
-// QueryBuilder is implemented by *ModelBuilder and *Builder
-type QueryBuilder interface {
-	helpers.SQLStringer
-	imALittleQueryBuilderShortAndStout()
-}
-
 //go:generate go run ../../internal/build/build.go
 type Builder struct {
-	selects  *selects
-	from     fromTable
-	joins    joins
-	wheres   *Conditions
-	groupBys groupBys
-	havings  *Conditions
-	limit    *limit
-	orderBys orderBys
-	scopes   *scopes
-	ctx      context.Context
+	query   dialects.SelectQuery
+	wheres  *Conditions
+	havings *Conditions
+
+	scopes *scopes
+	ctx    context.Context
+}
+
+var _ dialects.QueryBuilder = (*Builder)(nil)
+
+// NewBuilder creates a new SubBuilder without anything selected
+func NewBuilder() *Builder {
+	return &Builder{
+		query:   dialects.NewSelectQuery(),
+		wheres:  NewConditionBuilder(),
+		havings: NewConditionBuilder(),
+		scopes:  newScopes(),
+		ctx:     context.Background(),
+	}
+}
+
+// Query implements [dialects.QueryBuilder].
+func (b *Builder) Query() *dialects.SelectQuery {
+	current := b.Clone()
+	for _, s := range b.ActiveScopes() {
+		if s.Query != nil {
+			current = s.Query(current)
+		}
+	}
+	q := &current.query
+	q.Wheres = current.wheres.conditions
+	q.Havings = current.havings.conditions
+	return q
 }
 
 // ModelBuilder represents an sql query and any bindings needed to run it.
@@ -61,6 +79,7 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	sb.wheres.withParent(m)
 	sb.havings.withParent(m)
 	sb.scopes.withParent(m)
+
 	return &ModelBuilder[T]{
 		builder:       sb,
 		withs:         []string{},
@@ -68,19 +87,7 @@ func NewEmpty[T model.Model]() *ModelBuilder[T] {
 	}
 }
 
-// NewBuilder creates a new SubBuilder without anything selected
-func NewBuilder() *Builder {
-	return &Builder{
-		selects:  NewSelects(),
-		from:     "",
-		wheres:   newConditions().withPrefix("WHERE"),
-		groupBys: groupBys{},
-		havings:  newConditions().withPrefix("HAVING"),
-		limit:    &limit{},
-		scopes:   newScopes(),
-		ctx:      context.Background(),
-	}
+// Query implements [dialects.QueryBuilder].
+func (b *ModelBuilder[T]) Query() *dialects.SelectQuery {
+	return b.builder.Query()
 }
-
-func (*ModelBuilder[T]) imALittleQueryBuilderShortAndStout() {}
-func (*Builder) imALittleQueryBuilderShortAndStout()         {}

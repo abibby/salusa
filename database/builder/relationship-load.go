@@ -85,7 +85,7 @@ func loadContext(ctx context.Context, tx database.DB, models any, relationPath s
 }
 
 func getValue(rv reflect.Value, key string) (reflect.Value, bool) {
-	if rv.Kind() == reflect.Ptr {
+	if rv.Kind() == reflect.Pointer {
 		rv = rv.Elem()
 	}
 	if rv.Kind() != reflect.Struct {

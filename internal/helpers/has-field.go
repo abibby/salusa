@@ -7,7 +7,7 @@ func HasField(v any, field string) bool {
 }
 
 func hasField(rt reflect.Type, key string) bool {
-	if rt.Kind() == reflect.Ptr {
+	if rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
 	}
 	if rt.Kind() != reflect.Struct {

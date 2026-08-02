@@ -3,11 +3,12 @@ package builder_test
 import (
 	"testing"
 
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 )
 
 func TestLimit(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
 		{
 			Name:             "limit",
 			Builder:          NewTestBuilder().Limit(1),
@@ -17,8 +18,8 @@ func TestLimit(t *testing.T) {
 		{
 			Name:             "offset",
 			Builder:          NewTestBuilder().Offset(1),
-			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\" LIMIT ? OFFSET ?",
-			ExpectedBindings: []any{0, 1},
+			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\" OFFSET ?",
+			ExpectedBindings: []any{1},
 		},
 		{
 			Name:             "limit and offset",

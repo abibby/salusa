@@ -5,22 +5,23 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeleter(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.DeleteQueryTest(t, []test.Case[dialects.DeleteQueryBuilder]{
 		{
 			Name:             "delete all",
-			Builder:          NewTestBuilder().Deleter(),
+			Builder:          NewTestBuilder(),
 			ExpectedSQL:      "DELETE FROM \"foos\"",
 			ExpectedBindings: []any{},
 		},
 		{
 			Name:             "delete where",
-			Builder:          NewTestBuilder().Where("id", "=", 5).Deleter(),
+			Builder:          NewTestBuilder().Where("id", "=", 5),
 			ExpectedSQL:      "DELETE FROM \"foos\" WHERE \"id\" = ?",
 			ExpectedBindings: []any{5},
 		},

@@ -1,0 +1,63 @@
+package generic
+
+import (
+	"fmt"
+
+	"github.com/abibby/salusa/database/dialects"
+)
+
+func (g *Generic) EncodeWheres(c []dialects.Condition) (dialects.RawQuery, error) {
+	return g.encodeConditionsPrefix("WHERE", c)
+}
+func (g *Generic) EncodeHavings(c []dialects.Condition) (dialects.RawQuery, error) {
+	return g.encodeConditionsPrefix("HAVING", c)
+}
+
+func (g *Generic) encodeConditionsPrefix(prefix string, c []dialects.Condition) (dialects.RawQuery, error) {
+	if len(c) == 0 {
+		return dialects.RawQuery{}, nil
+	}
+	return newRawQueryBuilder().AddString(prefix).Add(g.EncodeConditions(c)).Build()
+}
+
+func (g *Generic) EncodeConditions(c []dialects.Condition) (dialects.RawQuery, error) {
+	b := newRawQueryBuilder()
+	for i, c := range c {
+		if i != 0 {
+			if c.Or {
+				b.AddString("OR")
+			} else {
+				b.AddString("AND")
+			}
+		}
+		if (c.Column != dialects.Column{}) {
+			b.Add(g.EncodeColumn(&c.Column))
+
+			if c.Operator == "" {
+				return dialects.RawQuery{}, fmt.Errorf("the operator must be set when the column is set")
+			}
+		}
+
+		if c.Value == nil {
+			switch c.Operator {
+			case "=":
+				b.AddString("IS NULL")
+			case "!=":
+				b.AddString("IS NOT NULL")
+			default:
+				return dialects.RawQuery{}, fmt.Errorf("wheres checking nil only support = and !=")
+			}
+		} else {
+			if c.Operator != "" {
+				b.AddString(c.Operator)
+			}
+			if inList, ok := c.Value.([]any); ok {
+				b.Add(group(mapJoinRawQueries(inList, ", ", g.EncodeAny)))
+			} else {
+				b.Add(g.EncodeAny(c.Value))
+			}
+		}
+	}
+
+	return b.Build()
+}

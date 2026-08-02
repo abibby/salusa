@@ -6,21 +6,28 @@ import (
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/generic"
 )
 
-type Posgtgres struct {
+type PosgtgresCore struct {
 	bindingNumber int
 }
 
-func (*Posgtgres) Identifier(s string) string {
+func (*PosgtgresCore) Identifier(s string) string {
+	if s == "*" {
+		return s
+	}
 	parts := strings.Split(s, ".")
 	for i, p := range parts {
+		if p == "*" {
+			continue
+		}
 		parts[i] = "\"" + p + "\""
 	}
 	return strings.Join(parts, ".")
 }
 
-func (*Posgtgres) DataType(t dialects.DataType) string {
+func (*PosgtgresCore) DataType(t dialects.DataType) string {
 	switch t {
 	case dialects.DataTypeBlob:
 		return "BYTEA"
@@ -53,15 +60,15 @@ func (*Posgtgres) DataType(t dialects.DataType) string {
 	return string(t)
 }
 
-func (*Posgtgres) CurrentTime() string {
+func (*PosgtgresCore) CurrentTime() string {
 	return "CURRENT_TIMESTAMP()"
 }
 
-func (*Posgtgres) AutoIncrement() string {
+func (*PosgtgresCore) AutoIncrement() string {
 	return ""
 }
 
-func (s *Posgtgres) Escape(v any) string {
+func (s *PosgtgresCore) Escape(v any) string {
 	switch v := v.(type) {
 	case string:
 		return "'" + strings.ReplaceAll(v, "'", "''") + "'"
@@ -84,14 +91,18 @@ func (s *Posgtgres) Escape(v any) string {
 	}
 }
 
-func (p *Posgtgres) Binding() string {
+func (p *PosgtgresCore) Binding() string {
 	p.bindingNumber++
 	return fmt.Sprintf("$%d", p.bindingNumber)
 }
 
+func New() dialects.Dialect {
+	return generic.New(&PosgtgresCore{})
+}
+
 func UsePostgres() {
 	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return &Posgtgres{}
+		return New()
 	})
 }
 func init() {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 type ColumnBuilder struct {
@@ -28,8 +27,6 @@ func NewColumn(name string, datatype dialects.DataType) *ColumnBuilder {
 		datatype: datatype,
 	}
 }
-
-var _ helpers.SQLStringer = &ColumnBuilder{}
 
 func (b *ColumnBuilder) Equals(newB *ColumnBuilder) bool {
 	return b.datatype == newB.datatype &&
@@ -88,31 +85,17 @@ func (b *ColumnBuilder) Index() *ColumnBuilder {
 	b.index = true
 	return b
 }
-func (b *ColumnBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
-	r := helpers.Result()
-	r.Add(helpers.Identifier(b.name))
-	r.AddString(d.DataType(b.datatype))
-
-	if b.autoIncrement {
-		r.AddString("PRIMARY KEY " + d.AutoIncrement())
-	} else if b.primary {
-		r.AddString("PRIMARY KEY")
+func (b *ColumnBuilder) ColumnDefinition() *dialects.ColumnDefinition {
+	return &dialects.ColumnDefinition{
+		Name:               b.name,
+		Datatype:           b.datatype,
+		Nullable:           b.nullable,
+		Primary:            b.primary,
+		AutoIncrement:      b.autoIncrement,
+		DefaultValue:       b.defaultValue,
+		Unique:             b.unique,
+		DefaultCurrentTime: b.defaultCurrentTime,
 	}
-	if !b.nullable {
-		r.AddString("NOT NULL")
-	}
-	if b.unique {
-		r.AddString("UNIQUE")
-	}
-
-	if b.defaultValue != nil {
-		r.AddString("DEFAULT").
-			AddString(d.Escape(b.defaultValue))
-	} else if b.defaultCurrentTime {
-		r.AddString("DEFAULT").
-			AddString(d.CurrentTime())
-	}
-	return r.SQLString(d)
 }
 
 func (b *ColumnBuilder) GoString() string {

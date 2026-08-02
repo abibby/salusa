@@ -6,14 +6,12 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/internal/helpers"
 )
 
 type UpdateTableBuilder struct {
 	blueprint *Blueprint
 }
 
-var _ helpers.SQLStringer = &UpdateTableBuilder{}
 var _ Blueprinter = &UpdateTableBuilder{}
 
 func Table(name string, cb func(table *Blueprint)) *UpdateTableBuilder {
@@ -31,49 +29,35 @@ func (b *UpdateTableBuilder) Type() BlueprintType {
 	return BlueprintTypeUpdate
 }
 
-func (b *UpdateTableBuilder) SQLString(d dialects.Dialect) (string, []any, error) {
-	r := helpers.Result()
-	alterTable := helpers.Concat(helpers.Raw("ALTER TABLE "), helpers.Identifier(b.blueprint.name))
-	for _, column := range b.blueprint.dropColumns {
-		r.Add(helpers.Concat(
-			alterTable,
-			helpers.Raw(" DROP COLUMN "),
-			helpers.Identifier(column),
-			helpers.Raw(";"),
-		))
-	}
+func (b *UpdateTableBuilder) AlterTableQuery() *dialects.AlterTableQuery {
+	addColumns := make([]dialects.ColumnDefinition, 0, len(b.blueprint.columns))
+	modifyColumns := make([]dialects.ColumnDefinition, 0, len(b.blueprint.columns))
+
 	for _, column := range b.blueprint.columns {
 		if column.change {
-			r.Add(helpers.Concat(
-				alterTable,
-				helpers.Raw(" MODIFY COLUMN "),
-				column,
-				helpers.Raw(";"),
-			))
+			modifyColumns = append(modifyColumns, *column.ColumnDefinition())
 		} else {
-			r.Add(helpers.Concat(
-				alterTable,
-				helpers.Raw(" ADD "),
-				column,
-				helpers.Raw(";"),
-			))
+			addColumns = append(addColumns, *column.ColumnDefinition())
 		}
 	}
+	foreignKeys := make([]dialects.ForeignKey, 0, len(b.blueprint.foreignKeys))
 	for _, foreignKey := range b.blueprint.foreignKeys {
-		r.Add(helpers.Concat(
-			alterTable,
-			helpers.Raw(" ADD "),
-			foreignKey,
-			helpers.Raw(";"),
-		))
+		foreignKeys = append(foreignKeys, *foreignKey.ForeignKey())
 	}
+	indexes := make([]dialects.Index, 0, len(b.blueprint.indexes))
 	for _, index := range b.blueprint.indexes {
-		r.Add(helpers.Concat(index, helpers.Raw(";")))
+		indexes = append(indexes, *index.Index())
 	}
 
-	return r.SQLString(d)
+	return &dialects.AlterTableQuery{
+		Table:         b.blueprint.TableName(),
+		DropColumns:   b.blueprint.dropColumns,
+		AddColumns:    addColumns,
+		ModifyColumns: modifyColumns,
+		ForeignKeys:   foreignKeys,
+		Indexes:       indexes,
+	}
 }
-
 func (b *UpdateTableBuilder) GoString() string {
 	return fmt.Sprintf(
 		"schema.Table(%#v, %#v)",
@@ -83,5 +67,10 @@ func (b *UpdateTableBuilder) GoString() string {
 }
 
 func (b *UpdateTableBuilder) Run(ctx context.Context, tx database.DB) error {
-	return runQuery(ctx, tx, b)
+	result, err := dialects.New().EncodeAlterTableQuery(b.AlterTableQuery())
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, result.SQL, result.Bindings...)
+	return err
 }

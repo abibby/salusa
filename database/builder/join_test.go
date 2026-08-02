@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 )
 
 func TestJoin(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.QueryTest(t, []test.Case[dialects.QueryBuilder]{
 		{
 			Name:             "join",
 			Builder:          NewTestBuilder().Join("bars", "bars.foo_id", "=", "foos.id"),

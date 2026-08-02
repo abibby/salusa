@@ -4,40 +4,41 @@ import (
 	"fmt"
 
 	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/internal/test"
 )
 
 func ExampleBuilder() {
-	query, bindings, err := builder.
+	q := builder.
 		From[*test.Foo]().
-		Where("column", "=", "value").
-		SQLString(dialects.New())
+		Where("column", "=", "value")
+
+	r, err := sqlite.New().EncodeSelectQuery(q.Query())
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(bindings)
-	fmt.Println(query)
+	fmt.Println(r.SQL)
+	fmt.Println(r.Bindings)
 	// Output:
-	// [value]
 	// SELECT "foos".* FROM "foos" WHERE "column" = ?
+	// [value]
 }
 
 func ExampleBuilder_WhereHas() {
-	query, bindings, err := builder.
+	q := builder.
 		From[*test.Foo]().
 		WhereHas("Bar", func(q *builder.Builder) *builder.Builder {
 			return q.Where("id", "=", 7)
-		}).
-		SQLString(dialects.New())
+		})
+	r, err := sqlite.New().EncodeSelectQuery(q.Query())
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(bindings)
-	fmt.Println(query)
+	fmt.Println(r.SQL)
+	fmt.Println(r.Bindings)
 	// Output:
-	// [7]
 	// SELECT "foos".* FROM "foos" WHERE EXISTS (SELECT "bars".* FROM "bars" WHERE "foo_id" = "foos"."id" AND "id" = ?)
+	// [7]
 }

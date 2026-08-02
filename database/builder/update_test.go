@@ -5,35 +5,36 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
+	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUpdater(t *testing.T) {
-	test.QueryTest(t, []test.Case{
+	test.UpdateQueryTest(t, []test.Case[*dialects.UpdateQuery]{
 		{
 			Name:             "Update all",
-			Builder:          NewTestBuilder().Updater(builder.Updates{"id": 1}),
-			ExpectedSQL:      `UPDATE "foos" SET "id"=?`,
+			Builder:          NewTestBuilder().UpdateQuery(builder.Updates{"id": 1}),
+			ExpectedSQL:      `UPDATE "foos" SET "id" = ?`,
 			ExpectedBindings: []any{1},
 		},
 		{
 			Name:             "Update all multi",
-			Builder:          NewTestBuilder().Updater(builder.Updates{"id": 1, "foo": "bar"}),
-			ExpectedSQL:      `UPDATE "foos" SET "foo"=?, "id"=?`,
+			Builder:          NewTestBuilder().UpdateQuery(builder.Updates{"id": 1, "foo": "bar"}),
+			ExpectedSQL:      `UPDATE "foos" SET "foo" = ?, "id" = ?`,
 			ExpectedBindings: []any{"bar", 1},
 		},
 		{
 			Name:             "Update where",
-			Builder:          NewTestBuilder().Where("id", "=", 5).Updater(builder.Updates{"id": 1}),
-			ExpectedSQL:      `UPDATE "foos" SET "id"=? WHERE "id" = ?`,
+			Builder:          NewTestBuilder().Where("id", "=", 5).UpdateQuery(builder.Updates{"id": 1}),
+			ExpectedSQL:      `UPDATE "foos" SET "id" = ? WHERE "id" = ?`,
 			ExpectedBindings: []any{1, 5},
 		},
 		{
 			Name:             "Update where multi",
-			Builder:          NewTestBuilder().Where("id", "=", 5).Updater(builder.Updates{"id": 1, "foo": "bar"}),
-			ExpectedSQL:      `UPDATE "foos" SET "foo"=?, "id"=? WHERE "id" = ?`,
+			Builder:          NewTestBuilder().Where("id", "=", 5).UpdateQuery(builder.Updates{"id": 1, "foo": "bar"}),
+			ExpectedSQL:      `UPDATE "foos" SET "foo" = ?, "id" = ? WHERE "id" = ?`,
 			ExpectedBindings: []any{"bar", 1, 5},
 		},
 	})

@@ -160,7 +160,8 @@ func (t *Blueprint) DropColumn(column string) {
 }
 
 func (b *Blueprint) GoString() string {
-	src := "func(table *schema.Blueprint) {\n"
+	src := strings.Builder{}
+	src.WriteString("func(table *schema.Blueprint) {\n")
 	for _, c := range b.columns {
 		m := map[dialects.DataType]string{
 			dialects.DataTypeBlob:     "Blob",
@@ -180,19 +181,19 @@ func (b *Blueprint) GoString() string {
 			dialects.DataTypeUInt32:   "UInt",
 			dialects.DataTypeUInt64:   "UInt64",
 		}
-		src += fmt.Sprintf("\ttable.%s(%#v)%s\n", m[c.datatype], c.name, c.GoString())
+		fmt.Fprintf(&src, "\ttable.%s(%#v)%s\n", m[c.datatype], c.name, c.GoString())
 	}
 
 	for _, index := range b.indexes {
-		src += fmt.Sprintf("\ttable.Index(%#v)%s\n", index.name, index.GoString())
+		fmt.Fprintf(&src, "\ttable.Index(%#v)%s\n", index.name, index.GoString())
 	}
 
 	for _, c := range b.dropColumns {
-		src += fmt.Sprintf("\ttable.DropColumn(%#v)\n", c)
+		fmt.Fprintf(&src, "\ttable.DropColumn(%#v)\n", c)
 	}
 
 	for _, foreignKey := range b.foreignKeys {
-		src += fmt.Sprintf("\ttable.ForeignKey(%#v, %#v, %#v)\n", foreignKey.localKey, foreignKey.relatedTable, foreignKey.relatedKey)
+		fmt.Fprintf(&src, "\ttable.ForeignKey(%#v, %#v, %#v)\n", foreignKey.localKey, foreignKey.relatedTable, foreignKey.relatedKey)
 	}
 
 	if len(b.primaryKeys) > 1 {
@@ -202,10 +203,11 @@ func (b *Blueprint) GoString() string {
 			}),
 			", ",
 		)
-		src += fmt.Sprintf("\ttable.PrimaryKey(%s)\n", args)
+		fmt.Fprintf(&src, "\ttable.PrimaryKey(%s)\n", args)
 	}
 
-	return src + "}"
+	src.WriteString("}")
+	return src.String()
 }
 
 func (t *Blueprint) Merge(newBlueprint *Blueprint) {

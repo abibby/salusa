@@ -6,19 +6,26 @@ import (
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/generic"
 )
 
-type MySQL struct{}
+type MySQLCore struct{}
 
-func (*MySQL) Identifier(s string) string {
+func (*MySQLCore) Identifier(s string) string {
+	if s == "*" {
+		return s
+	}
 	parts := strings.Split(s, ".")
 	for i, p := range parts {
+		if p == "*" {
+			continue
+		}
 		parts[i] = "`" + p + "`"
 	}
 	return strings.Join(parts, ".")
 }
 
-func (*MySQL) DataType(t dialects.DataType) string {
+func (*MySQLCore) DataType(t dialects.DataType) string {
 	switch t {
 	case dialects.DataTypeString:
 		return "VARCHAR(255)"
@@ -55,14 +62,14 @@ func (*MySQL) DataType(t dialects.DataType) string {
 	return string(t)
 }
 
-func (*MySQL) CurrentTime() string {
+func (*MySQLCore) CurrentTime() string {
 	return "CURRENT_TIMESTAMP"
 }
-func (*MySQL) AutoIncrement() string {
+func (*MySQLCore) AutoIncrement() string {
 	return "AUTO_INCREMENT"
 }
 
-func (s *MySQL) Escape(v any) string {
+func (s *MySQLCore) Escape(v any) string {
 	switch v := v.(type) {
 	case string:
 		return "'" + strings.ReplaceAll(v, "'", "''") + "'"
@@ -85,12 +92,17 @@ func (s *MySQL) Escape(v any) string {
 	}
 }
 
-func (*MySQL) Binding() string {
+func (*MySQLCore) Binding() string {
 	return "?"
 }
+
+func New() dialects.Dialect {
+	return generic.New(&MySQLCore{})
+}
+
 func UseMySql() {
 	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return &MySQL{}
+		return New()
 	})
 }
 func init() {

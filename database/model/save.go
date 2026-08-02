@@ -10,16 +10,12 @@ import (
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
-	"github.com/abibby/salusa/slices"
 )
 
 var relationshipInterface = reflect.TypeOf((*relationship.Relationship)(nil)).Elem()
 
-func columnsAndValues(v reflect.Value) ([]string, []any) {
+func appendColumnsAndValues(v reflect.Value, m map[string]any) {
 	t := v.Type()
-	numFields := t.NumField()
-	columns := make([]string, 0, numFields)
-	values := make([]any, 0, numFields)
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
@@ -28,19 +24,21 @@ func columnsAndValues(v reflect.Value) ([]string, []any) {
 		}
 
 		if field.Anonymous && field.Type.Kind() == reflect.Struct {
-			subColumns, subValues := columnsAndValues(v.Field(i))
-			columns = append(columns, subColumns...)
-			values = append(values, subValues...)
+			appendColumnsAndValues(v.Field(i), m)
 		} else {
 			tag := helpers.DBTag(field)
 			if tag.Name == "-" || tag.Readonly || field.Type.Implements(relationshipInterface) {
 				continue
 			}
-			columns = append(columns, tag.Name)
-			values = append(values, v.Field(i).Interface())
+			m[tag.Name] = v.Field(i).Interface()
 		}
 	}
-	return columns, values
+}
+
+func columnsAndValues(v reflect.Value) map[string]any {
+	m := map[string]any{}
+	appendColumnsAndValues(v, m)
+	return m
 }
 
 func MustSave(tx database.DB, v Model) {
@@ -73,14 +71,14 @@ func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 	}
 
 	d := dialects.New()
-	columns, values := columnsAndValues(reflect.ValueOf(v).Elem())
+	m := columnsAndValues(reflect.ValueOf(v).Elem())
 	if inDB {
-		err = update(ctx, tx, d, v, columns, values)
+		err = update(ctx, tx, d, v, m)
 		if err != nil {
 			return fmt.Errorf("update: %w", err)
 		}
 	} else {
-		err = insert(ctx, tx, d, v, columns, values)
+		err = insert(ctx, tx, d, v, m)
 		if err != nil {
 			return fmt.Errorf("insert: %w", err)
 		}
@@ -98,47 +96,20 @@ func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 	return nil
 }
 
-func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values []any) error {
+func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, m map[string]any) error {
 	rPKey, pKey, isAuto := isAutoIncrementing(v)
 	if isAuto {
-		newColumns := make([]string, 0, len(columns))
-		newValues := make([]any, 0, len(values))
-		for i, column := range columns {
-			if column != pKey {
-				newColumns = append(newColumns, column)
-				newValues = append(newValues, values[i])
-			}
-		}
-		columns = newColumns
-		values = newValues
+		delete(m, pKey)
 	}
-	r := helpers.Result().
-		AddString("INSERT INTO").
-		Add(helpers.Identifier(database.GetTable(v))).
-		Add(
-			helpers.Group(
-				helpers.Join(
-					helpers.IdentifierList(columns),
-					", ",
-				),
-			),
-		).
-		AddString("VALUES").
-		Add(
-			helpers.Group(
-				helpers.Join(
-					helpers.LiteralList(values),
-					", ",
-				),
-			),
-		)
-
-	q, bindings, err := r.SQLString(d)
+	sql, err := d.EncodeInsertQuery(&dialects.InsertQuery{
+		Table:  database.GetTable(v),
+		Values: []map[string]any{m},
+	})
 	if err != nil {
-		return fmt.Errorf("failed to generate sql: %w", err)
+		return err
 	}
 
-	result, err := tx.ExecContext(ctx, q, bindings...)
+	result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
 	if err != nil {
 		return fmt.Errorf("failed to insert model: %w", err)
 	}
@@ -191,45 +162,32 @@ func isAutoIncrementing(v any) (reflect.Value, string, bool) {
 	return rPKey, pKey, true
 }
 
-func update(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values []any) error {
+func update(ctx context.Context, tx database.DB, d dialects.Dialect, v any, m map[string]any) error {
 	pKey := helpers.PrimaryKey(v)
-	r := helpers.Result().
-		AddString("UPDATE").
-		Add(helpers.Identifier(database.GetTable(v))).
-		AddString("SET")
 
-	for i, column := range columns {
-		if i != 0 {
-			r.AddString(",")
-		}
-		r.Add(helpers.Identifier(column))
-		r.AddString("=")
-		r.Add(helpers.Literal(values[i]))
-	}
-
-	r.AddString("WHERE")
-
-	for i, k := range pKey {
+	wheres := []dialects.Condition{}
+	for _, k := range pKey {
 		pKeyValue, ok := helpers.GetValue(v, k)
 		if !ok {
 			return fmt.Errorf("no primary key found")
 		}
-
-		if i != 0 {
-			r.AddString("AND")
-		}
-
-		r.Add(helpers.Identifier(k)).
-			AddString("=").
-			Add(helpers.Literal(pKeyValue))
+		wheres = append(wheres, dialects.Condition{
+			Column:   dialects.Column{Column: k},
+			Operator: "=",
+			Value:    pKeyValue,
+		})
 	}
 
-	q, bindings, err := r.SQLString(d)
+	result, err := d.EncodeUpdateQuery(&dialects.UpdateQuery{
+		Table:  database.GetTable(v),
+		Values: m,
+		Wheres: wheres,
+	})
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, q, bindings...)
+	_, err = tx.ExecContext(ctx, result.SQL, result.Bindings...)
 	if err != nil {
 		return err
 	}
@@ -248,24 +206,19 @@ func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T)
 	}
 
 	d := dialects.New()
-	var columns []string
-	values := make([][]any, len(models))
+	maps := make([]map[string]any, len(models))
 	for i, v := range models {
-
-		c, v := columnsAndValues(reflect.ValueOf(v).Elem())
-		if columns == nil {
-			columns = c
-		}
-		values[i] = v
+		maps[i] = columnsAndValues(reflect.ValueOf(v).Elem())
 	}
-	err := insertMany(ctx, tx, d, models[0], columns, values)
+	err := insertMany(ctx, tx, d, models[0], maps)
 	if err != nil {
 		return fmt.Errorf("insert: %w", err)
 	}
 	for _, v := range models {
-		if err != nil {
-			return fmt.Errorf("initialize relationships: %w", err)
-		}
+		// err = relationship.InitializeRelationships(v)
+		// if err != nil {
+		// 	return fmt.Errorf("initialize relationships: %w", err)
+		// }
 		err := hooks.AfterSave(ctx, tx, v)
 		if err != nil {
 			return fmt.Errorf("before save hooks: %w", err)
@@ -274,60 +227,33 @@ func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T)
 	return nil
 }
 
-func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, columns []string, values [][]any) error {
-	_, pKey, isAuto := isAutoIncrementing(v)
-	pKeyIndex := -1
+func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, maps []map[string]any) error {
+
+	rPKey, pKey, isAuto := isAutoIncrementing(v)
 	if isAuto {
-		newColumns := make([]string, 0, len(columns))
-		for i, column := range columns {
-			if column != pKey {
-				newColumns = append(newColumns, column)
-			} else {
-				pKeyIndex = i
-			}
+		for i := range maps {
+			delete(maps[i], pKey)
 		}
-		columns = newColumns
 	}
-	r := helpers.Result().
-		AddString("INSERT INTO").
-		Add(helpers.Identifier(database.GetTable(v))).
-		Add(
-			helpers.Group(
-				helpers.Join(
-					helpers.IdentifierList(columns),
-					", ",
-				),
-			),
-		).
-		AddString("VALUES").
-		Add(
-			helpers.Join(
-				slices.Map(values, func(v []any) helpers.SQLStringer {
-					newValues := make([]any, 0, len(columns))
-					for i, val := range v {
-						if i != pKeyIndex {
-							newValues = append(newValues, val)
-						}
-					}
-					return helpers.Group(
-						helpers.Join(
-							helpers.LiteralList(newValues),
-							", ",
-						),
-					)
-				}),
-				", ",
-			),
-		)
-
-	q, bindings, err := r.SQLString(d)
+	sql, err := dialects.New().EncodeInsertQuery(&dialects.InsertQuery{
+		Table:  database.GetTable(v),
+		Values: maps,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to generate sql: %w", err)
+		return err
 	}
 
-	_, err = tx.ExecContext(ctx, q, bindings...)
+	result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
 	if err != nil {
 		return fmt.Errorf("failed to insert model: %w", err)
+	}
+
+	if isAuto {
+		id, err := result.LastInsertId()
+		if err != nil {
+			return fmt.Errorf("could not get last insert id: %w", err)
+		}
+		rPKey.SetInt(id)
 	}
 
 	return nil

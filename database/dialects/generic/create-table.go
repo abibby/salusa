@@ -1,0 +1,83 @@
+package generic
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/slices"
+)
+
+func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {
+	b := newRawQueryBuilder().AddString("CREATE TABLE")
+	if q.IfNotExists {
+		b.AddString("IF NOT EXISTS")
+	}
+	b.AddString(g.core.Identifier(q.Table))
+
+	columnsAndConstraints := make([]dialects.RawQuery, 0, len(q.Columns)+len(q.ForeignKeys)+1)
+	for _, c := range q.Columns {
+		c, err := g.EncodeColumnDefinition(&c)
+		if err != nil {
+			return dialects.RawQuery{}, err
+		}
+		columnsAndConstraints = append(columnsAndConstraints, c)
+	}
+	if len(q.PrimaryKeys) > 0 {
+		columnsAndConstraints = append(columnsAndConstraints, dialects.Raw(fmt.Sprintf("PRIMARY KEY (%s)",
+			strings.Join(slices.Map(q.PrimaryKeys, g.core.Identifier), ", ")),
+		))
+	}
+	for _, f := range q.ForeignKeys {
+		f, err := g.EncodeForeignKey(&f)
+		if err != nil {
+			return dialects.RawQuery{}, err
+		}
+		columnsAndConstraints = append(columnsAndConstraints, f)
+	}
+
+	b.Add(group(joinRawQueries(columnsAndConstraints, ", "), nil))
+	b.AddStringNoSpace(";")
+
+	for _, index := range q.Indexes {
+		b.Add(g.EncodeIndex(&index))
+		b.AddStringNoSpace(";")
+	}
+
+	return b.Build()
+}
+
+func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects.RawQuery, error) {
+	r := newRawQueryBuilder()
+	r.AddString(g.core.Identifier(c.Name))
+	r.AddString(g.core.DataType(c.Datatype))
+
+	if c.AutoIncrement {
+		r.AddString("PRIMARY KEY " + g.core.AutoIncrement())
+	} else if c.Primary {
+		r.AddString("PRIMARY KEY")
+	}
+	if !c.Nullable {
+		r.AddString("NOT NULL")
+	}
+	if c.Unique {
+		r.AddString("UNIQUE")
+	}
+
+	if c.DefaultValue != nil {
+		r.AddString("DEFAULT").
+			AddString(g.core.Escape(c.DefaultValue))
+	} else if c.DefaultCurrentTime {
+		r.AddString("DEFAULT").
+			AddString(g.core.CurrentTime())
+	}
+	return r.Build()
+}
+func (g *Generic) EncodeForeignKey(f *dialects.ForeignKey) (dialects.RawQuery, error) {
+	return dialects.Raw(fmt.Sprintf("CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)",
+		g.core.Identifier(f.Name),
+		strings.Join(slices.Map(f.Columns, g.core.Identifier), ", "),
+		g.core.Identifier(f.ForeignTable),
+		strings.Join(slices.Map(f.ForeignColumns, g.core.Identifier), ", "),
+	)), nil
+}
