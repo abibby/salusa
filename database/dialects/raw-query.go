@@ -15,7 +15,10 @@ func JoinQueries(results []RawQuery) RawQuery {
 		}
 	}
 	if len(results) == 1 {
-		return results[1]
+		return RawQuery{
+			SQL:      results[0].SQL + ";",
+			Bindings: results[0].Bindings,
+		}
 	}
 	queryLen := 2*len(results) - 1
 	bindingCount := 0

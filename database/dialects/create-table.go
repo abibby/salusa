@@ -7,6 +7,9 @@ type CreateTableQuery struct {
 	IfNotExists bool
 	Table       string
 	Columns     []ColumnDefinition
+	PrimaryKeys []string
+	ForeignKeys []ForeignKey
+	Indexes     []Index
 }
 
 type ColumnDefinition struct {
@@ -18,4 +21,13 @@ type ColumnDefinition struct {
 	DefaultValue       any
 	Unique             bool
 	DefaultCurrentTime bool
+}
+
+type ForeignKey struct {
+	Name           string
+	Columns        []string
+	ForeignTable   string
+	ForeignColumns []string
+	// OnUpdate       string
+	// OnDelete       string
 }

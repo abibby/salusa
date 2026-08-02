@@ -24,26 +24,31 @@ type Case[T any] struct {
 }
 
 func QueryTest(t *testing.T, testCases []Case[dialects.QueryBuilder]) {
-	queryTest(t, testCases, func(d dialects.Dialect, b dialects.QueryBuilder) (dialects.RawQuery, error) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.QueryBuilder) (dialects.RawQuery, error) {
 		return d.EncodeSelectQuery(b.Query())
 	})
 }
 func CreateTableTest(t *testing.T, testCases []Case[dialects.CreateTableQueryBuilder]) {
-	queryTest(t, testCases, func(d dialects.Dialect, b dialects.CreateTableQueryBuilder) (dialects.RawQuery, error) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.CreateTableQueryBuilder) (dialects.RawQuery, error) {
 		return d.EncodeCreateTableQuery(b.CreateTableQuery())
 	})
 }
 func AlterTableTest(t *testing.T, testCases []Case[dialects.AlterTableQueryBuilder]) {
-	queryTest(t, testCases, func(d dialects.Dialect, b dialects.AlterTableQueryBuilder) (dialects.RawQuery, error) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b dialects.AlterTableQueryBuilder) (dialects.RawQuery, error) {
 		return d.EncodeAlterTableQuery(b.AlterTableQuery())
 	})
 }
 func ColumnDefinitionTest(t *testing.T, testCases []Case[*dialects.ColumnDefinition]) {
-	queryTest(t, testCases, func(d dialects.Dialect, b *dialects.ColumnDefinition) (dialects.RawQuery, error) {
+	t.Helper()
+	RawQueryTest(t, testCases, func(d dialects.Dialect, b *dialects.ColumnDefinition) (dialects.RawQuery, error) {
 		return d.(*generic.Generic).EncodeColumnDefinition(b)
 	})
 }
-func queryTest[T any](t *testing.T, testCases []Case[T], encoder func(d dialects.Dialect, b T) (dialects.RawQuery, error)) {
+func RawQueryTest[T any](t *testing.T, testCases []Case[T], encoder func(d dialects.Dialect, b T) (dialects.RawQuery, error)) {
+	t.Helper()
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			result, err := encoder(dialects.New(), tc.Builder)
@@ -64,6 +69,7 @@ type EncoderTestCase[T any] struct {
 }
 
 func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.RawQuery, error), testCases []EncoderTestCase[T]) {
+	t.Helper()
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			result, err := encoder(tc.Builder)

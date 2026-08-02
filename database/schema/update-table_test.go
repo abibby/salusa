@@ -45,7 +45,7 @@ func TestUpdateTable(t *testing.T) {
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.ForeignKey("id", "bar", "foo_id")
 			}),
-			ExpectedSQL:      "ALTER TABLE \"foo\" ADD CONSTRAINT \"id-bar-foo_id\" FOREIGN KEY (\"id\") REFERENCES \"bar\"(\"foo_id\");",
+			ExpectedSQL:      "ALTER TABLE \"foo\" ADD CONSTRAINT \"id-bar-foo_id\" FOREIGN KEY (\"id\") REFERENCES \"bar\" (\"foo_id\");",
 			ExpectedBindings: []any{},
 		},
 		// {

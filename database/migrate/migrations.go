@@ -102,7 +102,7 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 		b.Bool("run")
 	}).IfNotExists()
 
-	result, err := dialects.New().EncodeCreateTableQuery(q.GetBlueprint().CreateTableQuery())
+	result, err := dialects.New().EncodeCreateTableQuery(q.CreateTableQuery())
 	if err != nil {
 		return err
 	}

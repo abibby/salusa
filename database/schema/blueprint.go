@@ -159,29 +159,6 @@ func (t *Blueprint) DropColumn(column string) {
 	t.dropColumns = append(t.dropColumns, column)
 }
 
-func (b *Blueprint) CreateTableQuery() *dialects.CreateTableQuery {
-	columns := make([]dialects.ColumnDefinition, len(b.columns))
-
-	for i, c := range b.columns {
-		columns[i] = *c.ColumnDefinition()
-	}
-
-	return &dialects.CreateTableQuery{
-		// IfNotExists: true,
-		Table:   b.TableName(),
-		Columns: columns,
-	}
-}
-func (b *Blueprint) AlterTableQuery() *dialects.AlterTableQuery {
-	columns := make([]dialects.ColumnDefinition, len(b.columns))
-
-	for i, c := range b.columns {
-		columns[i] = *c.ColumnDefinition()
-	}
-
-	return &dialects.AlterTableQuery{}
-}
-
 func (b *Blueprint) GoString() string {
 	src := strings.Builder{}
 	src.WriteString("func(table *schema.Blueprint) {\n")

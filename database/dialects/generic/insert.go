@@ -2,6 +2,7 @@ package generic
 
 import (
 	"errors"
+	"sort"
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
@@ -19,17 +20,18 @@ func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.RawQuery,
 
 	columns := make([]string, 0, numColumns)
 	values := make([][]any, len(q.Values))
+	for k := range q.Values[0] {
+		columns = append(columns, k)
+	}
+	sort.Strings(columns)
 
-	for i, m := range q.Values {
+	for i, newRow := range q.Values {
 		if len(q.Values[i]) != numColumns {
 			return dialects.RawQuery{}, ErrInsertMismatchedValueKeys
 		}
-		values[i] = make([]any, 0, numColumns)
-		for k, v := range m {
-			if i == 0 {
-				columns = append(columns, k)
-			}
-			values[i] = append(values[i], v)
+		values[i] = make([]any, numColumns)
+		for j, column := range columns {
+			values[i][j] = newRow[column]
 		}
 	}
 

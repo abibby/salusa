@@ -30,7 +30,33 @@ func (b *UpdateTableBuilder) Type() BlueprintType {
 }
 
 func (b *UpdateTableBuilder) AlterTableQuery() *dialects.AlterTableQuery {
-	return b.blueprint.AlterTableQuery()
+	addColumns := make([]dialects.ColumnDefinition, 0, len(b.blueprint.columns))
+	modifyColumns := make([]dialects.ColumnDefinition, 0, len(b.blueprint.columns))
+
+	for _, column := range b.blueprint.columns {
+		if column.change {
+			modifyColumns = append(modifyColumns, *column.ColumnDefinition())
+		} else {
+			addColumns = append(addColumns, *column.ColumnDefinition())
+		}
+	}
+	foreignKeys := make([]dialects.ForeignKey, 0, len(b.blueprint.foreignKeys))
+	for _, foreignKey := range b.blueprint.foreignKeys {
+		foreignKeys = append(foreignKeys, *foreignKey.ForeignKey())
+	}
+	indexes := make([]dialects.Index, 0, len(b.blueprint.indexes))
+	for _, index := range b.blueprint.indexes {
+		indexes = append(indexes, *index.Index())
+	}
+
+	return &dialects.AlterTableQuery{
+		Table:         b.blueprint.TableName(),
+		DropColumns:   b.blueprint.dropColumns,
+		AddColumns:    addColumns,
+		ModifyColumns: modifyColumns,
+		ForeignKeys:   foreignKeys,
+		Indexes:       indexes,
+	}
 }
 func (b *UpdateTableBuilder) GoString() string {
 	return fmt.Sprintf(

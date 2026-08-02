@@ -31,7 +31,29 @@ func (b *CreateTableBuilder) Type() BlueprintType {
 }
 
 func (b *CreateTableBuilder) CreateTableQuery() *dialects.CreateTableQuery {
-	return b.blueprint.CreateTableQuery()
+	columns := make([]dialects.ColumnDefinition, len(b.blueprint.columns))
+	for i, c := range b.blueprint.columns {
+		columns[i] = *c.ColumnDefinition()
+	}
+
+	foreignKeys := make([]dialects.ForeignKey, len(b.blueprint.foreignKeys))
+	for i, fk := range b.blueprint.foreignKeys {
+		foreignKeys[i] = *fk.ForeignKey()
+	}
+
+	indexes := make([]dialects.Index, len(b.blueprint.indexes))
+	for i, fk := range b.blueprint.indexes {
+		indexes[i] = *fk.Index()
+	}
+
+	return &dialects.CreateTableQuery{
+		IfNotExists: b.ifNotExists,
+		Table:       b.blueprint.TableName(),
+		Columns:     columns,
+		PrimaryKeys: b.blueprint.primaryKeys,
+		ForeignKeys: foreignKeys,
+		Indexes:     indexes,
+	}
 }
 
 func (b *CreateTableBuilder) GoString() string {
@@ -42,7 +64,7 @@ func (b *CreateTableBuilder) GoString() string {
 	)
 }
 func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {
-	q := b.blueprint.CreateTableQuery()
+	q := b.CreateTableQuery()
 	result, err := dialects.New().EncodeCreateTableQuery(q)
 	if err != nil {
 		return err

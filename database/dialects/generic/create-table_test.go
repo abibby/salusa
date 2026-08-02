@@ -19,7 +19,7 @@ func TestGeneric_EncodeCreateTableQuery(t *testing.T) {
 					{Name: "c1", Datatype: dialects.DataTypeDate},
 				},
 			},
-			ExpectedSQL:      "CREATE TABLE `foo` (\n\t`c1` date NOT NULL\n)",
+			ExpectedSQL:      "CREATE TABLE `foo` (`c1` date NOT NULL);",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -31,10 +31,7 @@ func TestGeneric_EncodeCreateTableQuery(t *testing.T) {
 					{Name: "c2", Datatype: dialects.DataTypeInt64},
 				},
 			},
-			ExpectedSQL: "CREATE TABLE `foo` (\n" +
-				"\t`c1` date NOT NULL,\n" +
-				"\t`c2` int64 NOT NULL\n" +
-				")",
+			ExpectedSQL:      "CREATE TABLE `foo` (`c1` date NOT NULL, `c2` int64 NOT NULL);",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -47,11 +44,7 @@ func TestGeneric_EncodeCreateTableQuery(t *testing.T) {
 					{Name: "optional", Datatype: dialects.DataTypeString, Nullable: true},
 				},
 			},
-			ExpectedSQL: "CREATE TABLE `foo` (\n" +
-				"\t`id` int32 PRIMARY KEY NOT NULL,\n" +
-				"\t`name` string NOT NULL UNIQUE,\n" +
-				"\t`optional` string\n" +
-				")",
+			ExpectedSQL:      "CREATE TABLE `foo` (`id` int32 PRIMARY KEY NOT NULL, `name` string NOT NULL UNIQUE, `optional` string);",
 			ExpectedBindings: []any{},
 		},
 	})

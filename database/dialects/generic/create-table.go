@@ -1,7 +1,11 @@
 package generic
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/slices"
 )
 
 func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {
@@ -11,20 +15,34 @@ func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects
 	}
 	b.AddString(g.core.Identifier(q.Table))
 
-	var err error
-	columns := make([]dialects.RawQuery, len(q.Columns))
-	for i, c := range q.Columns {
-		columns[i], err = g.EncodeColumnDefinition(&c)
+	columnsAndConstraints := make([]dialects.RawQuery, 0, len(q.Columns)+len(q.ForeignKeys)+1)
+	for _, c := range q.Columns {
+		c, err := g.EncodeColumnDefinition(&c)
 		if err != nil {
 			return dialects.RawQuery{}, err
 		}
-		// columns[i].SQL = "\n\t" + columns[i].SQL
-		// if i == len(q.Columns)-1 {
-		// 	columns[i].SQL += "\n"
-		// }
-
+		columnsAndConstraints = append(columnsAndConstraints, c)
 	}
-	b.Add(group(joinRawQueries(columns, ","), nil))
+	if len(q.PrimaryKeys) > 0 {
+		columnsAndConstraints = append(columnsAndConstraints, dialects.Raw(fmt.Sprintf("PRIMARY KEY (%s)",
+			strings.Join(slices.Map(q.PrimaryKeys, g.core.Identifier), ", ")),
+		))
+	}
+	for _, f := range q.ForeignKeys {
+		f, err := g.EncodeForeignKey(&f)
+		if err != nil {
+			return dialects.RawQuery{}, err
+		}
+		columnsAndConstraints = append(columnsAndConstraints, f)
+	}
+
+	b.Add(group(joinRawQueries(columnsAndConstraints, ", "), nil))
+	b.AddStringNoSpace(";")
+
+	for _, index := range q.Indexes {
+		b.Add(g.EncodeIndex(&index))
+		b.AddStringNoSpace(";")
+	}
 
 	return b.Build()
 }
@@ -54,4 +72,12 @@ func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects
 			AddString(g.core.CurrentTime())
 	}
 	return r.Build()
+}
+func (g *Generic) EncodeForeignKey(f *dialects.ForeignKey) (dialects.RawQuery, error) {
+	return dialects.Raw(fmt.Sprintf("CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)",
+		g.core.Identifier(f.Name),
+		strings.Join(slices.Map(f.Columns, g.core.Identifier), ", "),
+		g.core.Identifier(f.ForeignTable),
+		strings.Join(slices.Map(f.ForeignColumns, g.core.Identifier), ", "),
+	)), nil
 }

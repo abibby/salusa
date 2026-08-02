@@ -1,6 +1,7 @@
 package generic
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
@@ -36,6 +37,9 @@ func (b *rawQueryBuilder) Add(r dialects.RawQuery, err error) *rawQueryBuilder {
 	return b
 }
 
+func (b *rawQueryBuilder) AddStringf(s string, a ...any) *rawQueryBuilder {
+	return b.AddString(fmt.Sprintf(s, a...))
+}
 func (b *rawQueryBuilder) AddString(s string) *rawQueryBuilder {
 	return b.Add(dialects.RawQuery{
 		SQL: s,
