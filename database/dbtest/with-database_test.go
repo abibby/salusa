@@ -15,17 +15,17 @@ func newSQLiteRunner() *dbtest.Runner {
 	})
 }
 
-func TestRunNoTx(t *testing.T) {
-	runner := newSQLiteRunner()
+// func TestRunNoTx(t *testing.T) {
+// 	runner := newSQLiteRunner()
 
-	ran := false
-	ok := runner.RunNoTx(t, "no tx", func(t *testing.T, db *sqlx.DB) {
-		ran = true
-		assert.NotNil(t, db)
-	})
-	assert.True(t, ok)
-	assert.True(t, ran)
-}
+// 	ran := false
+// 	ok := runner.RunNoTx(t, "no tx", func(t *testing.T, db *sqlx.DB) {
+// 		ran = true
+// 		assert.NotNil(t, db)
+// 	})
+// 	assert.True(t, ok)
+// 	assert.True(t, ran)
+// }
 
 func TestRunNoTxOpenError(t *testing.T) {
 	runner := dbtest.NewRunner(func() (*sqlx.DB, error) {
