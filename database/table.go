@@ -21,7 +21,7 @@ func GetTable(m any) string {
 		return m.Table()
 	}
 	t := reflect.TypeOf(m)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	name := strcase.SnakeCase(t.Name())

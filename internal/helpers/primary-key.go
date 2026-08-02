@@ -53,7 +53,7 @@ func PrimaryKeyValue(m any) ([]any, error) {
 }
 
 func primaryKey(t reflect.Type) ([]string, string) {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 

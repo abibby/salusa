@@ -5,7 +5,7 @@ import "reflect"
 func Each(v any, cb func(v reflect.Value, pointer bool) error) error {
 	pointer := false
 	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Ptr {
+	if rv.Kind() == reflect.Pointer {
 		rv = rv.Elem()
 		pointer = true
 	}
