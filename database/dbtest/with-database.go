@@ -34,6 +34,7 @@ func (r *Runner) RunBenchmarkNoTx(t *testing.B, name string, cb func(t *testing.
 	return runNoTx(r, t, name, cb)
 }
 func run[T testing.TB](r *Runner, t T, name string, cb func(t T, tx *sqlx.Tx)) bool {
+	t.Helper()
 	var err error
 	if r.db == nil {
 		r.db, err = r.open()

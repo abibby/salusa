@@ -14,6 +14,7 @@ import (
 	"github.com/abibby/salusa/database/dbtest"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/email/emailtest"
+	"github.com/abibby/salusa/router"
 	"github.com/abibby/salusa/router/routertest"
 	"github.com/abibby/salusa/view"
 	"github.com/golang-jwt/jwt/v4"
@@ -391,5 +392,341 @@ func TestAuthRoutesForgotPassword(t *testing.T) {
 		assert.Equal(t, "Password reset", sent[0].Subject)
 		assert.Contains(t, string(sent[0].HTMLBody), urlResolver.Resolve("reset-password", "token", u.LookupToken))
 
+	})
+}
+
+func TestAuthRoutesHandlers(t *testing.T) {
+	assert.NotNil(t, usernameRoutes.UserCreate())
+	assert.NotNil(t, usernameRoutes.Login())
+	assert.NotNil(t, emailRoutes.VerifyEmail())
+	assert.NotNil(t, emailRoutes.ResetPassword())
+	assert.NotNil(t, usernameRoutes.ChangePassword())
+	assert.NotNil(t, usernameRoutes.Refresh())
+	assert.NotNil(t, emailRoutes.ForgotPassword())
+}
+
+func TestRegisterRoutes(t *testing.T) {
+	r := router.New()
+	auth.RegisterRoutes(r, usernameRoutes)
+
+	type methodPath struct {
+		Method string
+		Path   string
+	}
+	routes := make([]methodPath, 0)
+	for _, route := range r.Routes() {
+		routes = append(routes, methodPath{Method: route.Method, Path: route.Path})
+	}
+
+	assert.Contains(t, routes, methodPath{"POST", "/login"})
+	assert.Contains(t, routes, methodPath{"POST", "/user/password/reset"})
+	assert.Contains(t, routes, methodPath{"POST", "/user/password/forgot"})
+	assert.Contains(t, routes, methodPath{"POST", "/user"})
+	assert.Contains(t, routes, methodPath{"GET", "/user/verify"})
+	assert.Contains(t, routes, methodPath{"POST", "/login/refresh"})
+	assert.Contains(t, routes, methodPath{"POST", "/user/password/change"})
+}
+
+func TestAuthTokenOptions(t *testing.T) {
+	type customClaims struct {
+		*auth.Claims
+		Extra string `json:"extra"`
+	}
+
+	routes := auth.NewBasicAuthController[*auth.UsernameUser](
+		auth.CreateUser(auth.NewUsernameUser),
+		auth.AccessTokenOptions(func(u *auth.UsernameUser, claims *auth.Claims) jwt.Claims {
+			return &customClaims{Claims: claims, Extra: "access-" + u.Username}
+		}),
+		auth.RefreshTokenOptions(func(u *auth.UsernameUser, claims *auth.Claims) jwt.Claims {
+			return &customClaims{Claims: claims, Extra: "refresh-" + u.Username}
+		}),
+	)
+
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		_, err := routes.RunUserCreate(&auth.UsernameUser{
+			Username:     "user",
+			PasswordHash: []byte{},
+		}, &auth.UserCreateRequest{
+			Password: "pass",
+			Update:   dbtest.Update(tx),
+			Ctx:      ctx,
+			Logger:   nullLogger,
+		})
+		assert.NoError(t, err)
+
+		resp, err := routes.RunLogin(&auth.LoginRequest{
+			Username: "user",
+			Password: "pass",
+			Read:     dbtest.Read(tx),
+			Ctx:      ctx,
+			Log:      nullLogger,
+		})
+		assert.NoError(t, err)
+
+		accessClaims, err := auth.ParseOf[*customClaims](resp.AccessToken)
+		assert.NoError(t, err)
+		assert.Equal(t, "access-user", accessClaims.Extra)
+
+		refreshClaims, err := auth.ParseOf[*customClaims](resp.RefreshToken)
+		assert.NoError(t, err)
+		assert.Equal(t, "refresh-user", refreshClaims.Extra)
+	})
+}
+
+func TestAuthResetPasswordName(t *testing.T) {
+	routes := auth.NewBasicAuthController[*auth.EmailVerifiedUser](
+		auth.CreateUser(auth.NewEmailVerifiedUser),
+		auth.ResetPasswordName("custom-reset-password"),
+	)
+
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		urlResolver := routertest.NewTestResolver()
+		m := emailtest.NewTestMailer()
+
+		id := uuid.New()
+		err := model.Save(tx, &auth.EmailVerifiedUser{
+			ID:           id,
+			Email:        "user2@example.com",
+			PasswordHash: []byte{},
+			Verified:     true,
+		})
+		assert.NoError(t, err)
+
+		_, err = routes.RunForgotPassword(&auth.ForgotPasswordRequest{
+			Email:    "user2@example.com",
+			Update:   dbtest.Update(tx),
+			Ctx:      ctx,
+			Mailer:   m,
+			Logger:   nullLogger,
+			URL:      urlResolver,
+			Template: emailTemplates,
+		})
+		assert.NoError(t, err)
+
+		time.Sleep(time.Millisecond * 20)
+
+		sent := m.EmailsSent()
+		assert.Len(t, sent, 1)
+		assert.Contains(t, string(sent[0].HTMLBody), urlResolver.Resolve("custom-reset-password", "token", ""))
+	})
+}
+
+func TestAuthRoutesLoginUnverified(t *testing.T) {
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		_, err := emailRoutes.RunUserCreate(&auth.EmailVerifiedUser{
+			Email:        "unverified@example.com",
+			PasswordHash: []byte{},
+		}, &auth.UserCreateRequest{
+			Password: "pass",
+			Update:   dbtest.Update(tx),
+			Ctx:      ctx,
+			Mailer:   emailtest.NewTestMailer(),
+			Logger:   nullLogger,
+			URL:      routertest.NewTestResolver(),
+			Template: emailTemplates,
+		})
+		assert.NoError(t, err)
+
+		time.Sleep(time.Millisecond * 20)
+
+		_, err = emailRoutes.RunLogin(&auth.LoginRequest{
+			Username: "unverified@example.com",
+			Password: "pass",
+			Read:     dbtest.Read(tx),
+			Ctx:      ctx,
+			Log:      nullLogger,
+		})
+		assert.ErrorIs(t, err, auth.Err401Unauthorized)
+	})
+}
+
+func TestAuthRoutesVerifyEmailErrors(t *testing.T) {
+	Run(t, "non email verified user", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		_, err := usernameRoutes.RunVerifyEmail(&auth.VerifyEmailRequest{
+			Token:  "token",
+			Ctx:    ctx,
+			Update: dbtest.Update(tx),
+			URL:    routertest.NewTestResolver(),
+		})
+		assert.ErrorIs(t, err, auth.ErrNonEmailVerifiedUser)
+	})
+
+	Run(t, "token not found", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		_, err := emailRoutes.RunVerifyEmail(&auth.VerifyEmailRequest{
+			Token:  "unknown-token",
+			Ctx:    ctx,
+			Update: dbtest.Update(tx),
+			URL:    routertest.NewTestResolver(),
+		})
+		assert.ErrorIs(t, err, auth.ErrTokenNotFound)
+	})
+
+	Run(t, "already verified", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		err := model.Save(tx, &auth.EmailVerifiedUser{
+			ID:           uuid.New(),
+			Email:        "already@example.com",
+			PasswordHash: []byte{},
+			LookupToken:  "already-verified-token",
+			Verified:     true,
+		})
+		assert.NoError(t, err)
+
+		_, err = emailRoutes.RunVerifyEmail(&auth.VerifyEmailRequest{
+			Token:  "already-verified-token",
+			Ctx:    ctx,
+			Update: dbtest.Update(tx),
+			URL:    routertest.NewTestResolver(),
+		})
+		assert.Error(t, err)
+	})
+}
+
+func TestAuthRoutesResetPasswordErrors(t *testing.T) {
+	Run(t, "non email verified user", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		_, err := usernameRoutes.RunResetPassword(&auth.ResetPasswordRequest{
+			Token:    "token",
+			Password: "new password",
+			Ctx:      ctx,
+			Update:   dbtest.Update(tx),
+			URL:      routertest.NewTestResolver(),
+		})
+		assert.ErrorIs(t, err, auth.ErrNonEmailVerifiedUser)
+	})
+
+	Run(t, "token not found", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		_, err := emailRoutes.RunResetPassword(&auth.ResetPasswordRequest{
+			Token:    "unknown-token",
+			Password: "new password",
+			Ctx:      ctx,
+			Update:   dbtest.Update(tx),
+			URL:      routertest.NewTestResolver(),
+		})
+		assert.ErrorIs(t, err, auth.ErrTokenNotFound)
+	})
+
+	Run(t, "not verified", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		err := model.Save(tx, &auth.EmailVerifiedUser{
+			ID:           uuid.New(),
+			Email:        "unverified2@example.com",
+			PasswordHash: []byte{},
+			LookupToken:  "unverified-token",
+			Verified:     false,
+		})
+		assert.NoError(t, err)
+
+		_, err = emailRoutes.RunResetPassword(&auth.ResetPasswordRequest{
+			Token:    "unverified-token",
+			Password: "new password",
+			Ctx:      ctx,
+			Update:   dbtest.Update(tx),
+			URL:      routertest.NewTestResolver(),
+		})
+		assert.ErrorIs(t, err, auth.Err401Unauthorized)
+	})
+}
+
+func TestAuthRoutesForgotPasswordUnknownEmail(t *testing.T) {
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		m := emailtest.NewTestMailer()
+
+		_, err := emailRoutes.RunForgotPassword(&auth.ForgotPasswordRequest{
+			Email:    "does-not-exist@example.com",
+			Update:   dbtest.Update(tx),
+			Ctx:      ctx,
+			Mailer:   m,
+			Logger:   nullLogger,
+			URL:      routertest.NewTestResolver(),
+			Template: emailTemplates,
+		})
+		assert.NoError(t, err)
+		assert.Empty(t, m.EmailsSent())
+	})
+}
+
+func TestAuthRoutesChangePasswordWrongPassword(t *testing.T) {
+	// Hashed password salted with the id
+	id := uuid.MustParse("cae3c6b1-7ff1-4f23-9489-a9f6e82478f9")
+	passwordHash := []byte{
+		0x24, 0x32, 0x61, 0x24, 0x30, 0x34, 0x24, 0x78, 0x4d, 0x65,
+		0x30, 0x54, 0x66, 0x77, 0x4c, 0x75, 0x48, 0x79, 0x35, 0x78,
+		0x64, 0x51, 0x76, 0x58, 0x6b, 0x59, 0x73, 0x4b, 0x2e, 0x36,
+		0x34, 0x31, 0x70, 0x6c, 0x63, 0x6c, 0x69, 0x54, 0x43, 0x5a,
+		0x51, 0x51, 0x55, 0x49, 0x71, 0x41, 0x72, 0x65, 0x77, 0x51,
+		0x45, 0x4c, 0x6b, 0x43, 0x76, 0x6d, 0x6a, 0x62, 0x4d, 0x75,
+	}
+	Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		createdUser := &auth.UsernameUser{
+			ID:           id,
+			PasswordHash: passwordHash,
+		}
+		err := model.Save(tx, createdUser)
+		assert.NoError(t, err)
+
+		_, err = usernameRoutes.RunChangePassword(&auth.ChangePasswordRequest[*auth.UsernameUser]{
+			OldPassword: "wrong password",
+			NewPassword: "new password",
+			User:        createdUser,
+			Ctx:         ctx,
+			Update:      dbtest.Update(tx),
+		})
+		assert.ErrorIs(t, err, auth.Err401Unauthorized)
+	})
+}
+
+func TestAuthRoutesRefreshErrors(t *testing.T) {
+	Run(t, "wrong scope", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+		createdUser := &auth.UsernameUser{
+			ID:           uuid.New(),
+			PasswordHash: []byte(""),
+		}
+		err := model.Save(tx, createdUser)
+		assert.NoError(t, err)
+
+		token, err := auth.GenerateToken(&auth.Claims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				Subject: createdUser.GetID(),
+			},
+			Scope: []string{auth.ScopeAccess},
+		})
+		assert.NoError(t, err)
+
+		_, err = usernameRoutes.RunRefresh(&auth.RefreshRequest[*auth.UsernameUser]{
+			RefreshToken: token,
+			Ctx:          ctx,
+			Read:         dbtest.Read(tx),
+		})
+		assert.Error(t, err)
+	})
+
+	Run(t, "no user found", func(t *testing.T, tx *sqlx.Tx) {
+		ctx := context.Background()
+
+		token, err := auth.GenerateToken(&auth.Claims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				Subject: uuid.New().String(),
+			},
+			Scope: []string{auth.ScopeRefresh},
+		})
+		assert.NoError(t, err)
+
+		_, err = usernameRoutes.RunRefresh(&auth.RefreshRequest[*auth.UsernameUser]{
+			RefreshToken: token,
+			Ctx:          ctx,
+			Read:         dbtest.Read(tx),
+		})
+		assert.Error(t, err)
 	})
 }

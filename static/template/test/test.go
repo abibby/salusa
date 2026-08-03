@@ -17,9 +17,13 @@ import (
 )
 
 var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
+	return setupTestDB("sqlite", ":memory:")
+})
+
+func setupTestDB(driverName, dataSourceName string) (*sqlx.DB, error) {
 	sqlite.UseSQLite()
 
-	db, err := sqlx.Open("sqlite", ":memory:")
+	db, err := sqlx.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +36,7 @@ var runner = dbtest.NewRunner(func() (*sqlx.DB, error) {
 	log.Print("db loaded")
 
 	return db, nil
-})
+}
 
 var Run = runner.Run
 var RunBenchmark = runner.RunBenchmark

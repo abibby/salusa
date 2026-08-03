@@ -148,6 +148,14 @@ func AddTypeRule(key string, rule *TypeRule) {
 			return rule.Array(val, options.Arguments)
 		}
 
+		if val.Kind() == reflect.Bool {
+			if rule.Bool == nil {
+				log.Printf("no rule for bool fields")
+				return true
+			}
+			return rule.Bool(val.Bool(), options.Arguments)
+		}
+
 		log.Printf("using a numeric rule on a non numeric field")
 		return true
 	})

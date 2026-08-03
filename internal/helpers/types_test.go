@@ -3,6 +3,9 @@ package helpers
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type Foo struct{}
@@ -37,4 +40,60 @@ func TestRNewOf(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewOf(t *testing.T) {
+	t.Run("pointer", func(t *testing.T) {
+		v, err := NewOf[*Foo]()
+		require.NoError(t, err)
+		assert.IsType(t, &Foo{}, v)
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		v, err := NewOf[Foo]()
+		require.NoError(t, err)
+		assert.IsType(t, Foo{}, v)
+	})
+
+	t.Run("interface", func(t *testing.T) {
+		_, err := NewOf[any]()
+		assert.Error(t, err)
+	})
+
+	t.Run("int", func(t *testing.T) {
+		v, err := NewOf[int]()
+		require.NoError(t, err)
+		assert.Equal(t, 0, v)
+	})
+}
+
+func TestCreateFor(t *testing.T) {
+	t.Run("pointer", func(t *testing.T) {
+		v := CreateFor[*Foo]()
+		assert.Equal(t, reflect.Pointer, v.Kind())
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		v := CreateFor[Foo]()
+		assert.Equal(t, reflect.Struct, v.Kind())
+	})
+}
+
+func TestCreate(t *testing.T) {
+	t.Run("pointer", func(t *testing.T) {
+		v := Create(reflect.TypeFor[*Foo]())
+		assert.Equal(t, reflect.Pointer, v.Kind())
+		assert.IsType(t, &Foo{}, v.Interface())
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		v := Create(reflect.TypeFor[Foo]())
+		assert.Equal(t, reflect.Struct, v.Kind())
+	})
+}
+
+func TestZero(t *testing.T) {
+	assert.Equal(t, 0, Zero[int]())
+	assert.Equal(t, "", Zero[string]())
+	assert.Nil(t, Zero[*Foo]())
 }

@@ -287,7 +287,7 @@ func decode(t reflect.Type, values []string) (reflect.Value, error) {
 
 func decodeSlice(t reflect.Type, values []string) (reflect.Value, error) {
 	sliceT := t.Elem()
-	slice := reflect.MakeSlice(sliceT, 0, len(values))
+	slice := reflect.MakeSlice(t, 0, len(values))
 	for _, part := range values {
 		result, err := decode(sliceT, []string{part})
 		if err != nil {

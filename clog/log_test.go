@@ -9,6 +9,7 @@ import (
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/salusaconfig"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -71,5 +72,116 @@ func TestResolve(t *testing.T) {
 		l, err := di.Resolve[*slog.Logger](ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, l)
+	})
+}
+
+type testConfig struct {
+	level slog.Level
+	b     *bytes.Buffer
+}
+
+func (c *testConfig) GetHTTPPort() int {
+	return 8080
+}
+func (c *testConfig) GetBaseURL() string {
+	return "https://example.com"
+}
+func (c *testConfig) LoggerConfig() clog.Config {
+	return &testLoggerConfig{level: c.level, b: c.b}
+}
+
+type testLoggerConfig struct {
+	level slog.Level
+	b     *bytes.Buffer
+}
+
+func (c *testLoggerConfig) Handler() (slog.Handler, error) {
+	return slog.NewTextHandler(c.b, &slog.HandlerOptions{
+		Level: c.level,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Time(slog.TimeKey, time.Time{})
+			}
+			return a
+		},
+	}), nil
+}
+
+func TestNewDefaultConfig(t *testing.T) {
+	c := clog.NewDefaultConfig(slog.LevelWarn)
+	assert.NotNil(t, c)
+	h, err := c.Handler()
+	assert.NoError(t, err)
+	assert.NotNil(t, h)
+}
+
+func TestDefaultHandler(t *testing.T) {
+	h := clog.DefaultHandler(slog.LevelDebug)
+	assert.NotNil(t, h)
+}
+
+func TestRegister(t *testing.T) {
+	t.Run("with logger config", func(t *testing.T) {
+		b := bytes.NewBuffer(nil)
+		ctx := di.ContextWithDependencyProvider(
+			context.Background(),
+			di.NewDependencyProvider(),
+		)
+		di.RegisterSingleton(ctx, func() salusaconfig.Config {
+			return &testConfig{level: slog.LevelInfo, b: b}
+		})
+
+		err := clog.Register(ctx)
+		assert.NoError(t, err)
+
+		logger, err := di.Resolve[*clog.RootLogger](ctx)
+		assert.NoError(t, err)
+		assert.NotNil(t, logger)
+
+		(*slog.Logger)(logger).Warn("test")
+		assert.Contains(t, b.String(), "level=WARN msg=test")
+	})
+
+	t.Run("without logger config", func(t *testing.T) {
+		ctx := di.ContextWithDependencyProvider(
+			context.Background(),
+			di.NewDependencyProvider(),
+		)
+		di.RegisterSingleton(ctx, func() salusaconfig.Config {
+			return plainConfig{}
+		})
+
+		err := clog.Register(ctx)
+		assert.NoError(t, err)
+
+		logger, err := di.Resolve[*clog.RootLogger](ctx)
+		assert.NoError(t, err)
+		assert.NotNil(t, logger)
+	})
+}
+
+type plainConfig struct{}
+
+func (plainConfig) GetHTTPPort() int {
+	return 8080
+}
+func (plainConfig) GetBaseURL() string {
+	return "https://example.com"
+}
+
+func TestUse(t *testing.T) {
+	t.Run("resolves", func(t *testing.T) {
+		ctx, _ := register()
+		logger := clog.Use(ctx)
+		assert.NotNil(t, logger)
+	})
+
+	t.Run("fallback to default", func(t *testing.T) {
+		ctx := di.ContextWithDependencyProvider(
+			context.Background(),
+			di.NewDependencyProvider(),
+		)
+		logger := clog.Use(ctx)
+		assert.NotNil(t, logger)
 	})
 }

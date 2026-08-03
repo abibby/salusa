@@ -2,6 +2,7 @@ package di_test
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/abibby/salusa/di"
@@ -75,5 +76,50 @@ func TestDependencyProvider_Validate(t *testing.T) {
 
 		err := dp.Validate(ctx)
 		assert.ErrorIs(t, err, di.ErrDependancyCycle)
+	})
+}
+
+func TestValidator(t *testing.T) {
+	type Dep struct{ V int }
+	type Fillable struct {
+		D       *Dep            `inject:""`
+		Context context.Context `inject:""`
+	}
+
+	t.Run("valid", func(t *testing.T) {
+		ctx := di.TestDependencyProviderContext()
+		di.RegisterSingleton(ctx, func() *Dep {
+			return &Dep{}
+		})
+
+		v := di.Validator(ctx, reflect.TypeOf(&Fillable{}))
+		err := v.Validate(ctx)
+		assert.NoError(t, err)
+	})
+
+	t.Run("missing dependency", func(t *testing.T) {
+		ctx := di.TestDependencyProviderContext()
+
+		v := di.Validator(ctx, reflect.TypeOf(&Fillable{}))
+		err := v.Validate(ctx)
+		assert.ErrorIs(t, err, di.ErrMissingDependancy)
+	})
+
+	t.Run("non struct", func(t *testing.T) {
+		ctx := di.TestDependencyProviderContext()
+		type NotStruct int
+
+		v := di.Validator(ctx, reflect.TypeOf(NotStruct(0)))
+		err := v.Validate(ctx)
+		assert.NoError(t, err)
+	})
+
+	t.Run("pointer to non struct", func(t *testing.T) {
+		ctx := di.TestDependencyProviderContext()
+		type NotStruct int
+
+		v := di.Validator(ctx, reflect.TypeOf(new(NotStruct)))
+		err := v.Validate(ctx)
+		assert.NoError(t, err)
 	})
 }

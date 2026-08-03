@@ -26,11 +26,6 @@ func NewSelectQuery() SelectQuery {
 	}
 }
 
-func (q *SelectQuery) Clone() *SelectQuery {
-	// TODO implement clone
-	return q
-}
-
 type OrderColumn struct {
 	Column     string
 	Descending bool

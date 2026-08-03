@@ -1,0 +1,84 @@
+package postgres_test
+
+import (
+	"testing"
+
+	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/generic"
+	"github.com/abibby/salusa/database/dialects/postgres"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestPosgtgresCoreIdentifier(t *testing.T) {
+	c := &postgres.PosgtgresCore{}
+	assert.Equal(t, "*", c.Identifier("*"))
+	assert.Equal(t, `"foo"`, c.Identifier("foo"))
+	assert.Equal(t, `"foo".*`, c.Identifier("foo.*"))
+	assert.Equal(t, `"a"."b"`, c.Identifier("a.b"))
+}
+
+func TestPosgtgresCoreDataType(t *testing.T) {
+	c := &postgres.PosgtgresCore{}
+	cases := map[dialects.DataType]string{
+		dialects.DataTypeBlob:     "BYTEA",
+		dialects.DataTypeString:   "VARCHAR(255)",
+		dialects.DataTypeBoolean:  "BOOLEAN",
+		dialects.DataTypeDate:     "TIMESTAMP",
+		dialects.DataTypeDateTime: "TIMESTAMP",
+		dialects.DataTypeFloat32:  "REAL",
+		dialects.DataTypeFloat64:  "DOUBLE PRECISION",
+		dialects.DataTypeInt8:     "SMALLINT",
+		dialects.DataTypeInt16:    "SMALLINT",
+		dialects.DataTypeUInt8:    "SMALLINT",
+		dialects.DataTypeUInt16:   "SMALLINT",
+		dialects.DataTypeInt32:    "INTEGER",
+		dialects.DataTypeUInt32:   "INTEGER",
+		dialects.DataTypeInt64:    "BIGINT",
+		dialects.DataTypeUInt64:   "BIGINT",
+		dialects.DataTypeJSON:     "JSON",
+	}
+	for dt, expected := range cases {
+		assert.Equal(t, expected, c.DataType(dt), string(dt))
+	}
+	assert.Equal(t, "text", c.DataType(dialects.DataTypeText))
+	assert.Panics(t, func() {
+		c.DataType(dialects.DataTypeEnum)
+	})
+}
+
+func TestPosgtgresCoreMisc(t *testing.T) {
+	c := &postgres.PosgtgresCore{}
+	assert.Equal(t, "CURRENT_TIMESTAMP()", c.CurrentTime())
+	assert.Equal(t, "", c.AutoIncrement())
+	c2 := &postgres.PosgtgresCore{}
+	assert.Equal(t, "$1", c2.Binding())
+	assert.Equal(t, "$2", c2.Binding())
+}
+
+func TestPosgtgresCoreEscape(t *testing.T) {
+	c := &postgres.PosgtgresCore{}
+	assert.Equal(t, "'foo'", c.Escape("foo"))
+	assert.Equal(t, "'bar''s'", c.Escape("bar's"))
+	assert.Equal(t, "42", c.Escape(42))
+	assert.Equal(t, "4.5", c.Escape(4.5))
+	assert.Equal(t, "TRUE", c.Escape(true))
+	assert.Equal(t, "FALSE", c.Escape(false))
+	assert.Equal(t, `'{"a":1}'`, c.Escape(map[string]int{"a": 1}))
+	assert.Panics(t, func() {
+		c.Escape(make(chan int))
+	})
+}
+
+func TestPostgresNew(t *testing.T) {
+	d := postgres.New()
+	_, ok := d.(*generic.Generic)
+	assert.True(t, ok)
+	require.NotNil(t, d)
+}
+
+func TestUsePostgres(t *testing.T) {
+	postgres.UsePostgres()
+	_, ok := dialects.New().(*generic.Generic)
+	assert.True(t, ok)
+}

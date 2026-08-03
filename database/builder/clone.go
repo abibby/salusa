@@ -1,5 +1,7 @@
 package builder
 
+import "github.com/abibby/salusa/database/dialects"
+
 func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 	return &ModelBuilder[T]{
 		builder:       b.builder.Clone(),
@@ -9,7 +11,19 @@ func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 }
 func (b *Builder) Clone() *Builder {
 	return &Builder{
-		query:   *b.query.Clone(),
+		query: dialects.SelectQuery{
+			Select: dialects.Select{
+				Distinct: b.query.Select.Distinct,
+				Columns:  cloneSlice(b.query.Select.Columns),
+			},
+			From:     b.query.From,
+			Joins:    cloneSlice(b.query.Joins),
+			Wheres:   cloneSlice(b.query.Wheres),
+			Havings:  cloneSlice(b.query.Havings),
+			GroupBys: cloneSlice(b.query.GroupBys),
+			OrderBys: cloneSlice(b.query.OrderBys),
+			Limit:    b.query.Limit,
+		},
 		scopes:  b.scopes.Clone(),
 		wheres:  b.wheres.Clone(),
 		havings: b.havings.Clone(),

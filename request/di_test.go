@@ -10,6 +10,44 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDIMiddleware(t *testing.T) {
+	ctx := di.TestDependencyProviderContext()
+	err := request.Register(ctx)
+	assert.NoError(t, err)
+
+	type Request struct {
+		Request *http.Request `inject:""`
+	}
+
+	httpRequest := httptest.NewRequest("GET", "http://0.0.0.0/", http.NoBody).WithContext(ctx)
+
+	var gotReq *http.Request
+	middleware := request.DIMiddleware()
+	h := middleware(request.Handler(func(r *Request) (any, error) {
+		gotReq = r.Request
+		return nil, nil
+	}))
+
+	h.ServeHTTP(httptest.NewRecorder(), httpRequest)
+	assert.NotNil(t, gotReq)
+	assert.Equal(t, httpRequest.URL.String(), gotReq.URL.String())
+}
+
+func TestRegisterError(t *testing.T) {
+	ctx := di.TestDependencyProviderContext()
+	err := request.Register(ctx)
+	assert.NoError(t, err)
+
+	_, err = di.Resolve[*http.Request](ctx)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "request not in context")
+
+	_, err = di.Resolve[http.ResponseWriter](ctx)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "response not in context")
+}
+
+
 func TestInjectRequest(t *testing.T) {
 	type Request struct {
 		Request *http.Request `inject:""`
