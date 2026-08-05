@@ -101,9 +101,7 @@ func New() dialects.Dialect {
 }
 
 func UseMySql() {
-	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return New()
-	})
+	dialects.Register("mysql", New)
 }
 func init() {
 	UseMySql()

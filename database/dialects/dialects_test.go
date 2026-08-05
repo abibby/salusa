@@ -9,14 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSetDefaultDialectAndNew(t *testing.T) {
-	old := sqlite.New()
-	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return old
-	})
-	assert.Same(t, old, dialects.New())
-}
-
 func TestJoinQueries(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		r := dialects.JoinQueries([]dialects.RawQuery{})

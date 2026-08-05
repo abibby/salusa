@@ -1,7 +1,6 @@
 package builder_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/abibby/salusa/database/builder"
@@ -16,13 +15,13 @@ func TestDeleter(t *testing.T) {
 		{
 			Name:             "delete all",
 			Builder:          NewTestBuilder(),
-			ExpectedSQL:      "DELETE FROM \"foos\"",
+			ExpectedSQLite:   "DELETE FROM \"foos\"",
 			ExpectedBindings: []any{},
 		},
 		{
 			Name:             "delete where",
 			Builder:          NewTestBuilder().Where("id", "=", 5),
-			ExpectedSQL:      "DELETE FROM \"foos\" WHERE \"id\" = ?",
+			ExpectedSQLite:   "DELETE FROM \"foos\" WHERE \"id\" = ?",
 			ExpectedBindings: []any{5},
 		},
 	})
@@ -30,13 +29,10 @@ func TestDeleter(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	test.Run(t, "delete", func(t *testing.T, tx *sqlx.Tx) {
-		const insert = "INSERT INTO foos (id, name) values (?,?)"
-		_, err := tx.ExecContext(context.Background(), insert, 1, "test1")
-		assert.NoError(t, err)
-		_, err = tx.ExecContext(context.Background(), insert, 2, "test2")
-		assert.NoError(t, err)
+		MustSave(tx, &test.Foo{ID: 1, Name: "test1"})
+		MustSave(tx, &test.Foo{ID: 2, Name: "test2"})
 
-		err = builder.From[*test.Foo]().Where("id", "=", 1).Delete(tx)
+		err := builder.From[*test.Foo]().Where("id", "=", 1).Delete(tx)
 		assert.NoError(t, err)
 
 		foos, err := builder.From[*test.Foo]().Get(tx)

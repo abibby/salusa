@@ -74,6 +74,10 @@ func TestMySQLNew(t *testing.T) {
 
 func TestUseMySql(t *testing.T) {
 	mysql.UseMySql()
-	_, ok := dialects.New().(*generic.Generic)
+	d, err := dialects.New("mysql")
+	if err != nil {
+		assert.FailNow(t, "no dialect registered")
+	}
+	_, ok := d.(*generic.Generic)
 	assert.True(t, ok)
 }

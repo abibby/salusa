@@ -79,6 +79,10 @@ func TestPostgresNew(t *testing.T) {
 
 func TestUsePostgres(t *testing.T) {
 	postgres.UsePostgres()
-	_, ok := dialects.New().(*generic.Generic)
+	d, err := dialects.New("postgres")
+	if err != nil {
+		assert.FailNow(t, "no dialect registered")
+	}
+	_, ok := d.(*generic.Generic)
 	assert.True(t, ok)
 }

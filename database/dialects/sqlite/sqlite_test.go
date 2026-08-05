@@ -85,7 +85,11 @@ func TestSQLiteNew(t *testing.T) {
 
 func TestUseSQLite(t *testing.T) {
 	sqlite.UseSQLite()
-	_, ok := dialects.New().(*generic.Generic)
+	d, err := dialects.New("sqlite3")
+	if err != nil {
+		assert.FailNow(t, "no dialect registered")
+	}
+	_, ok := d.(*generic.Generic)
 	assert.True(t, ok)
 }
 

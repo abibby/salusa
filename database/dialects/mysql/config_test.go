@@ -13,7 +13,7 @@ func TestSimpleConfig(t *testing.T) {
 	c := &mysql.SimpleConfig{
 		Username: "user",
 		Password: "pass",
-		Address:  "localhost:3306",
+		Host:     "localhost:3306",
 		Database: "db",
 	}
 	c.SetDialect()

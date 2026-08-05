@@ -10,7 +10,11 @@ func (b *ModelBuilder[T]) Delete(tx database.DB) error {
 }
 
 func delete(b *Builder, tx database.DB) error {
-	result, err := dialects.New().EncodeDeleteQuery(b.DeleteQuery())
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
+	result, err := d.EncodeDeleteQuery(b.DeleteQuery())
 	if err != nil {
 		return err
 	}

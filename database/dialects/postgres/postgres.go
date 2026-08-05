@@ -101,9 +101,7 @@ func New() dialects.Dialect {
 }
 
 func UsePostgres() {
-	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return New()
-	})
+	dialects.Register("postgres", New)
 }
 func init() {
 	UsePostgres()

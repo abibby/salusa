@@ -89,9 +89,8 @@ func (*SQLiteCore) Binding() string {
 }
 
 func UseSQLite() {
-	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return New()
-	})
+	dialects.Register("sqlite3", New)
+	dialects.Register("sqlite", New)
 }
 func init() {
 	UseSQLite()

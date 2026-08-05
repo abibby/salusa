@@ -70,7 +70,10 @@ func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 		return fmt.Errorf("before save hooks: %w", err)
 	}
 
-	d := dialects.New()
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
 	m := columnsAndValues(reflect.ValueOf(v).Elem())
 	if inDB {
 		err = update(ctx, tx, d, v, m)
@@ -205,12 +208,15 @@ func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T)
 		}
 	}
 
-	d := dialects.New()
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
 	maps := make([]map[string]any, len(models))
 	for i, v := range models {
 		maps[i] = columnsAndValues(reflect.ValueOf(v).Elem())
 	}
-	err := insertMany(ctx, tx, d, models[0], maps)
+	err = insertMany(ctx, tx, d, models[0], maps)
 	if err != nil {
 		return fmt.Errorf("insert: %w", err)
 	}
@@ -235,7 +241,11 @@ func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, 
 			delete(maps[i], pKey)
 		}
 	}
-	sql, err := dialects.New().EncodeInsertQuery(&dialects.InsertQuery{
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
+	sql, err := d.EncodeInsertQuery(&dialects.InsertQuery{
 		Table:  database.GetTable(v),
 		Values: maps,
 	})

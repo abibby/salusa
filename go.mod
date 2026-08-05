@@ -17,6 +17,7 @@ require (
 	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.12.3
 	github.com/lmittmann/tint v1.0.5
 	github.com/mattn/go-sqlite3 v1.14.23
 	github.com/robfig/cron/v3 v3.0.1

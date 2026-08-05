@@ -13,7 +13,7 @@ func TestUpdateTable(t *testing.T) {
 		{
 			Name:             "empty update",
 			Builder:          schema.Table("foo", func(table *schema.Blueprint) {}),
-			ExpectedSQL:      "",
+			ExpectedSQLite:   "",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -21,7 +21,7 @@ func TestUpdateTable(t *testing.T) {
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.String("bar")
 			}),
-			ExpectedSQL:      "ALTER TABLE \"foo\" ADD \"bar\" TEXT NOT NULL;",
+			ExpectedSQLite:   "ALTER TABLE \"foo\" ADD \"bar\" TEXT NOT NULL;",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -29,7 +29,7 @@ func TestUpdateTable(t *testing.T) {
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.Int("id").Change()
 			}),
-			ExpectedSQL:      "ALTER TABLE \"foo\" MODIFY COLUMN \"id\" INTEGER NOT NULL;",
+			ExpectedSQLite:   "ALTER TABLE \"foo\" MODIFY COLUMN \"id\" INTEGER NOT NULL;",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -37,7 +37,7 @@ func TestUpdateTable(t *testing.T) {
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.DropColumn("id")
 			}),
-			ExpectedSQL:      "ALTER TABLE \"foo\" DROP COLUMN \"id\";",
+			ExpectedSQLite:   "ALTER TABLE \"foo\" DROP COLUMN \"id\";",
 			ExpectedBindings: []any{},
 		},
 		{
@@ -45,7 +45,7 @@ func TestUpdateTable(t *testing.T) {
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.ForeignKey("id", "bar", "foo_id")
 			}),
-			ExpectedSQL:      "ALTER TABLE \"foo\" ADD CONSTRAINT \"id-bar-foo_id\" FOREIGN KEY (\"id\") REFERENCES \"bar\" (\"foo_id\");",
+			ExpectedSQLite:   "ALTER TABLE \"foo\" ADD CONSTRAINT \"id-bar-foo_id\" FOREIGN KEY (\"id\") REFERENCES \"bar\" (\"foo_id\");",
 			ExpectedBindings: []any{},
 		},
 		// {
@@ -61,7 +61,7 @@ func TestUpdateTable(t *testing.T) {
 			Builder: schema.Table("foo", func(table *schema.Blueprint) {
 				table.Index("index-name").AddColumn("foo").AddColumn("bar")
 			}),
-			ExpectedSQL:      "CREATE INDEX IF NOT EXISTS \"index-name\" ON \"foo\" (\"foo\", \"bar\");",
+			ExpectedSQLite:   "CREATE INDEX IF NOT EXISTS \"index-name\" ON \"foo\" (\"foo\", \"bar\");",
 			ExpectedBindings: []any{},
 		},
 		// {

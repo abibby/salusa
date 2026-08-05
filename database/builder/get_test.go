@@ -12,11 +12,8 @@ import (
 
 func TestGet(t *testing.T) {
 	test.Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
-		const insert = "INSERT INTO foos (id, name) values (?,?)"
-		_, err := tx.ExecContext(context.Background(), insert, 1, "test1")
-		assert.NoError(t, err)
-		_, err = tx.ExecContext(context.Background(), insert, 2, "test2")
-		assert.NoError(t, err)
+		MustSave(tx, &test.Foo{ID: 1, Name: "test1"})
+		MustSave(tx, &test.Foo{ID: 2, Name: "test2"})
 
 		foos, err := builder.From[*test.Foo]().Get(tx)
 		assert.NoError(t, err)
@@ -29,11 +26,8 @@ func TestGet(t *testing.T) {
 
 func TestFirst(t *testing.T) {
 	test.Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
-		const insert = "INSERT INTO foos (id, name) values (?,?)"
-		_, err := tx.ExecContext(context.Background(), insert, 1, "test1")
-		assert.NoError(t, err)
-		_, err = tx.ExecContext(context.Background(), insert, 2, "test2")
-		assert.NoError(t, err)
+		MustSave(tx, &test.Foo{ID: 1, Name: "test1"})
+		MustSave(tx, &test.Foo{ID: 2, Name: "test2"})
 
 		foo, err := builder.From[*test.Foo]().First(tx)
 		assert.NoError(t, err)

@@ -9,7 +9,11 @@ import (
 )
 
 func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {
-	b := newRawQueryBuilder().AddString("CREATE TABLE")
+	b := newRawQueryBuilder().AddString("CREATE")
+	if q.Temporary {
+		b.AddString("TEMPORARY")
+	}
+	b.AddString("TABLE")
 	if q.IfNotExists {
 		b.AddString("IF NOT EXISTS")
 	}

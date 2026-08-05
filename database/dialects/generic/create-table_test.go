@@ -35,6 +35,18 @@ func TestGeneric_EncodeCreateTableQuery(t *testing.T) {
 			ExpectedBindings: []any{},
 		},
 		{
+			Name: "temp",
+			Builder: &dialects.CreateTableQuery{
+				Table:     "foo",
+				Temporary: true,
+				Columns: []dialects.ColumnDefinition{
+					{Name: "c1", Datatype: dialects.DataTypeDate},
+				},
+			},
+			ExpectedSQL:      "CREATE TEMPORARY TABLE `foo` (`c1` date NOT NULL);",
+			ExpectedBindings: []any{},
+		},
+		{
 			Name: "full",
 			Builder: &dialects.CreateTableQuery{
 				Table: "foo",

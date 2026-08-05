@@ -5,6 +5,7 @@ import (
 
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,13 +21,13 @@ func TestQueryTest(t *testing.T) {
 		{
 			Name:             "one select",
 			Builder:          builder.From[*Foo]().Select("a"),
-			ExpectedSQL:      `SELECT "a" FROM "foos"`,
+			ExpectedSQLite:   `SELECT "a" FROM "foos"`,
 			ExpectedBindings: []any{},
 		},
 		{
 			Name:             "with where",
 			Builder:          builder.From[*Foo]().Select("a").Where("id", "=", 1),
-			ExpectedSQL:      `SELECT "a" FROM "foos" WHERE "id" = ?`,
+			ExpectedSQLite:   `SELECT "a" FROM "foos" WHERE "id" = ?`,
 			ExpectedBindings: []any{1},
 		},
 	})
@@ -37,13 +38,13 @@ func TestDeleteQueryTest(t *testing.T) {
 		{
 			Name:             "delete",
 			Builder:          builder.From[*Foo](),
-			ExpectedSQL:      `DELETE FROM "foos"`,
+			ExpectedSQLite:   `DELETE FROM "foos"`,
 			ExpectedBindings: []any{},
 		},
 		{
 			Name:             "delete with where",
 			Builder:          builder.From[*Foo]().Where("id", "=", 3),
-			ExpectedSQL:      `DELETE FROM "foos" WHERE "id" = ?`,
+			ExpectedSQLite:   `DELETE FROM "foos" WHERE "id" = ?`,
 			ExpectedBindings: []any{3},
 		},
 	})
@@ -60,7 +61,7 @@ func TestUpdateQueryTest(t *testing.T) {
 					{Column: dialects.Column{Column: "id"}, Operator: "=", Value: 1},
 				},
 			},
-			ExpectedSQL:      `UPDATE "foos" SET "name" = ? WHERE "id" = ?`,
+			ExpectedSQLite:   `UPDATE "foos" SET "name" = ? WHERE "id" = ?`,
 			ExpectedBindings: []any{"x", 1},
 		},
 	})
@@ -86,7 +87,7 @@ func TestCreateTableTest(t *testing.T) {
 					{Name: "name", Datatype: dialects.DataTypeString},
 				},
 			}},
-			ExpectedSQL:      `CREATE TABLE IF NOT EXISTS "foos" ("id" INTEGER PRIMARY KEY NOT NULL, "name" TEXT NOT NULL);`,
+			ExpectedSQLite:   `CREATE TABLE IF NOT EXISTS "foos" ("id" INTEGER PRIMARY KEY NOT NULL, "name" TEXT NOT NULL);`,
 			ExpectedBindings: []any{},
 		},
 	})
@@ -102,7 +103,7 @@ func TestAlterTableTest(t *testing.T) {
 				ModifyColumns: []dialects.ColumnDefinition{{Name: "name", Datatype: dialects.DataTypeString}},
 				AddColumns:    []dialects.ColumnDefinition{{Name: "age", Datatype: dialects.DataTypeInt32}},
 			}},
-			ExpectedSQL:      `ALTER TABLE "foos" DROP COLUMN "old"; ALTER TABLE "foos" MODIFY COLUMN "name" TEXT NOT NULL; ALTER TABLE "foos" ADD "age" INTEGER NOT NULL;`,
+			ExpectedSQLite:   `ALTER TABLE "foos" DROP COLUMN "old"; ALTER TABLE "foos" MODIFY COLUMN "name" TEXT NOT NULL; ALTER TABLE "foos" ADD "age" INTEGER NOT NULL;`,
 			ExpectedBindings: []any{},
 		},
 	})
@@ -119,7 +120,7 @@ func TestColumnDefinitionTest(t *testing.T) {
 				AutoIncrement: true,
 				Unique:        true,
 			},
-			ExpectedSQL:      `"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE`,
+			ExpectedSQLite:   `"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE`,
 			ExpectedBindings: []any{},
 		},
 	})
@@ -130,7 +131,7 @@ func TestRawQueryTest(t *testing.T) {
 		{
 			Name:             "raw",
 			Builder:          builder.From[*Foo]().Select("a"),
-			ExpectedSQL:      `SELECT "a" FROM "foos"`,
+			ExpectedSQLite:   `SELECT "a" FROM "foos"`,
 			ExpectedBindings: []any{},
 		},
 	}, func(d dialects.Dialect, b dialects.QueryBuilder) (dialects.RawQuery, error) {
@@ -139,7 +140,7 @@ func TestRawQueryTest(t *testing.T) {
 }
 
 func TestEncoderTest(t *testing.T) {
-	d := dialects.New()
+	d := sqlite.New()
 	EncoderTest(t, d.EncodeSelectQuery, []EncoderTestCase[*dialects.SelectQuery]{
 		{
 			Name: "select",

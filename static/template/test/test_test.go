@@ -9,7 +9,7 @@ import (
 )
 
 func TestSetupTestDB(t *testing.T) {
-	db, err := setupTestDB("sqlite", ":memory:")
+	db, err := setupTestDB("sqlite3", ":memory:")
 	require.NoError(t, err)
 	require.NotNil(t, db)
 	require.NoError(t, db.Close())
@@ -17,7 +17,7 @@ func TestSetupTestDB(t *testing.T) {
 	_, err = setupTestDB("unknown-driver", ":memory:")
 	assert.Error(t, err)
 
-	_, err = setupTestDB("sqlite", "/nonexistent-dir/does-not-exist.sqlite")
+	_, err = setupTestDB("sqlite3", "/nonexistent-dir/does-not-exist.sqlite")
 	assert.Error(t, err)
 }
 
