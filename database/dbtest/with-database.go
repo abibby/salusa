@@ -71,19 +71,3 @@ func run[T testing.TB](r *Runner, t T, name string, cb func(t T, tx *sqlx.Tx)) b
 	}
 	return result
 }
-
-func runNoTx[T testing.TB](r *Runner, t T, name string, cb func(t T, tx *sqlx.DB)) bool {
-	db, err := r.open()
-	if err != nil {
-		t.Errorf("failed to open database: %v", err)
-		return false
-	}
-
-	defer db.Close()
-
-	var tAny any = t
-	result := tAny.(runner[T]).Run(name, func(t T) {
-		cb(t, db)
-	})
-	return result
-}
