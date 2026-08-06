@@ -7,6 +7,10 @@ import (
 
 var ErrNotRegistered = errors.New("no dialect registered")
 
+type Features struct {
+	Returning bool
+}
+
 type Dialect interface {
 	EncodeSelectQuery(q *SelectQuery) (RawQuery, error)
 	EncodeInsertQuery(q *InsertQuery) (RawQuery, error)
@@ -15,6 +19,7 @@ type Dialect interface {
 	EncodeCreateTableQuery(q *CreateTableQuery) (RawQuery, error)
 	EncodeDropTableQuery(q *DropTableQuery) (RawQuery, error)
 	EncodeAlterTableQuery(q *AlterTableQuery) (RawQuery, error)
+	Features() Features
 }
 
 var dialects = map[string]func() Dialect{}

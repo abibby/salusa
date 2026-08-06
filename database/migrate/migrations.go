@@ -106,11 +106,11 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 	if err != nil {
 		return err
 	}
-	result, err := d.EncodeCreateTableQuery(q.CreateTableQuery())
+	createTable, err := d.EncodeCreateTableQuery(q.CreateTableQuery())
 	if err != nil {
 		return err
 	}
-	_, err = database.Exec(ctx, db, result.SQL, result.Bindings)
+	_, err = database.Exec(ctx, db, createTable.SQL, createTable.Bindings)
 	if err != nil {
 		return err
 	}

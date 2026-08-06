@@ -10,6 +10,7 @@ import (
 	"github.com/abibby/salusa/database/hooks"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/internal/relationship"
+	"github.com/jmoiron/sqlx"
 )
 
 var relationshipInterface = reflect.TypeOf((*relationship.Relationship)(nil)).Elem()
@@ -99,30 +100,56 @@ func SaveContext(ctx context.Context, tx database.DB, v Model) error {
 	return nil
 }
 
-func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, m map[string]any) error {
+func insert(ctx context.Context, tx database.DB, d dialects.Dialect, v any, m map[string]any) (err error) {
+
 	rPKey, pKey, isAuto := isAutoIncrementing(v)
 	if isAuto {
 		delete(m, pKey)
 	}
-	sql, err := d.EncodeInsertQuery(&dialects.InsertQuery{
+
+	q := &dialects.InsertQuery{
 		Table:  database.GetTable(v),
 		Values: []map[string]any{m},
-	})
+	}
+	useReturning := d.Features().Returning && isAuto
+	if useReturning {
+		q.Returning = []string{pKey}
+	}
+	sql, err := d.EncodeInsertQuery(q)
 	if err != nil {
 		return err
 	}
 
-	result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
-	if err != nil {
-		return fmt.Errorf("failed to insert model: %w", err)
-	}
-
-	if isAuto {
-		id, err := result.LastInsertId()
+	defer func() {
 		if err != nil {
-			return fmt.Errorf("could not get last insert id: %w", err)
+			err = fmt.Errorf("failed to insert model %s: %w", sql.SQL, err)
 		}
+	}()
+
+	if useReturning {
+		rows, err := tx.QueryContext(ctx, sql.SQL, sql.Bindings...)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		var id int64
+		rows.Next()
+		rows.Scan(&id)
 		rPKey.SetInt(id)
+
+	} else {
+		result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
+		if err != nil {
+			return err
+		}
+		if isAuto {
+			id, err := result.LastInsertId()
+			if err != nil {
+				return fmt.Errorf("could not get last insert id: %w", err)
+			}
+			rPKey.SetInt(id)
+		}
 	}
 	return nil
 }
@@ -201,6 +228,9 @@ func InsertMany[T Model](tx database.DB, models []T) error {
 	return InsertManyContext(context.Background(), tx, models)
 }
 func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T) error {
+	if len(models) == 0 {
+		return nil
+	}
 	for _, v := range models {
 		err := hooks.BeforeSave(ctx, tx, v)
 		if err != nil {
@@ -216,15 +246,15 @@ func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T)
 	for i, v := range models {
 		maps[i] = columnsAndValues(reflect.ValueOf(v).Elem())
 	}
-	err = insertMany(ctx, tx, d, models[0], maps)
+	err = insertMany(ctx, tx, d, models, maps)
 	if err != nil {
 		return fmt.Errorf("insert: %w", err)
 	}
 	for _, v := range models {
-		// err = relationship.InitializeRelationships(v)
-		// if err != nil {
-		// 	return fmt.Errorf("initialize relationships: %w", err)
-		// }
+		err = relationship.InitializeRelationships(v)
+		if err != nil {
+			return fmt.Errorf("initialize relationships: %w", err)
+		}
 		err := hooks.AfterSave(ctx, tx, v)
 		if err != nil {
 			return fmt.Errorf("before save hooks: %w", err)
@@ -233,37 +263,61 @@ func InsertManyContext[T Model](ctx context.Context, tx database.DB, models []T)
 	return nil
 }
 
-func insertMany(ctx context.Context, tx database.DB, d dialects.Dialect, v any, maps []map[string]any) error {
-
-	rPKey, pKey, isAuto := isAutoIncrementing(v)
+func insertMany[T Model](ctx context.Context, tx database.DB, d dialects.Dialect, models []T, maps []map[string]any) (err error) {
+	_, pKey, isAuto := isAutoIncrementing(models[0])
 	if isAuto {
 		for i := range maps {
 			delete(maps[i], pKey)
 		}
 	}
-	d, err := dialects.New(tx.DriverName())
-	if err != nil {
-		return err
-	}
-	sql, err := d.EncodeInsertQuery(&dialects.InsertQuery{
-		Table:  database.GetTable(v),
+
+	useReturning := d.Features().Returning && isAuto
+
+	q := &dialects.InsertQuery{
+		Table:  database.GetTable(models[0]),
 		Values: maps,
-	})
+	}
+	if useReturning {
+		q.Returning = []string{pKey}
+	}
+	sql, err := d.EncodeInsertQuery(q)
 	if err != nil {
 		return err
 	}
 
-	result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
-	if err != nil {
-		return fmt.Errorf("failed to insert model: %w", err)
-	}
-
-	if isAuto {
-		id, err := result.LastInsertId()
+	defer func() {
 		if err != nil {
-			return fmt.Errorf("could not get last insert id: %w", err)
+			err = fmt.Errorf("failed to insert model %s: %w", sql.SQL, err)
 		}
-		rPKey.SetInt(id)
+	}()
+
+	if useReturning {
+		var ids []int64
+		err = sqlx.SelectContext(ctx, tx, &ids, sql.SQL, sql.Bindings...)
+		if err != nil {
+			return err
+		}
+		for i, m := range models {
+			pkey, _, _ := isAutoIncrementing(m)
+			pkey.SetInt(ids[i])
+
+		}
+
+	} else {
+		result, err := tx.ExecContext(ctx, sql.SQL, sql.Bindings...)
+		if err != nil {
+			return err
+		}
+		if isAuto {
+			lastID, err := result.LastInsertId()
+			if err != nil {
+				return fmt.Errorf("could not get last insert id: %w", err)
+			}
+			for i, m := range models {
+				pkey, _, _ := isAutoIncrementing(m)
+				pkey.SetInt(lastID + int64(i))
+			}
+		}
 	}
 
 	return nil

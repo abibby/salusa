@@ -11,7 +11,7 @@ import (
 )
 
 func TestMustMigrateModel(t *testing.T) {
-	test.RunNoTx(t, "success", func(t *testing.T, db *sqlx.DB) {
+	test.Run(t, "success", func(t *testing.T, db *sqlx.Tx) {
 		type MustMigrateModelModel struct {
 			model.BaseModel
 			ID int `db:"id,primary"`
@@ -21,7 +21,7 @@ func TestMustMigrateModel(t *testing.T) {
 		})
 	})
 
-	test.RunNoTx(t, "panics on invalid field", func(t *testing.T, db *sqlx.DB) {
+	test.Run(t, "panics on invalid field", func(t *testing.T, db *sqlx.Tx) {
 		type MustMigrateModelErrorModel struct {
 			model.BaseModel
 			ID    int `db:"id,primary"`

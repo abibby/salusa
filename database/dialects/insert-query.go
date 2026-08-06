@@ -4,6 +4,7 @@ type InsertQueryBuilder interface {
 	InsertQuery() *InsertQuery
 }
 type InsertQuery struct {
-	Table  string
-	Values []map[string]any
+	Table     string
+	Values    []map[string]any
+	Returning []string
 }

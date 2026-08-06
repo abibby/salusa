@@ -66,7 +66,7 @@ func TestBelongsToLoad(t *testing.T) {
 			{ID: 3},
 		}
 		for _, f := range foos {
-			assert.NoError(t, model.Save(tx, f))
+			model.MustSave(tx, f)
 		}
 		bars := []*test.Bar{
 			{ID: 4, FooID: 1},
@@ -74,7 +74,7 @@ func TestBelongsToLoad(t *testing.T) {
 			{ID: 6, FooID: 3},
 		}
 		for _, b := range bars {
-			assert.NoError(t, model.Save(tx, b))
+			model.MustSave(tx, b)
 		}
 
 		err := builder.Load(tx, bars, "Foo")

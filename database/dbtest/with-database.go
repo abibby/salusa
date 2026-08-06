@@ -25,21 +25,23 @@ func (r *Runner) Run(t *testing.T, name string, cb func(t *testing.T, tx *sqlx.T
 	t.Helper()
 	return run(r, t, name, cb)
 }
-func (r *Runner) RunNoTx(t *testing.T, name string, cb func(t *testing.T, tx *sqlx.DB)) bool {
 
-	t.Helper()
-	return runNoTx(r, t, name, cb)
-}
+// func (r *Runner) RunNoTx(t *testing.T, name string, cb func(t *testing.T, tx *sqlx.DB)) bool {
+
+//		t.Helper()
+//		return runNoTx(r, t, name, cb)
+//	}
 func (r *Runner) RunBenchmark(t *testing.B, name string, cb func(t *testing.B, tx *sqlx.Tx)) bool {
 
 	t.Helper()
 	return run(r, t, name, cb)
 }
-func (r *Runner) RunBenchmarkNoTx(t *testing.B, name string, cb func(t *testing.B, tx *sqlx.DB)) bool {
 
-	t.Helper()
-	return runNoTx(r, t, name, cb)
-}
+// func (r *Runner) RunBenchmarkNoTx(t *testing.B, name string, cb func(t *testing.B, tx *sqlx.DB)) bool {
+
+//		t.Helper()
+//		return runNoTx(r, t, name, cb)
+//	}
 func run[T testing.TB](r *Runner, t T, name string, cb func(t T, tx *sqlx.Tx)) bool {
 	t.Helper()
 	var err error
@@ -58,6 +60,7 @@ func run[T testing.TB](r *Runner, t T, name string, cb func(t T, tx *sqlx.Tx)) b
 
 	var tAny any = t
 	result := tAny.(runner[T]).Run(name, func(t T) {
+		t.Helper()
 		cb(t, tx)
 	})
 

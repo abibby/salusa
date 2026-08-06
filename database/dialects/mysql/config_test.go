@@ -18,7 +18,7 @@ func TestSimpleConfig(t *testing.T) {
 	}
 	c.SetDialect()
 	assert.Equal(t, "mysql", c.DriverName())
-	assert.Equal(t, "user:pass@/db", c.DataSourceName())
+	assert.Equal(t, "user:pass@/db?multiStatements=true&parseTime=true", c.DataSourceName())
 }
 
 func TestNewMySQLConfig(t *testing.T) {

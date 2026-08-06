@@ -47,7 +47,7 @@ func TestMySQLCoreDataType(t *testing.T) {
 func TestMySQLCoreMisc(t *testing.T) {
 	c := &mysql.MySQLCore{}
 	assert.Equal(t, "CURRENT_TIMESTAMP", c.CurrentTime())
-	assert.Equal(t, "AUTO_INCREMENT", c.AutoIncrement())
+	assert.Equal(t, "PRIMARY KEY AUTO_INCREMENT", c.AutoIncrement())
 	assert.Equal(t, "?", c.Binding())
 }
 

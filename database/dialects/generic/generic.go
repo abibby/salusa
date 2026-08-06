@@ -15,11 +15,19 @@ type Core interface {
 	AutoIncrement() string
 	Escape(v any) string
 	Binding() string
+	Features() dialects.Features
 }
 type Generic struct {
 	core Core
 }
 
+var _ dialects.Dialect = (*Generic)(nil)
+
 func New(c Core) *Generic {
 	return &Generic{core: c}
+}
+
+// Features implements [dialects.Dialect].
+func (g *Generic) Features() dialects.Features {
+	return g.core.Features()
 }

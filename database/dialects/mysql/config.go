@@ -26,6 +26,8 @@ func (c *SimpleConfig) DataSourceName() string {
 	mysqlCfg.Passwd = c.Password
 	mysqlCfg.Addr = c.Host
 	mysqlCfg.DBName = c.Database
+	mysqlCfg.MultiStatements = true
+	mysqlCfg.ParseTime = true
 	return mysqlCfg.FormatDSN()
 }
 

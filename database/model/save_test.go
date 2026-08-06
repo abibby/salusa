@@ -24,18 +24,22 @@ func TestSave_create(t *testing.T) {
 		assert.NoError(t, err)
 
 		rows, err := tx.QueryContext(context.Background(), "select id, name from foos")
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			return
+		}
+		defer rows.Close()
 
 		assert.True(t, rows.Next())
 		id := 0
 		name := ""
 		err = rows.Scan(&id, &name)
-		assert.NoError(t, err)
+		if assert.NoError(t, err) {
 
-		assert.Equal(t, f.ID, id)
-		assert.Equal(t, f.Name, name)
+			assert.Equal(t, f.ID, id)
+			assert.Equal(t, f.Name, name)
 
-		assert.False(t, rows.Next())
+			assert.False(t, rows.Next())
+		}
 	})
 
 	test.Run(t, "autoincrement", func(t *testing.T, tx *sqlx.Tx) {
@@ -120,7 +124,7 @@ func TestSave_autoincrement(t *testing.T) {
 		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
-		assert.Equal(t, f.ID, 1)
+		assert.NotEqual(t, f.ID, 0)
 	})
 	test.Run(t, "autoincrement set id", func(t *testing.T, tx *sqlx.Tx) {
 		f := &test.Foo{
@@ -209,15 +213,27 @@ func TestSave_readonly(t *testing.T) {
 
 func TestInsertManyContext(t *testing.T) {
 	test.Run(t, "insert", func(t *testing.T, tx *sqlx.Tx) {
-		err := model.InsertManyContext(context.TODO(), tx, []*test.Foo{{Name: "1"}, {Name: "2"}, {Name: "3"}})
-		assert.NoError(t, err)
+		models := []*test.Foo{{Name: "1"}, {Name: "2"}, {Name: "3"}}
+		err := model.InsertManyContext(context.TODO(), tx, models)
+		if !assert.NoError(t, err) {
+			return
+		}
 
-		foos, err := builder.From[*SaveFooReadonly]().Get(tx)
-		assert.NoError(t, err)
+		for _, m := range models {
+			assert.NotZero(t, m.ID)
+		}
+
+		foos, err := builder.From[*SaveFooReadonly]().OrderBy("id").Get(tx)
+		if !assert.NoError(t, err) {
+			return
+		}
+
 		assert.Len(t, foos, 3)
 		for i, foo := range foos {
 			assert.True(t, foo.InDatabase())
 			assert.Equal(t, fmt.Sprint(i+1), foo.Name)
+			assert.Equal(t, models[i].ID, foo.ID)
+			assert.Equal(t, models[i].Name, foo.Name)
 		}
 	})
 

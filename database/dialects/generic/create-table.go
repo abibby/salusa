@@ -57,7 +57,7 @@ func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects
 	r.AddString(g.core.DataType(c.Datatype))
 
 	if c.AutoIncrement {
-		r.AddString("PRIMARY KEY " + g.core.AutoIncrement())
+		r.AddString(g.core.AutoIncrement())
 	} else if c.Primary {
 		r.AddString("PRIMARY KEY")
 	}

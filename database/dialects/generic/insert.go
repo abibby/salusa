@@ -47,5 +47,14 @@ func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.RawQuery,
 		}
 		b.Add(group(mapJoinRawQueries(v, ", ", g.EncodeLiteral)))
 	}
+
+	returning := make([]string, len(q.Returning))
+	for i, r := range q.Returning {
+		returning[i] = g.core.Identifier(r)
+	}
+	if len(returning) > 0 {
+		b.AddString("RETURNING " + strings.Join(returning, ", "))
+	}
+
 	return b.Build()
 }

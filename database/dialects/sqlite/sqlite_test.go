@@ -41,7 +41,7 @@ func TestSQLiteCoreDataType(t *testing.T) {
 func TestSQLiteCoreMisc(t *testing.T) {
 	c := &sqlite.SQLiteCore{}
 	assert.Equal(t, "CURRENT_TIMESTAMP", c.CurrentTime())
-	assert.Equal(t, "AUTOINCREMENT", c.AutoIncrement())
+	assert.Equal(t, "PRIMARY KEY AUTOINCREMENT", c.AutoIncrement())
 	assert.Equal(t, "?", c.Binding())
 }
 

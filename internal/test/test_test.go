@@ -154,14 +154,6 @@ func TestEncoderTest(t *testing.T) {
 	})
 }
 
-func TestRunnerRunNoTx(t *testing.T) {
-	RunNoTx(t, "select count", func(t *testing.T, db *sqlx.DB) {
-		var n int
-		err := db.Get(&n, "SELECT COUNT(*) FROM foos")
-		assert.NoError(t, err)
-	})
-}
-
 func TestRunnerRun(t *testing.T) {
 	Run(t, "select count", func(t *testing.T, tx *sqlx.Tx) {
 		var n int
