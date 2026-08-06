@@ -83,7 +83,11 @@ func (b *ModelBuilder[T]) Load(tx database.DB, v any) error {
 
 // Load executes the query as a select statement and sets v to the result.
 func (b *Builder) Load(tx database.DB, v any) (err error) {
-	r, err := dialects.New().EncodeSelectQuery(b.Query())
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
+	r, err := d.EncodeSelectQuery(b.Query())
 	if err != nil {
 		return err
 	}
@@ -181,6 +185,8 @@ func (b *Builder) numericFunc(tx database.DB, function, column string) (int, err
 	err := b.
 		Clone().
 		Unordered().
+		Limit(0).
+		Offset(0).
 		SelectFunction(function, column).LoadOne(tx, &count)
 	if err != nil {
 		return 0, err

@@ -14,6 +14,7 @@ import (
 type DB interface {
 	sqlx.QueryerContext
 	sqlx.ExecerContext
+	DriverName() string
 }
 
 type Transaction interface {

@@ -67,7 +67,11 @@ func (b *UpdateTableBuilder) GoString() string {
 }
 
 func (b *UpdateTableBuilder) Run(ctx context.Context, tx database.DB) error {
-	result, err := dialects.New().EncodeAlterTableQuery(b.AlterTableQuery())
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
+	result, err := d.EncodeAlterTableQuery(b.AlterTableQuery())
 	if err != nil {
 		return err
 	}

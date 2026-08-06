@@ -24,11 +24,12 @@ func TestSoftDeletes(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, foos, 0)
 
-		foos, err = builder.From[*test.FooSoftDelete]().WithoutGlobalScope(mixins.SoftDeleteScope).Get(tx)
-		assert.NoError(t, err)
-		assert.Len(t, foos, 1)
-		assert.Equal(t, foo.ID, foos[0].ID)
-		assert.NotNil(t, foos[0].DeletedAt)
+		foos, err = builder.From[*test.FooSoftDelete]().WithoutGlobalScope(mixins.SoftDeleteScope).Dump().Get(tx)
+		if assert.NoError(t, err) {
+			assert.Len(t, foos, 1)
+			assert.Equal(t, foo.ID, foos[0].ID)
+			assert.NotNil(t, foos[0].DeletedAt)
+		}
 	})
 	//content
 }

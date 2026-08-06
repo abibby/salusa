@@ -28,7 +28,7 @@ func (*testCore) CurrentTime() string {
 }
 
 func (*testCore) AutoIncrement() string {
-	return "AUTO_INCREMENT"
+	return "PRIMARY KEY AUTO_INCREMENT"
 }
 
 func (*testCore) Escape(v any) string {
@@ -37,4 +37,8 @@ func (*testCore) Escape(v any) string {
 
 func (*testCore) Binding() string {
 	return "?"
+}
+
+func (*testCore) Features() dialects.Features {
+	return dialects.Features{}
 }

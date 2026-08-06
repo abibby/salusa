@@ -18,7 +18,11 @@ func DropIfExists(table string) Runner {
 	})
 }
 func runDropTable(ctx context.Context, tx database.DB, q *dialects.DropTableQuery) error {
-	result, err := dialects.New().EncodeDropTableQuery(q)
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
+	result, err := d.EncodeDropTableQuery(q)
 	if err != nil {
 		return err
 	}

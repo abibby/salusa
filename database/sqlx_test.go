@@ -30,6 +30,9 @@ func (f *fakeDB) QueryxContext(ctx context.Context, query string, args ...any) (
 func (f *fakeDB) QueryRowxContext(ctx context.Context, query string, args ...any) *sqlx.Row {
 	return nil
 }
+func (f *fakeDB) DriverName() string {
+	return "fake_db"
+}
 
 func newTestDB(t *testing.T) *sqlx.DB {
 	t.Helper()

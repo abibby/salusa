@@ -13,12 +13,12 @@ func TestSimpleConfig(t *testing.T) {
 	c := &mysql.SimpleConfig{
 		Username: "user",
 		Password: "pass",
-		Address:  "localhost:3306",
+		Host:     "localhost:3306",
 		Database: "db",
 	}
 	c.SetDialect()
 	assert.Equal(t, "mysql", c.DriverName())
-	assert.Equal(t, "user:pass@/db", c.DataSourceName())
+	assert.Equal(t, "user:pass@/db?multiStatements=true&parseTime=true", c.DataSourceName())
 }
 
 func TestNewMySQLConfig(t *testing.T) {

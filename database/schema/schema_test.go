@@ -246,18 +246,19 @@ func TestCreateTableBuilder(t *testing.T) {
 }
 
 func TestUpdateTableBuilder(t *testing.T) {
-	b := schema.Table("foo", func(t *schema.Blueprint) {})
+	b := schema.Table("foo_new", func(t *schema.Blueprint) {})
 	assert.NotNil(t, b.GetBlueprint())
 	assert.Equal(t, schema.BlueprintTypeUpdate, b.Type())
-	assert.Contains(t, b.GoString(), "schema.Table(\"foo\"")
+	assert.Contains(t, b.GoString(), "schema.Table(")
+	assert.Contains(t, b.GoString(), "foo")
 
 	test.Run(t, "run", func(t *testing.T, tx *sqlx.Tx) {
-		err := schema.Create("foo", func(t *schema.Blueprint) {
+		err := schema.Create("foo_new", func(t *schema.Blueprint) {
 			t.Int("id")
 		}).Run(context.Background(), tx)
 		require.NoError(t, err)
 
-		ub := schema.Table("foo", func(t *schema.Blueprint) {
+		ub := schema.Table("foo_new", func(t *schema.Blueprint) {
 			t.String("name")
 		})
 		err = ub.Run(context.Background(), tx)

@@ -9,7 +9,11 @@ import (
 )
 
 func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {
-	b := newRawQueryBuilder().AddString("CREATE TABLE")
+	b := newRawQueryBuilder().AddString("CREATE")
+	if q.Temporary {
+		b.AddString("TEMPORARY")
+	}
+	b.AddString("TABLE")
 	if q.IfNotExists {
 		b.AddString("IF NOT EXISTS")
 	}
@@ -53,7 +57,7 @@ func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects
 	r.AddString(g.core.DataType(c.Datatype))
 
 	if c.AutoIncrement {
-		r.AddString("PRIMARY KEY " + g.core.AutoIncrement())
+		r.AddString(g.core.AutoIncrement())
 	} else if c.Primary {
 		r.AddString("PRIMARY KEY")
 	}

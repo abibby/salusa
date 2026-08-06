@@ -12,7 +12,7 @@ import (
 )
 
 func TestRunModelCreate(t *testing.T) {
-	test.RunNoTx(t, "success", func(t *testing.T, db *sqlx.DB) {
+	test.Run(t, "success", func(t *testing.T, db *sqlx.Tx) {
 		type RunModelCreateModel struct {
 			model.BaseModel
 			ID int `db:"id,primary"`
@@ -21,7 +21,7 @@ func TestRunModelCreate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	test.RunNoTx(t, "error", func(t *testing.T, db *sqlx.DB) {
+	test.Run(t, "error", func(t *testing.T, db *sqlx.Tx) {
 		type RunModelCreateErrorModel struct {
 			model.BaseModel
 			ID    int `db:"id,primary"`

@@ -102,11 +102,15 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 		b.Bool("run")
 	}).IfNotExists()
 
-	result, err := dialects.New().EncodeCreateTableQuery(q.CreateTableQuery())
+	d, err := dialects.New(db.DriverName())
 	if err != nil {
 		return err
 	}
-	_, err = database.Exec(ctx, db, result.SQL, result.Bindings)
+	createTable, err := d.EncodeCreateTableQuery(q.CreateTableQuery())
+	if err != nil {
+		return err
+	}
+	_, err = database.Exec(ctx, db, createTable.SQL, createTable.Bindings)
 	if err != nil {
 		return err
 	}

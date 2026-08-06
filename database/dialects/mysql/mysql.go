@@ -66,7 +66,7 @@ func (*MySQLCore) CurrentTime() string {
 	return "CURRENT_TIMESTAMP"
 }
 func (*MySQLCore) AutoIncrement() string {
-	return "AUTO_INCREMENT"
+	return "PRIMARY KEY AUTO_INCREMENT"
 }
 
 func (s *MySQLCore) Escape(v any) string {
@@ -96,14 +96,16 @@ func (*MySQLCore) Binding() string {
 	return "?"
 }
 
+func (s *MySQLCore) Features() dialects.Features {
+	return dialects.Features{}
+}
+
 func New() dialects.Dialect {
 	return generic.New(&MySQLCore{})
 }
 
 func UseMySql() {
-	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return New()
-	})
+	dialects.Register("mysql", New)
 }
 func init() {
 	UseMySql()

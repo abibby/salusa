@@ -47,7 +47,7 @@ func TestMySQLCoreDataType(t *testing.T) {
 func TestMySQLCoreMisc(t *testing.T) {
 	c := &mysql.MySQLCore{}
 	assert.Equal(t, "CURRENT_TIMESTAMP", c.CurrentTime())
-	assert.Equal(t, "AUTO_INCREMENT", c.AutoIncrement())
+	assert.Equal(t, "PRIMARY KEY AUTO_INCREMENT", c.AutoIncrement())
 	assert.Equal(t, "?", c.Binding())
 }
 
@@ -74,6 +74,10 @@ func TestMySQLNew(t *testing.T) {
 
 func TestUseMySql(t *testing.T) {
 	mysql.UseMySql()
-	_, ok := dialects.New().(*generic.Generic)
+	d, err := dialects.New("mysql")
+	if err != nil {
+		assert.FailNow(t, "no dialect registered")
+	}
+	_, ok := d.(*generic.Generic)
 	assert.True(t, ok)
 }

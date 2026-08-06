@@ -50,7 +50,7 @@ func (*SQLiteCore) CurrentTime() string {
 }
 
 func (*SQLiteCore) AutoIncrement() string {
-	return "AUTOINCREMENT"
+	return "PRIMARY KEY AUTOINCREMENT"
 }
 
 func (s *SQLiteCore) Escape(v any) string {
@@ -88,10 +88,15 @@ func (*SQLiteCore) Binding() string {
 	return "?"
 }
 
+func (s *SQLiteCore) Features() dialects.Features {
+	return dialects.Features{
+		Returning: true,
+	}
+}
+
 func UseSQLite() {
-	dialects.SetDefaultDialect(func() dialects.Dialect {
-		return New()
-	})
+	dialects.Register("sqlite3", New)
+	dialects.Register("sqlite", New)
 }
 func init() {
 	UseSQLite()

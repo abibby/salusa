@@ -12,19 +12,19 @@ func TestLimit(t *testing.T) {
 		{
 			Name:             "limit",
 			Builder:          NewTestBuilder().Limit(1),
-			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\" LIMIT ?",
+			ExpectedSQLite:   "SELECT \"foos\".* FROM \"foos\" LIMIT ?",
 			ExpectedBindings: []any{1},
 		},
 		{
 			Name:             "offset",
 			Builder:          NewTestBuilder().Offset(1),
-			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\" OFFSET ?",
+			ExpectedSQLite:   "SELECT \"foos\".* FROM \"foos\" OFFSET ?",
 			ExpectedBindings: []any{1},
 		},
 		{
 			Name:             "limit and offset",
 			Builder:          NewTestBuilder().Limit(1).Offset(2),
-			ExpectedSQL:      "SELECT \"foos\".* FROM \"foos\" LIMIT ? OFFSET ?",
+			ExpectedSQLite:   "SELECT \"foos\".* FROM \"foos\" LIMIT ? OFFSET ?",
 			ExpectedBindings: []any{1, 2},
 		},
 	})

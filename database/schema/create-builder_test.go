@@ -16,7 +16,7 @@ func TestBuilder(t *testing.T) {
 		{
 			Name:             "create table",
 			Builder:          schema.Create("foo", func(table *schema.Blueprint) {}),
-			ExpectedSQL:      `CREATE TABLE "foo" ();`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ();`,
 			ExpectedBindings: []any{},
 		},
 		{
@@ -24,7 +24,7 @@ func TestBuilder(t *testing.T) {
 			Builder: schema.Create("foo", func(table *schema.Blueprint) {
 				table.String("bar")
 			}),
-			ExpectedSQL:      `CREATE TABLE "foo" ("bar" TEXT NOT NULL);`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ("bar" TEXT NOT NULL);`,
 			ExpectedBindings: []any{},
 		},
 		{
@@ -33,7 +33,7 @@ func TestBuilder(t *testing.T) {
 				table.Int("id")
 				table.String("bar")
 			}),
-			ExpectedSQL:      `CREATE TABLE "foo" ("id" INTEGER NOT NULL, "bar" TEXT NOT NULL);`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ("id" INTEGER NOT NULL, "bar" TEXT NOT NULL);`,
 			ExpectedBindings: []any{},
 		},
 		{
@@ -41,7 +41,7 @@ func TestBuilder(t *testing.T) {
 			Builder: schema.Create("foo", func(table *schema.Blueprint) {
 				table.Int("id").Primary()
 			}),
-			ExpectedSQL:      `CREATE TABLE "foo" ("id" INTEGER PRIMARY KEY NOT NULL);`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ("id" INTEGER PRIMARY KEY NOT NULL);`,
 			ExpectedBindings: []any{},
 		},
 		{
@@ -51,7 +51,7 @@ func TestBuilder(t *testing.T) {
 				table.Int("id2")
 				table.PrimaryKey("id1", "id2")
 			}),
-			ExpectedSQL:      `CREATE TABLE "foo" ("id1" INTEGER NOT NULL, "id2" INTEGER NOT NULL, PRIMARY KEY ("id1", "id2"));`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ("id1" INTEGER NOT NULL, "id2" INTEGER NOT NULL, PRIMARY KEY ("id1", "id2"));`,
 			ExpectedBindings: []any{},
 		},
 		{
@@ -61,7 +61,7 @@ func TestBuilder(t *testing.T) {
 				table.String("name")
 				table.Index("name_index").AddColumn("name")
 			}),
-			ExpectedSQL:      `CREATE TABLE "foo" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL); CREATE INDEX IF NOT EXISTS "name_index" ON "foo" ("name");`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL); CREATE INDEX IF NOT EXISTS "name_index" ON "foo" ("name");`,
 			ExpectedBindings: []any{},
 		},
 		{
@@ -70,7 +70,7 @@ func TestBuilder(t *testing.T) {
 				table.Int("id")
 				table.ForeignKey("id", "bar", "foo_id")
 			}),
-			ExpectedSQL:      `CREATE TABLE "foo" ("id" INTEGER NOT NULL, CONSTRAINT "id-bar-foo_id" FOREIGN KEY ("id") REFERENCES "bar" ("foo_id"));`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ("id" INTEGER NOT NULL, CONSTRAINT "id-bar-foo_id" FOREIGN KEY ("id") REFERENCES "bar" ("foo_id"));`,
 			ExpectedBindings: []any{},
 		},
 		{
@@ -78,15 +78,17 @@ func TestBuilder(t *testing.T) {
 			Builder: schema.Create("foo", func(table *schema.Blueprint) {
 				table.Int("id").Nullable()
 			}),
-			ExpectedSQL:      `CREATE TABLE "foo" ("id" INTEGER);`,
+			ExpectedSQLite:   `CREATE TABLE "foo" ("id" INTEGER);`,
 			ExpectedBindings: []any{},
 		},
 	})
 }
 
-func TestDefaultSQLite(t *testing.T) {
+func TestDefault(t *testing.T) {
 	test.Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
-		c := schema.Create("foo", func(table *schema.Blueprint) {
+		defer schema.Drop("foo_tmp").Run(context.Background(), tx)
+
+		c := schema.Create("foo_tmp", func(table *schema.Blueprint) {
 			table.Int("id").Default(1)
 			table.Bool("bool").Default(false)
 		})

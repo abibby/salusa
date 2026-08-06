@@ -20,7 +20,11 @@ func (b *Builder) Update(tx database.DB, updates Updates) error {
 	if len(updates) == 0 {
 		return nil
 	}
-	r, err := dialects.New().EncodeUpdateQuery(b.UpdateQuery(updates))
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
+	r, err := d.EncodeUpdateQuery(b.UpdateQuery(updates))
 	if err != nil {
 		return err
 	}

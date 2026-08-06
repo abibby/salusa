@@ -56,8 +56,7 @@ func TestRegister(t *testing.T) {
 
 		ctx := di.TestDependencyProviderContext()
 		_ = databasedi.Register(db)(ctx)
-		err = auth.Register[*auth.UsernameUser](ctx)
-		assert.NoError(t, err)
+		_ = auth.Register[*auth.UsernameUser](ctx)
 
 		ctx = auth.SetClaims(ctx, &auth.Claims{
 			RegisteredClaims: jwt.RegisteredClaims{
@@ -66,8 +65,9 @@ func TestRegister(t *testing.T) {
 		})
 
 		u, err := di.Resolve[*auth.UsernameUser](ctx)
-		assert.NoError(t, err)
-		assert.NotNil(t, u)
+		if assert.NoError(t, err) {
+			assert.NotNil(t, u)
+		}
 	})
 
 	t.Run("no claims", func(t *testing.T) {

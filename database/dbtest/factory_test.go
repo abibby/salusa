@@ -22,8 +22,9 @@ func TestFactory(t *testing.T) {
 		assert.Equal(t, "foo", f.Name)
 
 		dbF, err := builder.From[*test.Foo]().Find(tx, f.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, f, dbF)
+		if assert.NoError(t, err) {
+			assert.Equal(t, f, dbF)
+		}
 	})
 	test.Run(t, "count", func(t *testing.T, tx *sqlx.Tx) {
 		foos := fooFactory.Count(4).Create(tx)

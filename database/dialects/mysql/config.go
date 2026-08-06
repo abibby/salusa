@@ -8,7 +8,7 @@ import (
 type SimpleConfig struct {
 	Username string
 	Password string
-	Address  string
+	Host     string
 	Database string
 }
 
@@ -24,8 +24,10 @@ func (c *SimpleConfig) DataSourceName() string {
 	mysqlCfg := mysql.NewConfig()
 	mysqlCfg.User = c.Username
 	mysqlCfg.Passwd = c.Password
-	mysqlCfg.Addr = c.Address
+	mysqlCfg.Addr = c.Host
 	mysqlCfg.DBName = c.Database
+	mysqlCfg.MultiStatements = true
+	mysqlCfg.ParseTime = true
 	return mysqlCfg.FormatDSN()
 }
 

@@ -11,6 +11,7 @@ import (
 type CreateTableBuilder struct {
 	blueprint   *Blueprint
 	ifNotExists bool
+	temporary   bool
 }
 
 var _ Blueprinter = &CreateTableBuilder{}
@@ -48,6 +49,7 @@ func (b *CreateTableBuilder) CreateTableQuery() *dialects.CreateTableQuery {
 
 	return &dialects.CreateTableQuery{
 		IfNotExists: b.ifNotExists,
+		Temporary:   b.temporary,
 		Table:       b.blueprint.TableName(),
 		Columns:     columns,
 		PrimaryKeys: b.blueprint.primaryKeys,
@@ -65,7 +67,11 @@ func (b *CreateTableBuilder) GoString() string {
 }
 func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {
 	q := b.CreateTableQuery()
-	result, err := dialects.New().EncodeCreateTableQuery(q)
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return err
+	}
+	result, err := d.EncodeCreateTableQuery(q)
 	if err != nil {
 		return err
 	}
@@ -74,5 +80,9 @@ func (b *CreateTableBuilder) Run(ctx context.Context, tx database.DB) error {
 }
 func (b *CreateTableBuilder) IfNotExists() *CreateTableBuilder {
 	b.ifNotExists = true
+	return b
+}
+func (b *CreateTableBuilder) Temporary() *CreateTableBuilder {
+	b.temporary = true
 	return b
 }

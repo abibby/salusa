@@ -1,5 +1,16 @@
 package dialects
 
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrNotRegistered = errors.New("no dialect registered")
+
+type Features struct {
+	Returning bool
+}
+
 type Dialect interface {
 	EncodeSelectQuery(q *SelectQuery) (RawQuery, error)
 	EncodeInsertQuery(q *InsertQuery) (RawQuery, error)
@@ -8,14 +19,19 @@ type Dialect interface {
 	EncodeCreateTableQuery(q *CreateTableQuery) (RawQuery, error)
 	EncodeDropTableQuery(q *DropTableQuery) (RawQuery, error)
 	EncodeAlterTableQuery(q *AlterTableQuery) (RawQuery, error)
+	Features() Features
 }
 
-func SetDefaultDialect(dialectFactory func() Dialect) {
-	defaultDialect = dialectFactory
+var dialects = map[string]func() Dialect{}
+
+func Register(driver string, factory func() Dialect) {
+	dialects[driver] = factory
 }
 
-func New() Dialect {
-	return defaultDialect()
+func New(driverName string) (Dialect, error) {
+	f, ok := dialects[driverName]
+	if !ok {
+		return nil, fmt.Errorf("%w for %s", ErrNotRegistered, driverName)
+	}
+	return f(), nil
 }
-
-var defaultDialect func() Dialect = func() Dialect { panic("no default dialect set") }

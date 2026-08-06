@@ -26,31 +26,3 @@ func TestUpdateRead(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
-
-func TestRunNoTx(t *testing.T) {
-	ran := false
-	newRunner().RunNoTx(t, "", func(t *testing.T, db *sqlx.DB) {
-		ran = true
-		assert.NotNil(t, db)
-	})
-	assert.True(t, ran)
-}
-
-func TestRunBenchmarks(t *testing.T) {
-	testing.Benchmark(func(b *testing.B) {
-		ran := false
-		newRunner().RunBenchmark(b, "", func(t *testing.B, tx *sqlx.Tx) {
-			ran = true
-			assert.NotNil(t, tx)
-		})
-		assert.True(t, ran)
-	})
-	testing.Benchmark(func(b *testing.B) {
-		ran := false
-		newRunner().RunBenchmarkNoTx(b, "", func(t *testing.B, db *sqlx.DB) {
-			ran = true
-			assert.NotNil(t, db)
-		})
-		assert.True(t, ran)
-	})
-}

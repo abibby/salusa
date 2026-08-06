@@ -5,6 +5,7 @@ type CreateTableQueryBuilder interface {
 }
 type CreateTableQuery struct {
 	IfNotExists bool
+	Temporary   bool
 	Table       string
 	Columns     []ColumnDefinition
 	PrimaryKeys []string
