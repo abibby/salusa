@@ -3,7 +3,10 @@ package test
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/abibby/salusa/database"
@@ -150,6 +153,22 @@ var activeRunners = []NamedRunner{
 	{"pgsql", pgsqlRunner},
 }
 
+var mysqlLock *os.File
+var pgsqlLock *os.File
+
+func lockTestDB(driver string) (*os.File, error) {
+	lockFile := filepath.Join(os.TempDir(), "salusa-"+driver+"-test-db.lock")
+	f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return nil, fmt.Errorf("open %s test database lock file: %w", driver, err)
+	}
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
+		f.Close()
+		return nil, fmt.Errorf("lock %s test database: %w", driver, err)
+	}
+	return f, nil
+}
+
 func initDB(cfg database.Config) func() (*sqlx.DB, error) {
 	return func() (*sqlx.DB, error) {
 		cfg.SetDialect()
@@ -160,39 +179,26 @@ func initDB(cfg database.Config) func() (*sqlx.DB, error) {
 
 		ctx := context.Background()
 
-		tables := []string{}
 		switch cfg.DriverName() {
 		case "sqlite", "sqlite3":
 		case "mysql":
-			err = builder.NewBuilder().
-				WithContext(ctx).
-				Select("table_name").
-				From("information_schema.tables").
-				WhereRaw("table_schema = DATABASE()").
-				Load(db, &tables)
-			if err != nil {
-				return nil, err
-			}
-			d, err := dialects.New(cfg.DriverName())
-			if err != nil {
-				return nil, err
-			}
-
-			results := make([]dialects.RawQuery, len(tables))
-			for i, t := range tables {
-				sql, err := d.EncodeDropTableQuery(&dialects.DropTableQuery{Table: t})
+			if mysqlLock == nil {
+				mysqlLock, err = lockTestDB("mysql")
 				if err != nil {
 					return nil, err
 				}
-				results[i] = sql
 			}
-			query := dialects.JoinQueries(results)
-			_, err = db.ExecContext(ctx, query.SQL, query.Bindings...)
+			err = dropMySQLTables(ctx, db)
 			if err != nil {
 				return nil, err
 			}
-
 		case "postgres":
+			if pgsqlLock == nil {
+				pgsqlLock, err = lockTestDB("postgres")
+				if err != nil {
+					return nil, err
+				}
+			}
 			_, err = db.ExecContext(ctx, "DROP SCHEMA public CASCADE;CREATE SCHEMA public;")
 			if err != nil {
 				return nil, err
@@ -205,6 +211,57 @@ func initDB(cfg database.Config) func() (*sqlx.DB, error) {
 		}
 		return db, nil
 	}
+}
+
+func dropMySQLTables(ctx context.Context, db *sqlx.DB) error {
+	tables := []string{}
+	err := builder.NewBuilder().
+		WithContext(ctx).
+		Select("table_name").
+		From("information_schema.tables").
+		WhereRaw("table_schema = DATABASE()").
+		Load(db, &tables)
+	if err != nil {
+		return err
+	}
+	if len(tables) == 0 {
+		return nil
+	}
+
+	d, err := dialects.New("mysql")
+	if err != nil {
+		return err
+	}
+
+	results := make([]dialects.RawQuery, len(tables))
+	for i, t := range tables {
+		sql, err := d.EncodeDropTableQuery(&dialects.DropTableQuery{Table: t})
+		if err != nil {
+			return err
+		}
+		results[i] = sql
+	}
+	query := dialects.JoinQueries(results)
+
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS = 0")
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, query.SQL, query.Bindings...)
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS = 1")
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 func Run(t *testing.T, name string, cb func(t *testing.T, tx *sqlx.Tx)) {
