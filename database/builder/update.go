@@ -5,6 +5,7 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
+	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -37,6 +38,33 @@ func (b *Builder) Update(tx database.DB, updates Updates) error {
 	return nil
 }
 
+func (b *ModelBuilder[T]) UpdateReturning(tx database.DB, updates Updates) ([]T, error) {
+	if len(updates) == 0 {
+		return nil, nil
+	}
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return nil, err
+	}
+
+	q := b.UpdateQuery(updates)
+	q.Returning = []dialects.Column{
+		{Column: "*"},
+	}
+
+	r, err := d.EncodeUpdateQuery(q)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []T{}
+	err = sqlx.SelectContext(b.Context(), tx, &result, r.SQL, r.Bindings...)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
 func (b *ModelBuilder[T]) UpdateQuery(updates Updates) *dialects.UpdateQuery {
 	return b.builder.UpdateQuery(updates)
 }

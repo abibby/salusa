@@ -6,6 +6,7 @@ import (
 
 func (g *Generic) EncodeSelectQuery(q *dialects.SelectQuery) (dialects.RawQuery, error) {
 	return newRawQueryBuilder().
+		AddString("SELECT").
 		Add(g.EncodeSelects(&q.Select)).
 		Add(g.EncodeFrom(q.From)).
 		Add(g.EncodeJoins(q.Joins)).

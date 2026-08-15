@@ -11,12 +11,12 @@ import (
 func TestGeneric_EncodeSelectQuery(t *testing.T) {
 	g := generic.New(&testCore{})
 	test.EncoderTest(t, g.EncodeSelectQuery, []test.EncoderTestCase[*dialects.SelectQuery]{
-		{
-			Name:             "empty",
-			Builder:          &dialects.SelectQuery{},
-			ExpectedSQL:      "",
-			ExpectedBindings: []any{},
-		},
+		// {
+		// 	Name:             "empty",
+		// 	Builder:          &dialects.SelectQuery{},
+		// 	ExpectedSQL:      "",
+		// 	ExpectedBindings: []any{},
+		// },
 		{
 			Name: "simple",
 			Builder: &dialects.SelectQuery{

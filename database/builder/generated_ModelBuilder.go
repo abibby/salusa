@@ -11,6 +11,14 @@ func (b *ModelBuilder[T]) WithContext(ctx context.Context) *ModelBuilder[T] {
 	b.builder = b.builder.WithContext(ctx)
 	return b
 }
+func (b *ModelBuilder[T]) ForUpdate() *ModelBuilder[T] {
+	b.builder = b.builder.ForUpdate()
+	return b
+}
+func (b *ModelBuilder[T]) ForUpdateSkipLocked() *ModelBuilder[T] {
+	b.builder = b.builder.ForUpdateSkipLocked()
+	return b
+}
 
 // From sets the table which the query is targeting.
 func (b *ModelBuilder[T]) From(table string) *ModelBuilder[T] {
