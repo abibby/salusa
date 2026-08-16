@@ -1,4 +1,4 @@
-package dbpubsub
+package dbqueue
 
 import (
 	"context"
