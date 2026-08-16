@@ -10,11 +10,34 @@ type PubSub interface {
 }
 
 type Topic interface {
-	Publish(ctx context.Context, data []byte)
-	Subscribe(ctx context.Context) Subscription
+	Producer
+	Consumer
 }
 
 type Subscription interface {
 	io.Closer
-	Next() []byte
+	Next() ([]byte, error)
+}
+
+type Message interface {
+	ID() string
+	Data() []byte
+
+	// Ack signals the message was processed successfully and can be deleted.
+	Ack(ctx context.Context) error
+
+	// Nack signals processing failed. The message should be re-queued or dead-lettered.
+	Nack(ctx context.Context) error
+}
+
+type Producer interface {
+	Enqueue(ctx context.Context, data []byte) error
+	Close() error
+}
+
+type Consumer interface {
+	// Consume returns a read-only channel of messages.
+	// The backend handles batching, pre-fetching, and pushing to this channel.
+	Consume(ctx context.Context) (<-chan Message, error)
+	Close() error
 }
