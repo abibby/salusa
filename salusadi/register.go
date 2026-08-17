@@ -22,7 +22,7 @@ func Register[TUser auth.User](migrations *migrate.Migrations) func(ctx context.
 			auth.Register[TUser],
 			databasedi.RegisterFromConfig(migrations),
 			email.Register,
-			event.Register,
+			event.RegisterChannelQueue,
 			filesystem.Register,
 			openapidocdi.Register,
 		}

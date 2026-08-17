@@ -16,11 +16,11 @@ type fakeQueue struct {
 	ch chan Event
 }
 
-func (q *fakeQueue) Push(e event.Event) error {
+func (q *fakeQueue) Push(ctx context.Context, e event.Event) error {
 	q.ch <- e.(Event)
 	return nil
 }
-func (q *fakeQueue) Pop(events map[event.EventType]reflect.Type) (event.Event, error) {
+func (q *fakeQueue) Pop(ctx context.Context, events map[event.EventType]reflect.Type) (event.Event, error) {
 	return nil, nil
 }
 

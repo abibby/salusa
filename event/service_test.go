@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/salusaconfig"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,18 +17,13 @@ func TestChannelQueue(t *testing.T) {
 	t.Run("push pop", func(t *testing.T) {
 		q := NewChannelQueue()
 		ev := &TestEvent1{Foo: "bar"}
-		err := q.Push(ev)
+		err := q.Push(context.Background(), ev)
 		assert.NoError(t, err)
-		e, err := q.Pop(map[EventType]reflect.Type{
+		e, err := q.Pop(context.Background(), map[EventType]reflect.Type{
 			ev.Type(): reflect.TypeOf(&TestEvent1{}),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, ev, e)
-	})
-
-	t.Run("config", func(t *testing.T) {
-		c := NewChannelQueueConfig()
-		assert.IsType(t, &ChannelQueue{}, c.Queue())
 	})
 
 	t.Run("register", func(t *testing.T) {
@@ -42,18 +36,6 @@ func TestChannelQueue(t *testing.T) {
 	})
 }
 
-type queueTestConfig struct{}
-
-func (queueTestConfig) GetHTTPPort() int {
-	return 8080
-}
-func (queueTestConfig) GetBaseURL() string {
-	return "https://example.com"
-}
-func (queueTestConfig) QueueConfig() Config {
-	return NewChannelQueueConfig()
-}
-
 type plainConfig struct{}
 
 func (plainConfig) GetHTTPPort() int {
@@ -61,33 +43,6 @@ func (plainConfig) GetHTTPPort() int {
 }
 func (plainConfig) GetBaseURL() string {
 	return "https://example.com"
-}
-
-func TestQueueRegister(t *testing.T) {
-	t.Run("with queue config", func(t *testing.T) {
-		ctx := di.TestDependencyProviderContext()
-		di.RegisterSingleton(ctx, func() salusaconfig.Config {
-			return queueTestConfig{}
-		})
-
-		err := Register(ctx)
-		assert.NoError(t, err)
-		q, err := di.Resolve[Queue](ctx)
-		assert.NoError(t, err)
-		assert.NotNil(t, q)
-	})
-
-	t.Run("without queue config", func(t *testing.T) {
-		ctx := di.TestDependencyProviderContext()
-		di.RegisterSingleton(ctx, func() salusaconfig.Config {
-			return plainConfig{}
-		})
-
-		err := Register(ctx)
-		assert.NoError(t, err)
-		_, err = di.Resolve[Queue](ctx)
-		assert.Error(t, err)
-	})
 }
 
 var testHandlerDone chan string
@@ -188,11 +143,11 @@ type testQueue struct {
 	block chan struct{}
 }
 
-func (q *testQueue) Push(e Event) error {
+func (q *testQueue) Push(ctx context.Context, e Event) error {
 	return nil
 }
 
-func (q *testQueue) Pop(events map[EventType]reflect.Type) (Event, error) {
+func (q *testQueue) Pop(ctx context.Context, events map[EventType]reflect.Type) (Event, error) {
 	if q.idx < len(q.items) {
 		item := q.items[q.idx]
 		q.idx++

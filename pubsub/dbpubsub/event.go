@@ -1,6 +1,8 @@
 package dbpubsub
 
 import (
+	"time"
+
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/model/mixins"
@@ -11,10 +13,12 @@ type Event struct {
 	model.BaseModel
 	mixins.Timestamps
 
-	ID     int         `json:"id"     db:"id,primary,autoincrement"`
-	Status EventStatus `json:"status" db:"status"`
-	Topic  string      `json:"topic"  db:"topic"`
-	Data   []byte      `json:"data"   db:"data"`
+	ID       int         `db:"id,primary,autoincrement"`
+	FirstRun *time.Time  `db:"first_run"`
+	RunAt    *time.Time  `db:"run_at"`
+	Status   EventStatus `db:"status"`
+	Topic    string      `db:"topic"`
+	Data     []byte      `db:"data"`
 }
 
 type EventStatus string

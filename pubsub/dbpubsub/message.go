@@ -4,11 +4,15 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/abibby/salusa/database"
+	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/pubsub"
+	"github.com/jmoiron/sqlx"
 )
 
 type Message struct {
-	event *Event
+	event  *Event
+	update database.Update
 }
 
 var _ pubsub.Message = (*Message)(nil)
@@ -25,10 +29,16 @@ func (m *Message) ID() string {
 
 // Ack implements [event.Message].
 func (m *Message) Ack(ctx context.Context) error {
-	panic("unimplemented")
+	return m.update(func(tx *sqlx.Tx) error {
+		m.event.Status = EventFinished
+		return model.SaveContext(ctx, tx, m.event)
+	})
 }
 
 // Nack implements [event.Message].
 func (m *Message) Nack(ctx context.Context) error {
-	panic("unimplemented")
+	return m.update(func(tx *sqlx.Tx) error {
+		m.event.Status = EventError
+		return model.SaveContext(ctx, tx, m.event)
+	})
 }

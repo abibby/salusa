@@ -3,6 +3,8 @@ package pubsub
 import (
 	"context"
 	"io"
+
+	"github.com/abibby/salusa/di"
 )
 
 type PubSub interface {
@@ -40,4 +42,11 @@ type Consumer interface {
 	// The backend handles batching, pre-fetching, and pushing to this channel.
 	Consume(ctx context.Context) (<-chan Message, error)
 	Close() error
+}
+
+func Register(ctx context.Context) error {
+	di.RegisterWith(ctx, func(ctx context.Context, tag string, with PubSub) (Topic, error) {
+		return with.Topic(tag), nil
+	})
+	return nil
 }

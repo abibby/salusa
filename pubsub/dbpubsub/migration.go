@@ -11,10 +11,17 @@ var Migration = &migrate.Migration{
 		table.DateTime("created_at")
 		table.DateTime("updated_at")
 		table.Int("id").Primary().AutoIncrement()
-		table.String("status").Default(EventPending)
+		table.DateTime("first_run").Nullable()
+		table.DateTime("run_at").Nullable()
+		table.String("status")
+		table.String("topic")
 		table.Blob("data")
 
-		table.Index("idx_job_queue_status_id").AddColumn("status").AddColumn("id")
+		table.Index("idx_job_queue_status_id").
+			AddColumn("status").
+			AddColumn("topic").
+			AddColumn("run_at").
+			AddColumn("id")
 	}),
 	Down: schema.DropIfExists("events"),
 }

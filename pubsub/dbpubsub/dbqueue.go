@@ -45,7 +45,7 @@ func Register(ctx context.Context) error {
 	di.RegisterLazySingletonWith(ctx, func(u database.Update) (pubsub.PubSub, error) {
 		return New(u), nil
 	})
-	return nil
+	return pubsub.Register(ctx)
 }
 
 // Close implements [pubsub.Queue].
@@ -83,6 +83,7 @@ func (t *Topic) listen(ctx context.Context, messages chan pubsub.Message) {
 			events, err := EventQuery().
 				Where("status", "=", "pending").
 				Where("topic", "=", t.topic).
+				Where("run_at", "<", time.Now()).
 				OrderBy("id").
 				Limit(1).
 				ForUpdateSkipLocked().

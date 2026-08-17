@@ -7,18 +7,6 @@ import (
 	"github.com/abibby/salusa/di"
 )
 
-type ChannelQueueConfig struct{}
-
-var _ (Config) = (*ChannelQueueConfig)(nil)
-
-func NewChannelQueueConfig() *ChannelQueueConfig {
-	return &ChannelQueueConfig{}
-}
-
-func (c *ChannelQueueConfig) Queue() Queue {
-	return NewChannelQueue()
-}
-
 type ChannelQueue struct {
 	channel chan []byte
 }
@@ -29,7 +17,7 @@ func NewChannelQueue() *ChannelQueue {
 	}
 }
 
-func (q ChannelQueue) Push(e Event) error {
+func (q *ChannelQueue) Push(ctx context.Context, e Event) error {
 	b, err := encodeEvent(e)
 	if err != nil {
 		return err
@@ -37,7 +25,7 @@ func (q ChannelQueue) Push(e Event) error {
 	q.channel <- b
 	return nil
 }
-func (q ChannelQueue) Pop(events map[EventType]reflect.Type) (Event, error) {
+func (q *ChannelQueue) Pop(ctx context.Context, events map[EventType]reflect.Type) (Event, error) {
 	return decodeEvent(<-q.channel, events)
 }
 

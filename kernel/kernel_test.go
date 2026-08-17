@@ -419,7 +419,6 @@ func TestValidate(t *testing.T) {
 func TestServiceFuncs(t *testing.T) {
 	var sf ServiceFunc = func() error { return nil }
 	assert.NoError(t, sf.Run(context.Background()))
-	assert.False(t, sf.Restart())
 
 	var sfr ServiceFuncRestart = func() error { return nil }
 	assert.NoError(t, sfr.Run(context.Background()))

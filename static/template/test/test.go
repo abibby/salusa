@@ -7,7 +7,6 @@ import (
 	"github.com/abibby/salusa/database/dbtest"
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/email/emailtest"
-	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/static/template/app"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/abibby/salusa/static/template/migrations"
@@ -47,5 +46,4 @@ var Kernel = kerneltest.NewTestKernelFactory(app.Kernel, &config.Config{
 
 	Database: sqlite.NewConfig(":memory:"),
 	Mail:     emailtest.NewTestMailerConfig(),
-	Queue:    event.NewChannelQueueConfig(),
 })

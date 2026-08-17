@@ -103,7 +103,7 @@ func (s *EventService) Run(ctx context.Context) error {
 	}
 
 	for {
-		e, err := s.Queue.Pop(events)
+		e, err := s.Queue.Pop(ctx, events)
 		if err != nil {
 			s.Logger.Warn("could not pop event off queue", slog.Any("error", err))
 			continue

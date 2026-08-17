@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"sync"
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
@@ -52,9 +53,7 @@ func (k *Kernel) Run(ctx context.Context) error {
 		return k.runFetch(ctx, *fetch, *method, *headers, *body, *username)
 	}
 
-	go k.RunServices(ctx)
-
-	return k.RunHttpServer(ctx)
+	return k.RunServices(ctx)
 }
 func (k *Kernel) handlerWithMiddleware() http.Handler {
 	h := k.rootHandler
@@ -87,10 +86,13 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 	return k.HttpServer(ctx).ListenAndServe()
 }
 
-func (k *Kernel) RunServices(ctx context.Context) {
+func (k *Kernel) RunServices(ctx context.Context) error {
+	wg := sync.WaitGroup{}
 	for _, s := range k.services {
+		wg.Add(1)
 		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
+			defer wg.Done()
 			for {
 				if di.IsFillable(s) {
 					err := di.Fill(ctx, s)
@@ -112,6 +114,8 @@ func (k *Kernel) RunServices(ctx context.Context) {
 			}
 		}(ctx, s)
 	}
+	wg.Wait()
+	return nil
 }
 
 func (k *Kernel) singles(ctx context.Context) {

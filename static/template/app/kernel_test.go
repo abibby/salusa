@@ -6,7 +6,6 @@ import (
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/email/emailtest"
-	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/kernel"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +25,6 @@ func TestKernelBootstrap(t *testing.T) {
 
 		Database: sqlite.NewConfig(":memory:"),
 		Mail:     emailtest.NewTestMailerConfig(),
-		Queue:    event.NewChannelQueueConfig(),
 	}
 
 	k := kernel.Config(func() *config.Config { return cfg })(Kernel)

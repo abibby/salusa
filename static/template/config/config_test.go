@@ -6,7 +6,6 @@ import (
 
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/email/emailtest"
-	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/static/template/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,14 +34,12 @@ func TestConfig_Methods(t *testing.T) {
 		BasePath: "/base",
 		Database: sqlite.NewConfig(":memory:"),
 		Mail:     emailtest.NewTestMailerConfig(),
-		Queue:    event.NewChannelQueueConfig(),
 	}
 
 	assert.Equal(t, 8080, c.GetHTTPPort())
 	assert.Equal(t, "/base", c.GetBaseURL())
 	assert.Equal(t, c.Database, c.DBConfig())
 	assert.Equal(t, c.Mail, c.MailConfig())
-	assert.Equal(t, c.Queue, c.QueueConfig())
 }
 
 func TestLoad_missingEnvFile(t *testing.T) {
