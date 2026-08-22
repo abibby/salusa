@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/salusaconfig"
 	"github.com/lmittmann/tint"
 )
 
@@ -17,10 +16,6 @@ const (
 )
 
 type RootLogger slog.Logger
-
-type LoggerConfiger interface {
-	LoggerConfig() Config
-}
 
 type Config interface {
 	Handler() (slog.Handler, error)
@@ -40,18 +35,21 @@ func (c *DefaultConfig) Handler() (slog.Handler, error) {
 	return DefaultHandler(c.Level), nil
 }
 
-func Register(ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(cfg salusaconfig.Config) (*RootLogger, error) {
-		var h slog.Handler
-		if lc, ok := cfg.(LoggerConfiger); ok {
-			var err error
-			h, err = lc.LoggerConfig().Handler()
-			if err != nil {
-				return nil, err
-			}
-		}
-		if h == nil {
-			h = DefaultHandler(slog.LevelInfo)
+func RegisterDefault(ctx context.Context) {
+	di.RegisterLazySingleton(ctx, func() (*RootLogger, error) {
+		logger := slog.New(DefaultHandler(slog.LevelInfo))
+
+		slog.SetDefault(logger)
+		return (*RootLogger)(logger), nil
+	})
+
+	registerLogger(ctx)
+}
+func Register(ctx context.Context, cfg Config) {
+	di.RegisterLazySingleton(ctx, func() (*RootLogger, error) {
+		h, err := cfg.Handler()
+		if err != nil {
+			return nil, err
 		}
 
 		logger := slog.New(h)
@@ -61,25 +59,16 @@ func Register(ctx context.Context) error {
 	})
 
 	registerLogger(ctx)
-	return nil
 }
-func RegisterWith(h slog.Handler) func(ctx context.Context) error {
-	return func(ctx context.Context) error {
+func RegisterWith(ctx context.Context, h slog.Handler) {
+	di.RegisterLazySingleton(ctx, func() (*RootLogger, error) {
+		logger := slog.New(h)
 
-		di.RegisterLazySingleton(ctx, func() (*RootLogger, error) {
-			if h == nil {
-				h = DefaultHandler(slog.LevelInfo)
-			}
-			logger := slog.New(h)
+		slog.SetDefault(logger)
+		return (*RootLogger)(logger), nil
+	})
 
-			slog.SetDefault(logger)
-			return (*RootLogger)(logger), nil
-		})
-
-		registerLogger(ctx)
-
-		return nil
-	}
+	registerLogger(ctx)
 }
 func DefaultHandler(level slog.Level) slog.Handler {
 	fi, err := os.Stderr.Stat()
@@ -89,7 +78,7 @@ func DefaultHandler(level slog.Level) slog.Handler {
 			Level: level,
 		})
 	}
-	return tint.NewHandler(os.Stderr, &tint.Options{
+	return tint.NewTextHandler(os.Stderr, &tint.Options{
 		Level: level,
 		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
 			err, ok := attr.Value.Any().(error)

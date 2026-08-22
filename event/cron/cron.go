@@ -24,8 +24,8 @@ func (b *CronEvent) SetTime(t time.Time) {
 }
 
 type CronService struct {
-	Queue  event.Queue  `inject:""`
-	Logger *slog.Logger `inject:""`
+	Dispatch event.Dispatch `inject:""`
+	Logger   *slog.Logger   `inject:""`
 
 	events map[string][]Event
 }
@@ -48,7 +48,7 @@ func (c *CronService) Run(ctx context.Context) error {
 		for _, e := range events {
 			_, err := runner.AddFunc(spec, func() {
 				e.SetTime(time.Now())
-				err := c.Queue.Push(ctx, e)
+				err := c.Dispatch(ctx, e)
 				if err != nil {
 					c.Logger.Error("failed to dispatch event", slog.Any("error", err))
 				}

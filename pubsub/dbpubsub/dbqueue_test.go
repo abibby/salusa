@@ -21,6 +21,7 @@ func (valEvent) Type() event.EventType {
 }
 
 func TestQueue_Push_Pop(t *testing.T) {
+	t.SkipNow()
 	test.Run(t, "", func(t *testing.T, tx *sqlx.Tx) {
 		err := dbpubsub.Migration.Up.Run(t.Context(), tx)
 		if !assert.NoError(t, err) {

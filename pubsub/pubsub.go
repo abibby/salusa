@@ -44,9 +44,8 @@ type Consumer interface {
 	Close() error
 }
 
-func Register(ctx context.Context) error {
+func RegisterTopic(ctx context.Context) {
 	di.RegisterWith(ctx, func(ctx context.Context, tag string, with PubSub) (Topic, error) {
 		return with.Topic(tag), nil
 	})
-	return nil
 }

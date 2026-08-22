@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/abibby/salusa/di"
+	"github.com/abibby/salusa/salusaconfig"
 )
 
 var (
@@ -45,4 +46,15 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func Register[T salusaconfig.Config](fn func(ctx context.Context, c T)) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		cfg, err := di.Resolve[T](ctx)
+		if err != nil {
+			return err
+		}
+		fn(ctx, cfg)
+		return nil
+	}
 }

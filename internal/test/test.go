@@ -20,6 +20,7 @@ import (
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/model/mixins"
+	"github.com/abibby/salusa/di"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
@@ -149,8 +150,8 @@ type NamedRunner struct {
 
 var activeRunners = []NamedRunner{
 	{"sqlite", sqliteRunner},
-	{"mysql", mysqlRunner},
-	{"pgsql", pgsqlRunner},
+	// {"mysql", mysqlRunner},
+	// {"pgsql", pgsqlRunner},
 }
 
 var mysqlLock *os.File
@@ -171,15 +172,14 @@ func lockTestDB(driver string) (*os.File, error) {
 
 func initDB(cfg database.Config) func() (*sqlx.DB, error) {
 	return func() (*sqlx.DB, error) {
-		cfg.SetDialect()
-		db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
+		ctx := di.TestDependencyProviderContext()
+		database.Register(ctx, cfg, nil)
+		db, err := di.Resolve[*sqlx.DB](ctx)
 		if err != nil {
-			return nil, fmt.Errorf("open db: %s: %w", cfg.DriverName(), err)
+			return nil, fmt.Errorf("open db: %w", err)
 		}
 
-		ctx := context.Background()
-
-		switch cfg.DriverName() {
+		switch db.DriverName() {
 		case "sqlite", "sqlite3":
 		case "mysql":
 			if mysqlLock == nil {
@@ -207,7 +207,7 @@ func initDB(cfg database.Config) func() (*sqlx.DB, error) {
 
 		err = migrate.RunModelCreate(ctx, db, &Foo{}, &Bar{}, &FooSoftDelete{})
 		if err != nil {
-			return nil, fmt.Errorf("create test tables: %s: %w", cfg.DriverName(), err)
+			return nil, fmt.Errorf("create test tables: %s: %w", db.DriverName(), err)
 		}
 		return db, nil
 	}

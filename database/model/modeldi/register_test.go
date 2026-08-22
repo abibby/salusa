@@ -62,9 +62,8 @@ func TestGetValue(t *testing.T) {
 
 func newTestDB(t *testing.T) *sqlx.DB {
 	t.Helper()
-	cfg := sqlite.NewConfig(":memory:")
-	cfg.SetDialect()
-	db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
+	sqlite.UseSQLite()
+	db, err := sqlx.Open("sqlite3", ":memory:")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		_ = db.Close()

@@ -32,7 +32,7 @@ func (l *LocalFS) FS() fs.FS {
 	return os.DirFS(l.Root)
 }
 
-func Register(ctx context.Context) error {
+func Register(ctx context.Context) {
 	di.RegisterLazySingletonWith(ctx, func(cfg salusaconfig.Config) (fs.FS, error) {
 		var cfgAny any = cfg
 		cfger, ok := cfgAny.(FSConfiger)
@@ -41,5 +41,4 @@ func Register(ctx context.Context) error {
 		}
 		return cfger.FSConfig().FS(), nil
 	})
-	return nil
 }

@@ -4,25 +4,12 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/abibby/salusa/event"
 	"github.com/stretchr/testify/assert"
 )
-
-type fakeQueue struct {
-	ch chan Event
-}
-
-func (q *fakeQueue) Push(ctx context.Context, e event.Event) error {
-	q.ch <- e.(Event)
-	return nil
-}
-func (q *fakeQueue) Pop(ctx context.Context, events map[event.EventType]reflect.Type) (event.Event, error) {
-	return nil, nil
-}
 
 type testEvent struct {
 	CronEvent
@@ -62,9 +49,10 @@ func TestSchedule(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	q := &fakeQueue{ch: make(chan Event, 1)}
 	s := Service()
-	s.Queue = q
+	s.Dispatch = func(ctx context.Context, e event.Event) error {
+		return nil
+	}
 	s.Logger = slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	s.Schedule("* * * * *", &testEvent{})
@@ -75,9 +63,12 @@ func TestRun(t *testing.T) {
 }
 
 func TestRunFiresEvent(t *testing.T) {
-	q := &fakeQueue{ch: make(chan Event, 1)}
+	ch := make(chan event.Event, 1)
 	s := Service()
-	s.Queue = q
+	s.Dispatch = func(ctx context.Context, e event.Event) error {
+		ch <- e
+		return nil
+	}
 	s.Logger = slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	s.Schedule("@every 100ms", &testEvent{})
@@ -86,7 +77,7 @@ func TestRunFiresEvent(t *testing.T) {
 	assert.NoError(t, err)
 
 	select {
-	case e := <-q.ch:
+	case e := <-ch:
 		te, ok := e.(*testEvent)
 		assert.True(t, ok)
 		assert.False(t, te.Time.IsZero())

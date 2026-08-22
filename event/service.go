@@ -8,6 +8,7 @@ import (
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/pubsub"
 )
 
 type Handler[E Event] interface {
@@ -68,11 +69,12 @@ func NewListener[H Handler[E], E Event]() *Listener {
 }
 
 type EventService struct {
-	Queue  Queue                  `inject:""`
+	PubSub pubsub.PubSub          `inject:""`
 	Logger *slog.Logger           `inject:""`
 	DP     *di.DependencyProvider `inject:""`
 
 	listeners map[EventType][]runner
+	topic     string
 }
 
 var _ kernel.Service = (*EventService)(nil)
@@ -102,10 +104,18 @@ func (s *EventService) Run(ctx context.Context) error {
 		events[eventType] = runners[0].EventType()
 	}
 
-	for {
-		e, err := s.Queue.Pop(ctx, events)
+	t := s.PubSub.Topic(s.topic)
+	defer t.Close()
+
+	messages, err := t.Consume(ctx)
+	if err != nil {
+		return err
+	}
+
+	for m := range messages {
+		e, err := decodeEvent(m.Data(), events)
 		if err != nil {
-			s.Logger.Warn("could not pop event off queue", slog.Any("error", err))
+			s.Logger.Warn("could not decode event", "error", err)
 			continue
 		}
 		runners, ok := s.listeners[e.Type()]
@@ -128,4 +138,5 @@ func (s *EventService) Run(ctx context.Context) error {
 		}
 
 	}
+	return nil
 }

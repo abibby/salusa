@@ -17,7 +17,7 @@ type userRegisterDeps struct {
 	Claims *Claims  `inject:""`
 }
 
-func Register[T User](ctx context.Context) error {
+func Register[T User](ctx context.Context) {
 	di.Register(ctx, func(ctx context.Context, tag string) (*Claims, error) {
 		c, _ := GetClaimsCtx(ctx)
 		return c, nil
@@ -62,5 +62,4 @@ func Register[T User](ctx context.Context) error {
 		}
 		return u, err
 	})
-	return nil
 }

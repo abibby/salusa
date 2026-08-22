@@ -12,6 +12,7 @@ import (
 
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/go-openapi/spec"
+	"github.com/google/uuid"
 )
 
 var (
@@ -25,6 +26,10 @@ var (
 
 var formatMap = map[reflect.Type]string{
 	typeTime: "date-time",
+}
+
+func init() {
+	RegisterFormat[uuid.UUID]("uuid")
 }
 
 func RegisterFormat[T any](format string) {

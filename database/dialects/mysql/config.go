@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"github.com/abibby/salusa/database"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -12,11 +11,6 @@ type SimpleConfig struct {
 	Database string
 }
 
-var _ database.Config = (*SimpleConfig)(nil)
-
-func (c *SimpleConfig) SetDialect() {
-	UseMySql()
-}
 func (c *SimpleConfig) DriverName() string {
 	return "mysql"
 }
@@ -40,15 +34,18 @@ func NewMySQLConfig(cfg *mysql.Config) *Config {
 		cfg: cfg,
 	}
 }
-
-var _ database.Config = (*Config)(nil)
-
-func (c *Config) SetDialect() {
-	UseMySql()
-}
 func (c *Config) DriverName() string {
 	return "mysql"
 }
 func (c *Config) DataSourceName() string {
 	return c.cfg.FormatDSN()
 }
+
+// func (c *Config) Register(ctx context.Context) error {
+// 	di.RegisterLazySingleton(ctx, func() (*sqlx.DB, error) {
+// 		UseMySql()
+// 		return sqlx.Open(c.DriverName(), c.DataSourceName())
+// 	})
+
+// 	return databasedi.RegisterTransactions(nil)(ctx)
+// }

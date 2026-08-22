@@ -47,10 +47,3 @@ func (c *Config) GetHTTPPort() int {
 func (c *Config) GetBaseURL() string {
 	return c.BasePath
 }
-
-func (c *Config) DBConfig() database.Config {
-	return c.Database
-}
-func (c *Config) MailConfig() email.Config {
-	return c.Mail
-}

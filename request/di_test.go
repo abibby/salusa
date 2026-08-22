@@ -12,8 +12,7 @@ import (
 
 func TestDIMiddleware(t *testing.T) {
 	ctx := di.TestDependencyProviderContext()
-	err := request.Register(ctx)
-	assert.NoError(t, err)
+	request.Register(ctx)
 
 	type Request struct {
 		Request *http.Request `inject:""`
@@ -35,10 +34,9 @@ func TestDIMiddleware(t *testing.T) {
 
 func TestRegisterError(t *testing.T) {
 	ctx := di.TestDependencyProviderContext()
-	err := request.Register(ctx)
-	assert.NoError(t, err)
+	request.Register(ctx)
 
-	_, err = di.Resolve[*http.Request](ctx)
+	_, err := di.Resolve[*http.Request](ctx)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "request not in context")
 
@@ -47,14 +45,12 @@ func TestRegisterError(t *testing.T) {
 	assert.Contains(t, err.Error(), "response not in context")
 }
 
-
 func TestInjectRequest(t *testing.T) {
 	type Request struct {
 		Request *http.Request `inject:""`
 	}
 	ctx := di.TestDependencyProviderContext()
-	err := request.Register(ctx)
-	assert.NoError(t, err)
+	request.Register(ctx)
 
 	httpRequest := httptest.
 		NewRequest("GET", "http://0.0.0.0/", http.NoBody).
@@ -77,8 +73,7 @@ func TestInjectResponseWriter(t *testing.T) {
 	}
 
 	ctx := di.TestDependencyProviderContext()
-	err := request.Register(ctx)
-	assert.NoError(t, err)
+	request.Register(ctx)
 
 	rw := httptest.NewRecorder()
 

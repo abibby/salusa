@@ -9,7 +9,6 @@ import (
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/salusaconfig"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,14 +20,14 @@ func register() (context.Context, *bytes.Buffer) {
 
 	b := bytes.NewBuffer([]byte{})
 
-	_ = clog.RegisterWith(slog.NewTextHandler(b, &slog.HandlerOptions{
+	clog.RegisterWith(ctx, slog.NewTextHandler(b, &slog.HandlerOptions{
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				return slog.Time(slog.TimeKey, time.Time{})
 			}
 			return a
 		},
-	}))(ctx)
+	}))
 
 	return ctx, b
 }
@@ -67,7 +66,7 @@ func TestResolve(t *testing.T) {
 			di.NewDependencyProvider(),
 		)
 
-		_ = clog.RegisterWith(nil)(ctx)
+		clog.RegisterDefault(ctx)
 
 		l, err := di.Resolve[*slog.Logger](ctx)
 		assert.NoError(t, err)
@@ -121,38 +120,9 @@ func TestDefaultHandler(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
-	t.Run("with logger config", func(t *testing.T) {
-		b := bytes.NewBuffer(nil)
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
-		di.RegisterSingleton(ctx, func() salusaconfig.Config {
-			return &testConfig{level: slog.LevelInfo, b: b}
-		})
-
-		err := clog.Register(ctx)
-		assert.NoError(t, err)
-
-		logger, err := di.Resolve[*clog.RootLogger](ctx)
-		assert.NoError(t, err)
-		assert.NotNil(t, logger)
-
-		(*slog.Logger)(logger).Warn("test")
-		assert.Contains(t, b.String(), "level=WARN msg=test")
-	})
-
 	t.Run("without logger config", func(t *testing.T) {
-		ctx := di.ContextWithDependencyProvider(
-			context.Background(),
-			di.NewDependencyProvider(),
-		)
-		di.RegisterSingleton(ctx, func() salusaconfig.Config {
-			return plainConfig{}
-		})
-
-		err := clog.Register(ctx)
-		assert.NoError(t, err)
+		ctx := di.TestDependencyProviderContext()
+		clog.RegisterDefault(ctx)
 
 		logger, err := di.Resolve[*clog.RootLogger](ctx)
 		assert.NoError(t, err)

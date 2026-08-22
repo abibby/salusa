@@ -16,7 +16,6 @@ func TestSimpleConfig(t *testing.T) {
 		Host:     "localhost:3306",
 		Database: "db",
 	}
-	c.SetDialect()
 	assert.Equal(t, "mysql", c.DriverName())
 	assert.Equal(t, "user:pass@/db?multiStatements=true&parseTime=true", c.DataSourceName())
 }
@@ -31,7 +30,6 @@ func TestNewMySQLConfig(t *testing.T) {
 	c := mysql.NewMySQLConfig(inner)
 	require.NotNil(t, c)
 	assert.Equal(t, "mysql", c.DriverName())
-	c.SetDialect()
 	assert.Contains(t, c.DataSourceName(), "u:p@tcp(h)/d")
 }
 
@@ -43,7 +41,6 @@ func TestConfig(t *testing.T) {
 		Addr:   "localhost:3306",
 		DBName: "db",
 	})
-	c.SetDialect()
 	assert.Equal(t, "mysql", c.DriverName())
 	assert.Contains(t, c.DataSourceName(), "user:pass@tcp(localhost:3306)/db")
 }

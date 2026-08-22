@@ -64,8 +64,7 @@ func TestRegister(t *testing.T) {
 		return &testConfig{fsys: fsys}
 	})
 
-	err := filesystem.Register(ctx)
-	require.NoError(t, err)
+	filesystem.Register(ctx)
 
 	f, err := di.Resolve[fs.FS](ctx)
 	require.NoError(t, err)
@@ -85,10 +84,9 @@ func TestRegister_notFSConfiger(t *testing.T) {
 		return &nonFSConfig{}
 	})
 
-	err := filesystem.Register(ctx)
-	require.NoError(t, err)
+	filesystem.Register(ctx)
 
-	_, err = di.Resolve[fs.FS](ctx)
+	_, err := di.Resolve[fs.FS](ctx)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "config not instance of email.FSConfiger")
 }

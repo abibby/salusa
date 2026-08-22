@@ -2,10 +2,10 @@ package loki
 
 import (
 	"log/slog"
+	"net/url"
 
 	"github.com/abibby/salusa/clog"
-	"github.com/grafana/loki-client-go/loki"
-	slogloki "github.com/samber/slog-loki/v3"
+	"github.com/bearsoft-fi/slogloki"
 )
 
 type Config struct {
@@ -17,20 +17,15 @@ type Config struct {
 var _ clog.Config = (*Config)(nil)
 
 func (c *Config) Handler() (slog.Handler, error) {
-
-	// setup loki client
-	config, err := loki.NewDefaultConfig(c.URL)
-	if err != nil {
+	if _, err := url.ParseRequestURI(c.URL); err != nil {
 		return nil, err
 	}
 
-	config.TenantID = c.TenantID
+	config := slogloki.NewDefaultConfig(
+		c.URL,
+		slogloki.WithLevel(c.Level),
+		slogloki.WithTenantID(c.TenantID),
+	)
 
-	// client, err := loki.NewWithLogger(config, &localLogger{slog.New(clog.DefaultHandler())})
-	client, err := loki.New(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return slogloki.Option{Level: c.Level, Client: client}.NewLokiHandler(), nil
+	return slogloki.NewLokiHandler(config, map[string]string{})
 }

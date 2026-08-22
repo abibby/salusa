@@ -16,7 +16,7 @@ const (
 	responseKey
 )
 
-func Register(ctx context.Context) error {
+func Register(ctx context.Context) {
 	di.Register(ctx, func(ctx context.Context, tag string) (*http.Request, error) {
 		req, ok := ctx.Value(requestKey).(*http.Request)
 		if !ok {
@@ -31,7 +31,6 @@ func Register(ctx context.Context) error {
 		}
 		return resp, nil
 	})
-	return nil
 }
 
 func DIMiddleware() router.MiddlewareFunc {

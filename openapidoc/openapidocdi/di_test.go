@@ -17,8 +17,7 @@ func TestRegister(t *testing.T) {
 		return k, nil
 	})
 
-	err := Register(ctx)
-	assert.NoError(t, err)
+	Register(ctx)
 
 	api, err := di.Resolve[openapidoc.APIDocer](ctx)
 	assert.NoError(t, err)

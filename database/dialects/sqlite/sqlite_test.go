@@ -92,10 +92,3 @@ func TestUseSQLite(t *testing.T) {
 	_, ok := d.(*generic.Generic)
 	assert.True(t, ok)
 }
-
-func TestConfig(t *testing.T) {
-	c := sqlite.NewConfig(":memory:")
-	c.SetDialect()
-	assert.Equal(t, "sqlite3", c.DriverName())
-	assert.Equal(t, ":memory:", c.DataSourceName())
-}

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/abibby/salusa/auth"
-	"github.com/abibby/salusa/database/databasedi"
+	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/di"
@@ -27,9 +27,8 @@ func TestRegister(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := di.TestDependencyProviderContext()
-		_ = databasedi.Register(db)(ctx)
-		err = auth.Register[*AutoIncrementUser](ctx)
-		assert.NoError(t, err)
+		database.RegisterDB(ctx, db)
+		auth.Register[*AutoIncrementUser](ctx)
 
 		ctx = auth.SetClaims(ctx, &auth.Claims{
 			RegisteredClaims: jwt.RegisteredClaims{
@@ -55,8 +54,8 @@ func TestRegister(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := di.TestDependencyProviderContext()
-		_ = databasedi.Register(db)(ctx)
-		_ = auth.Register[*auth.UsernameUser](ctx)
+		database.RegisterDB(ctx, db)
+		auth.Register[*auth.UsernameUser](ctx)
 
 		ctx = auth.SetClaims(ctx, &auth.Claims{
 			RegisteredClaims: jwt.RegisteredClaims{
@@ -83,9 +82,8 @@ func TestRegister(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := di.TestDependencyProviderContext()
-		_ = databasedi.Register(db)(ctx)
-		err = auth.Register[*auth.UsernameUser](ctx)
-		assert.NoError(t, err)
+		database.RegisterDB(ctx, db)
+		auth.Register[*auth.UsernameUser](ctx)
 
 		u, err := di.Resolve[*auth.UsernameUser](ctx)
 		assert.ErrorIs(t, err, auth.Err401Unauthorized)
@@ -104,9 +102,8 @@ func TestRegister(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := di.TestDependencyProviderContext()
-		_ = databasedi.Register(db)(ctx)
-		err = auth.Register[*AutoIncrementUser](ctx)
-		assert.NoError(t, err)
+		database.RegisterDB(ctx, db)
+		auth.Register[*AutoIncrementUser](ctx)
 
 		ctx = auth.SetClaims(ctx, &auth.Claims{
 			RegisteredClaims: jwt.RegisteredClaims{
@@ -125,9 +122,8 @@ func TestRegister(t *testing.T) {
 		migrate.MustMigrateModel(db, &auth.UsernameUser{})
 
 		ctx := di.TestDependencyProviderContext()
-		_ = databasedi.Register(db)(ctx)
-		err := auth.Register[*auth.UsernameUser](ctx)
-		assert.NoError(t, err)
+		database.RegisterDB(ctx, db)
+		auth.Register[*auth.UsernameUser](ctx)
 
 		ctx = auth.SetClaims(ctx, &auth.Claims{
 			RegisteredClaims: jwt.RegisteredClaims{

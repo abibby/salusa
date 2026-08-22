@@ -1,0 +1,31 @@
+package channelpubsub
+
+import (
+	"github.com/abibby/salusa/pubsub"
+)
+
+type PubSub struct {
+	topics map[string]chan pubsub.Message
+}
+
+var _ pubsub.PubSub = (*PubSub)(nil)
+
+func New() *PubSub {
+	return &PubSub{
+		topics: map[string]chan pubsub.Message{},
+	}
+}
+
+// Topic implements [pubsub.PubSub].
+func (p *PubSub) Topic(name string) pubsub.Topic {
+	t, ok := p.topics[name]
+
+	if !ok {
+		t = make(chan pubsub.Message)
+		p.topics[name] = t
+	}
+
+	return &Topic{
+		ch: t,
+	}
+}

@@ -8,7 +8,6 @@ import (
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/pubsub"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
@@ -40,13 +39,6 @@ type Topic struct {
 }
 
 var _ pubsub.Topic = (*Topic)(nil)
-
-func Register(ctx context.Context) error {
-	di.RegisterLazySingletonWith(ctx, func(u database.Update) (pubsub.PubSub, error) {
-		return New(u), nil
-	})
-	return pubsub.Register(ctx)
-}
 
 // Close implements [pubsub.Queue].
 func (t *Topic) Close() error {
