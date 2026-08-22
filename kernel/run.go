@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"sync"
 
 	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/di"
@@ -87,12 +86,9 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 }
 
 func (k *Kernel) RunServices(ctx context.Context) error {
-	wg := sync.WaitGroup{}
 	for _, s := range k.services {
-		wg.Add(1)
 		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {
-			defer wg.Done()
 			for {
 				if di.IsFillable(s) {
 					err := di.Fill(ctx, s)
@@ -114,8 +110,7 @@ func (k *Kernel) RunServices(ctx context.Context) error {
 			}
 		}(ctx, s)
 	}
-	wg.Wait()
-	return nil
+	return k.RunHttpServer(ctx)
 }
 
 func (k *Kernel) singles(ctx context.Context) {

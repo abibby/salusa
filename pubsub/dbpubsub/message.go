@@ -38,7 +38,8 @@ func (m *Message) Ack(ctx context.Context) error {
 // Nack implements [event.Message].
 func (m *Message) Nack(ctx context.Context) error {
 	return m.update(func(tx *sqlx.Tx) error {
-		m.event.Status = EventError
+		m.event.Status = EventPending
+		m.event.Retries += 1
 		return model.SaveContext(ctx, tx, m.event)
 	})
 }

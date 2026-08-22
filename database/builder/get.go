@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -92,35 +93,7 @@ func (b *Builder) Load(tx database.DB, v any) (err error) {
 		return err
 	}
 
-	defer func() {
-		if err == nil {
-			return
-		}
-		err = &QueryError{
-			err:   err,
-			query: r.SQL,
-		}
-	}()
-
-	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
-		err = sqlx.SelectContext(b.Context(), tx, v, r.SQL, r.Bindings...)
-	} else {
-		err = sqlx.GetContext(b.Context(), tx, v, r.SQL, r.Bindings...)
-	}
-	if err != nil {
-		return err
-	}
-
-	err = relationship.InitializeRelationships(v)
-	if err != nil {
-		return err
-	}
-
-	err = hooks.AfterLoad(b.Context(), tx, v)
-	if err != nil {
-		return err
-	}
-	return nil
+	return load(b.Context(), tx, r, v)
 }
 
 // Load executes the query as a select statement and sets v to the result.
@@ -135,6 +108,38 @@ func (b *ModelBuilder[T]) LoadOne(tx database.DB, v any) error {
 // Deprecated: Use Builder.Load
 func (b *Builder) LoadOne(tx database.DB, v any) error {
 	return b.Load(tx, v)
+}
+
+func load(ctx context.Context, tx database.DB, r dialects.RawQuery, v any) (err error) {
+	defer func() {
+		if err == nil {
+			return
+		}
+		err = &QueryError{
+			err:   err,
+			query: r.SQL,
+		}
+	}()
+
+	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
+		err = sqlx.SelectContext(ctx, tx, v, r.SQL, r.Bindings...)
+	} else {
+		err = sqlx.GetContext(ctx, tx, v, r.SQL, r.Bindings...)
+	}
+	if err != nil {
+		return err
+	}
+
+	err = relationship.InitializeRelationships(v)
+	if err != nil {
+		return err
+	}
+
+	err = hooks.AfterLoad(ctx, tx, v)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (b *ModelBuilder[T]) Each(tx database.DB, cb func(v T) error) error {

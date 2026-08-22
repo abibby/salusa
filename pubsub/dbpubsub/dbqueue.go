@@ -4,16 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/abibby/salusa/clog"
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/pubsub"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 )
 
 type PubSub struct {
+	table  string
 	update database.Update
 }
 
@@ -45,66 +44,60 @@ func (t *Topic) Close() error {
 	return nil
 }
 
-// Consume implements [pubsub.Queue].
-func (t *Topic) Consume(ctx context.Context) (<-chan pubsub.Message, error) {
-	messages := make(chan pubsub.Message)
-	go func() {
-		t.listen(ctx, messages)
-		close(messages)
-	}()
-	return messages, nil
-}
+// // Consume implements [pubsub.Queue].
+// func (t *Topic) Consume(ctx context.Context) (<-chan pubsub.Message, error) {
+// 	messages := make(chan pubsub.Message)
+// 	go func() {
+// 		t.listen(ctx, messages)
+// 		close(messages)
+// 	}()
+// 	return messages, nil
+// }
 
 // Enqueue implements [pubsub.Queue].
 func (t *Topic) Enqueue(ctx context.Context, data []byte) error {
 	return t.update(func(tx *sqlx.Tx) error {
 		return model.Save(tx, &Event{
 			Data:   data,
+			RunAt:  time.Now(),
 			Topic:  t.topic,
 			Status: EventPending,
 		})
 	})
 }
 
-// Pop implements [pubsub.Queue].
-func (t *Topic) listen(ctx context.Context, messages chan pubsub.Message) {
+// Dequeue implements [pubsub.Topic].
+func (t *Topic) Dequeue(ctx context.Context) (pubsub.Message, error) {
 	tick := time.Tick(10 * time.Second)
 
 	for {
-		err := t.update(func(tx *sqlx.Tx) error {
-			events, err := EventQuery().
+		events, err := database.Value(t.update, func(tx *sqlx.Tx) ([]*Event, error) {
+			now := time.Now()
+			return EventQuery().
 				Where("status", "=", "pending").
 				Where("topic", "=", t.topic).
-				Where("run_at", "<", time.Now()).
+				Where("run_at", "<", now).
 				OrderBy("id").
 				Limit(1).
 				ForUpdateSkipLocked().
 				UpdateReturning(tx, builder.Updates{
 					"status":     "processing",
-					"updated_at": time.Now(),
+					"updated_at": now,
 				})
-			if err != nil {
-				return err
-			}
-			if len(events) == 0 {
-				return nil
-			}
-
-			spew.Dump(events)
-			messages <- &Message{
-				event: events[0],
-			}
-
-			return nil
 		})
 		if err != nil {
-			clog.Use(ctx).Warn("failed to process queue", "error", err)
-			return
+			return nil, err
+		}
+		if len(events) > 0 {
+			return &Message{
+				event:  events[0],
+				update: t.update,
+			}, nil
 		}
 
 		select {
 		case <-ctx.Done():
-			return
+			return nil, ctx.Err()
 		case <-tick:
 		}
 	}

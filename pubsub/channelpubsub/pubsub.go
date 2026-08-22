@@ -21,7 +21,7 @@ func (p *PubSub) Topic(name string) pubsub.Topic {
 	t, ok := p.topics[name]
 
 	if !ok {
-		t = make(chan pubsub.Message)
+		t = make(chan pubsub.Message, 10)
 		p.topics[name] = t
 	}
 

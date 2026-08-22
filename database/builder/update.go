@@ -5,7 +5,6 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -47,6 +46,7 @@ func (b *ModelBuilder[T]) UpdateReturning(tx database.DB, updates Updates) ([]T,
 		return nil, err
 	}
 
+	// b.Query().Select.Columns
 	q := b.UpdateQuery(updates)
 	q.Returning = []dialects.Column{
 		{Column: "*"},
@@ -58,11 +58,11 @@ func (b *ModelBuilder[T]) UpdateReturning(tx database.DB, updates Updates) ([]T,
 	}
 
 	result := []T{}
-	err = sqlx.SelectContext(b.Context(), tx, &result, r.SQL, r.Bindings...)
+
+	err = load(b.Context(), tx, r, &result)
 	if err != nil {
 		return nil, err
 	}
-
 	return result, nil
 }
 func (b *ModelBuilder[T]) UpdateQuery(updates Updates) *dialects.UpdateQuery {

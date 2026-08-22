@@ -3,7 +3,9 @@ package event
 import (
 	"context"
 	"log/slog"
+	"math"
 	"reflect"
+	"time"
 
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
@@ -107,12 +109,20 @@ func (s *EventService) Run(ctx context.Context) error {
 	t := s.PubSub.Topic(s.topic)
 	defer t.Close()
 
-	messages, err := t.Consume(ctx)
-	if err != nil {
-		return err
-	}
+	fails := 0
+	for ctx.Err() == nil {
+		m, err := t.Dequeue(ctx)
+		if err != nil {
+			s.Logger.Warn("could not dequeue event", "error", err)
 
-	for m := range messages {
+			if ctx.Err() == nil {
+				time.Sleep(time.Duration(math.Max(math.Pow(2, float64(fails)), 60)) * time.Second)
+				fails++
+			}
+			continue
+		}
+		fails = 0
+
 		e, err := decodeEvent(m.Data(), events)
 		if err != nil {
 			s.Logger.Warn("could not decode event", "error", err)
@@ -138,5 +148,5 @@ func (s *EventService) Run(ctx context.Context) error {
 		}
 
 	}
-	return nil
+	return ctx.Err()
 }

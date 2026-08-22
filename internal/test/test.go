@@ -282,7 +282,7 @@ func RunBenchmark(t *testing.B, name string, cb func(t *testing.B, tx *sqlx.Tx))
 func runners(t testing.TB, name string, cb func(runner *dbtest.Runner, name string)) {
 	t.Helper()
 	for _, r := range activeRunners {
-		cb(r.Runner, strings.TrimSpace(name+r.Name))
+		cb(r.Runner, strings.TrimSpace(name+" "+r.Name))
 	}
 }
 

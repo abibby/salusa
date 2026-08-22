@@ -12,8 +12,15 @@ type PubSub interface {
 }
 
 type Topic interface {
-	Producer
-	Consumer
+	// Enqueue adds a message to the topic.
+	Enqueue(ctx context.Context, data []byte) error
+
+	// Dequeue fetches a single message. It should block until a message is
+	// available or the context is canceled.
+	Dequeue(ctx context.Context) (Message, error)
+
+	// Close cleans up connections or background goroutines.
+	Close() error
 }
 
 type Subscription interface {
@@ -28,20 +35,9 @@ type Message interface {
 	// Ack signals the message was processed successfully and can be deleted.
 	Ack(ctx context.Context) error
 
-	// Nack signals processing failed. The message should be re-queued or dead-lettered.
+	// Nack signals processing failed. The message should be re-queued or
+	// dead-lettered.
 	Nack(ctx context.Context) error
-}
-
-type Producer interface {
-	Enqueue(ctx context.Context, data []byte) error
-	Close() error
-}
-
-type Consumer interface {
-	// Consume returns a read-only channel of messages.
-	// The backend handles batching, pre-fetching, and pushing to this channel.
-	Consume(ctx context.Context) (<-chan Message, error)
-	Close() error
 }
 
 func RegisterTopic(ctx context.Context) {
