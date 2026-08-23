@@ -3,9 +3,8 @@ package request
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 type ValidationError map[string][]string
@@ -32,7 +31,7 @@ func (e ValidationError) HTMLError() string {
 		fmt.Fprint(b, "</ul></li>")
 		items = append(items, b.String())
 	}
-	slices.Sort(items)
+	sort.Strings(items)
 	return fmt.Sprintf(
 		"<h2>Validation Error</h2><ul>%s</ul>",
 		strings.Join(items, ""),

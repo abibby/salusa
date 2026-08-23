@@ -113,7 +113,7 @@ func TestDequeueContextCanceled(t *testing.T) {
 	runMessageTest(t, func(t *testing.T, ctx context.Context, env messageTestEnv) {
 		q := env.p.Topic("default")
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(ctx)
 		cancel()
 
 		m, err := q.Dequeue(ctx)
