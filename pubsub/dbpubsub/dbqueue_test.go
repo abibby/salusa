@@ -15,9 +15,11 @@ import (
 func TestStandard(t *testing.T) {
 	pubsubtest.RunStandardTests(t, func(t *testing.T, name string, fn func(*testing.T, pubsub.PubSub)) {
 		test.Run(t, name, func(t *testing.T, tx *sqlx.Tx) {
-			err := dbpubsub.Migration.Up.Run(t.Context(), tx)
-			if !assert.NoError(t, err) {
-				return
+			for _, m := range dbpubsub.Migrations {
+				err := m.Up.Run(t.Context(), tx)
+				if !assert.NoError(t, err) {
+					return
+				}
 			}
 			p := dbpubsub.New(database.Update(func(f func(tx *sqlx.Tx) error) error {
 				return f(tx)

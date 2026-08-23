@@ -32,17 +32,17 @@ func (*SQLiteCore) Identifier(s string) string {
 }
 
 func (*SQLiteCore) DataType(t dialects.DataType) string {
-	switch t {
-	case dialects.DataTypeString, dialects.DataTypeText, dialects.DataTypeJSON:
+	switch t.Name {
+	case dialects.DataTypeString.Name, dialects.DataTypeText.Name, dialects.DataTypeJSON.Name:
 		return "TEXT"
-	case dialects.DataTypeDate, dialects.DataTypeDateTime:
+	case dialects.DataTypeDate.Name, dialects.DataTypeDateTime.Name:
 		return "TIMESTAMP"
-	case dialects.DataTypeInt32, dialects.DataTypeUInt32, dialects.DataTypeBoolean:
+	case dialects.DataTypeInt32.Name, dialects.DataTypeUInt32.Name, dialects.DataTypeBoolean.Name:
 		return "INTEGER"
-	case dialects.DataTypeFloat32:
+	case dialects.DataTypeFloat32.Name:
 		return "FLOAT"
 	}
-	return string(t)
+	return t.Name
 }
 
 func (*SQLiteCore) CurrentTime() string {

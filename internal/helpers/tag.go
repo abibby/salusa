@@ -2,9 +2,8 @@ package helpers
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
-
-	"github.com/abibby/salusa/database/dialects"
 )
 
 type Tag struct {
@@ -15,7 +14,8 @@ type Tag struct {
 	Readonly      bool
 	Index         bool
 	Unique        bool
-	Type          dialects.DataType
+	Type          string
+	Size          int
 }
 
 func DBTag(f reflect.StructField) *Tag {
@@ -35,7 +35,15 @@ func DBTag(f reflect.StructField) *Tag {
 	for _, p := range parts[1:] {
 		typePrefix := "type:"
 		if strings.HasPrefix(p, typePrefix) {
-			tag.Type = dialects.DataType(p[len(typePrefix):])
+			tag.Type = p[len(typePrefix):]
+			continue
+		}
+		sizePrefix := "size:"
+		if strings.HasPrefix(p, sizePrefix) {
+			s, err := strconv.Atoi(p[len(sizePrefix):])
+			if err == nil {
+				tag.Size = s
+			}
 			continue
 		}
 		for i := 0; i < tagType.NumField(); i++ {

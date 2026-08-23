@@ -63,6 +63,9 @@ func blueprintFromFields(tableName string, fields []*field) *schema.Blueprint {
 			if f.tag.Unique {
 				b.Unique()
 			}
+			if f.tag.Size != 0 {
+				b.Size(f.tag.Size)
+			}
 		}
 	}
 

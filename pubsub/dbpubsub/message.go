@@ -2,7 +2,9 @@ package dbpubsub
 
 import (
 	"context"
+	"errors"
 	"strconv"
+	"time"
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
@@ -10,9 +12,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var ErrMessageFinished = errors.New("message finished")
+
 type Message struct {
-	event  *Event
-	update database.Update
+	event    *Event
+	update   database.Update
+	finished bool
 }
 
 var _ pubsub.Message = (*Message)(nil)
@@ -29,6 +34,10 @@ func (m *Message) ID() string {
 
 // Ack implements [event.Message].
 func (m *Message) Ack(ctx context.Context) error {
+	if m.finished {
+		return ErrMessageFinished
+	}
+	m.finished = true
 	return m.update(func(tx *sqlx.Tx) error {
 		m.event.Status = EventFinished
 		return model.SaveContext(ctx, tx, m.event)
@@ -37,9 +46,14 @@ func (m *Message) Ack(ctx context.Context) error {
 
 // Nack implements [event.Message].
 func (m *Message) Nack(ctx context.Context) error {
+	if m.finished {
+		return ErrMessageFinished
+	}
+	m.finished = true
 	return m.update(func(tx *sqlx.Tx) error {
 		m.event.Status = EventPending
 		m.event.Retries += 1
+		m.event.RunAt = time.Now().Add(time.Second * 5)
 		return model.SaveContext(ctx, tx, m.event)
 	})
 }

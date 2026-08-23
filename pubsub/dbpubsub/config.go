@@ -8,7 +8,7 @@ import (
 	"github.com/abibby/salusa/pubsub"
 )
 
-func Register(ctx context.Context, table string) {
+func Register(ctx context.Context) {
 	di.RegisterLazySingletonWith(ctx, func(u database.Update) (pubsub.PubSub, error) {
 		return New(u), nil
 	})

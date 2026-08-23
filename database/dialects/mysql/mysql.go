@@ -26,40 +26,44 @@ func (*MySQLCore) Identifier(s string) string {
 }
 
 func (*MySQLCore) DataType(t dialects.DataType) string {
-	switch t {
-	case dialects.DataTypeString:
-		return "VARCHAR(255)"
-	case dialects.DataTypeText, dialects.DataTypeJSON:
+	switch t.Name {
+	case dialects.DataTypeString.Name:
+		s := t.Size
+		if s == 0 {
+			s = 255
+		}
+		return fmt.Sprintf("VARCHAR(%d)", s)
+	case dialects.DataTypeText.Name, dialects.DataTypeJSON.Name:
 		return "MEDIUMTEXT"
-	case dialects.DataTypeInt8:
+	case dialects.DataTypeInt8.Name:
 		return "TINYINT"
-	case dialects.DataTypeInt16:
+	case dialects.DataTypeInt16.Name:
 		return "SMALLINT"
-	case dialects.DataTypeInt32:
+	case dialects.DataTypeInt32.Name:
 		return "INT"
-	case dialects.DataTypeInt64:
+	case dialects.DataTypeInt64.Name:
 		return "BIGINT"
-	case dialects.DataTypeUInt8:
+	case dialects.DataTypeUInt8.Name:
 		return "TINYINT UNSIGNED"
-	case dialects.DataTypeUInt16:
+	case dialects.DataTypeUInt16.Name:
 		return "SMALLINT UNSIGNED"
-	case dialects.DataTypeUInt32:
+	case dialects.DataTypeUInt32.Name:
 		return "INT UNSIGNED"
-	case dialects.DataTypeUInt64:
+	case dialects.DataTypeUInt64.Name:
 		return "BIGINT UNSIGNED"
-	case dialects.DataTypeBoolean:
+	case dialects.DataTypeBoolean.Name:
 		return "BOOLEAN"
-	case dialects.DataTypeFloat32:
+	case dialects.DataTypeFloat32.Name:
 		return "FLOAT"
-	case dialects.DataTypeFloat64:
+	case dialects.DataTypeFloat64.Name:
 		return "DOUBLE"
-	case dialects.DataTypeDate:
+	case dialects.DataTypeDate.Name:
 		return "DATE"
-	case dialects.DataTypeDateTime:
+	case dialects.DataTypeDateTime.Name:
 		return "DATETIME"
 	}
 
-	return string(t)
+	return t.Name
 }
 
 func (*MySQLCore) CurrentTime() string {

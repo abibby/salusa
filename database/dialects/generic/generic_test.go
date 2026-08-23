@@ -20,7 +20,7 @@ func (*testCore) Identifier(s string) string {
 }
 
 func (*testCore) DataType(t dialects.DataType) string {
-	return string(t)
+	return t.Name
 }
 
 func (*testCore) CurrentTime() string {

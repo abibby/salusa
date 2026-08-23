@@ -302,10 +302,13 @@ func TestRunFetch(t *testing.T) {
 func TestRunServices(t *testing.T) {
 	t.Run("service returns nil", func(t *testing.T) {
 		done := make(chan struct{})
-		k := New(RootHandler(okRootHandler()))
+		k := New(
+			Config(func() salusaconfig.Config { return &testConfig{port: 9876} }),
+			RootHandler(okRootHandler()),
+		)
 		k.services = []Service{&channelService{done: done, err: nil}}
-
 		go k.RunServices(context.Background())
+
 		select {
 		case <-done:
 		case <-time.After(5 * time.Second):
@@ -316,7 +319,10 @@ func TestRunServices(t *testing.T) {
 	t.Run("service errors and restarts", func(t *testing.T) {
 		done := make(chan struct{})
 		s := &restartingService{done: done}
-		k := New(RootHandler(okRootHandler()))
+		k := New(
+			Config(func() salusaconfig.Config { return &testConfig{port: 9876} }),
+			RootHandler(okRootHandler()),
+		)
 		k.services = []Service{s}
 
 		go k.RunServices(context.Background())
