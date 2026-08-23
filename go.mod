@@ -1,6 +1,6 @@
 module github.com/abibby/salusa
 
-go 1.26.6
+go 1.27
 
 require (
 	github.com/abibby/nulls v1.1.0
@@ -26,7 +26,6 @@ require (
 	github.com/stoewer/go-strcase v1.3.1
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.55.0
-	golang.org/x/exp v0.0.0-20260813180055-c1d0aacb2297
 	golang.org/x/mod v0.40.0
 	golang.org/x/tools v0.49.0
 	gopkg.in/yaml.v3 v3.0.1
