@@ -525,7 +525,10 @@ func TestRunServicesFillable(t *testing.T) {
 
 	done := make(chan struct{})
 	s := &fillableService{done: done}
-	k := New(RootHandler(okRootHandler()))
+	k := New(
+		Config(func() *testConfig { return &testConfig{} }),
+		RootHandler(okRootHandler()),
+	)
 	k.services = []Service{s}
 
 	go k.RunServices(ctx)
