@@ -42,6 +42,19 @@ func TestDecodeEventErrors(t *testing.T) {
 	})
 }
 
+type badFuncEvent struct {
+	Fn func()
+}
+
+func (*badFuncEvent) Type() EventType {
+	return "bad-event"
+}
+
+func TestEncodeEventError(t *testing.T) {
+	_, err := encodeEvent(&badFuncEvent{})
+	assert.Error(t, err)
+}
+
 type TestEvent1 struct {
 	Foo string
 }
