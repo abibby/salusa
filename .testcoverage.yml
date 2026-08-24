@@ -10,3 +10,4 @@ threshold:
 exclude:
   paths:
     - ^static/template
+    - ^internal/test
