@@ -299,15 +299,12 @@ func TestRunFetch(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestRunServices(t *testing.T) {
+func TestStartServices(t *testing.T) {
 	t.Run("service returns nil", func(t *testing.T) {
 		done := make(chan struct{})
-		k := New(
-			Config(func() salusaconfig.Config { return &testConfig{port: 9876} }),
-			RootHandler(okRootHandler()),
-		)
+		k := New(RootHandler(okRootHandler()))
 		k.services = []Service{&channelService{done: done, err: nil}}
-		go k.RunServices(context.Background())
+		k.StartServices(context.Background())
 
 		select {
 		case <-done:
@@ -319,13 +316,10 @@ func TestRunServices(t *testing.T) {
 	t.Run("service errors and restarts", func(t *testing.T) {
 		done := make(chan struct{})
 		s := &restartingService{done: done}
-		k := New(
-			Config(func() salusaconfig.Config { return &testConfig{port: 9876} }),
-			RootHandler(okRootHandler()),
-		)
+		k := New(RootHandler(okRootHandler()))
 		k.services = []Service{s}
 
-		go k.RunServices(context.Background())
+		k.StartServices(context.Background())
 		select {
 		case <-done:
 		case <-time.After(5 * time.Second):
@@ -486,15 +480,6 @@ func TestBootstrapErrors(t *testing.T) {
 		err := k.Bootstrap(ctx)
 		assert.ErrorIs(t, err, stepErr)
 	})
-
-	t.Run("register config error", func(t *testing.T) {
-		ctx := di.TestDependencyProviderContext()
-		cfgErr := context.Canceled
-		k := New(Config(func() *testConfig { return &testConfig{} }), RootHandler(okRootHandler()))
-		k.registerConfig = func(ctx context.Context) error { return cfgErr }
-		err := k.Bootstrap(ctx)
-		assert.ErrorIs(t, err, cfgErr)
-	})
 }
 
 func TestValidateWithService(t *testing.T) {
@@ -519,19 +504,16 @@ func (v *validatingService) Validate(ctx context.Context) error {
 	return context.Canceled
 }
 
-func TestRunServicesFillable(t *testing.T) {
+func TestStartServicesFillable(t *testing.T) {
 	ctx := di.TestDependencyProviderContext()
 	di.RegisterSingleton(ctx, func() string { return "hello" })
 
 	done := make(chan struct{})
 	s := &fillableService{done: done}
-	k := New(
-		Config(func() *testConfig { return &testConfig{} }),
-		RootHandler(okRootHandler()),
-	)
+	k := New(RootHandler(okRootHandler()))
 	k.services = []Service{s}
 
-	go k.RunServices(ctx)
+	k.StartServices(ctx)
 	select {
 	case <-done:
 	case <-time.After(5 * time.Second):

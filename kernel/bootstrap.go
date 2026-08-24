@@ -15,6 +15,8 @@ var (
 )
 
 func (k *Kernel) Bootstrap(ctx context.Context) error {
+	var err error
+
 	if k.bootstrapped {
 		return ErrAlreadyBootstrapped
 	}
@@ -33,10 +35,7 @@ func (k *Kernel) Bootstrap(ctx context.Context) error {
 		return k
 	})
 
-	err := k.registerConfig(ctx)
-	if err != nil {
-		return fmt.Errorf("Kernel.Bootstrap: registerConfig: %w", err)
-	}
+	k.registerConfig(ctx)
 
 	for i, b := range k.bootstrap {
 		err = b(ctx)

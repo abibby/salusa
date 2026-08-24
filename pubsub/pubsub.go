@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"context"
-	"io"
 
 	"github.com/abibby/salusa/di"
 )
@@ -21,11 +20,6 @@ type Topic interface {
 
 	// Close cleans up connections or background goroutines.
 	Close() error
-}
-
-type Subscription interface {
-	io.Closer
-	Next() ([]byte, error)
 }
 
 type Message interface {

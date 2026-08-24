@@ -150,8 +150,8 @@ type NamedRunner struct {
 
 var activeRunners = []NamedRunner{
 	{"sqlite", sqliteRunner},
-	// {"mysql", mysqlRunner},
-	// {"pgsql", pgsqlRunner},
+	{"mysql", mysqlRunner},
+	{"pgsql", pgsqlRunner},
 }
 
 var mysqlLock *os.File

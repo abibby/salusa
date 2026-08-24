@@ -40,12 +40,3 @@ func (c *Config) DriverName() string {
 func (c *Config) DataSourceName() string {
 	return c.cfg.FormatDSN()
 }
-
-// func (c *Config) Register(ctx context.Context) error {
-// 	di.RegisterLazySingleton(ctx, func() (*sqlx.DB, error) {
-// 		UseMySql()
-// 		return sqlx.Open(c.DriverName(), c.DataSourceName())
-// 	})
-
-// 	return databasedi.RegisterTransactions(nil)(ctx)
-// }

@@ -13,7 +13,7 @@ import (
 
 type Kernel struct {
 	bootstrap          []func(context.Context) error
-	registerConfig     func(context.Context) error
+	registerConfig     func(context.Context)
 	rootHandlerFactory func(ctx context.Context) http.Handler
 	rootHandler        http.Handler
 	services           []Service
@@ -32,7 +32,7 @@ type Kernel struct {
 func New(options ...KernelOption) *Kernel {
 	k := &Kernel{
 		bootstrap:      []func(context.Context) error{},
-		registerConfig: func(context.Context) error { return nil },
+		registerConfig: func(context.Context) {},
 		rootHandler:    http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
 		globalMiddleware: []router.Middleware{
 			request.DIMiddleware(),

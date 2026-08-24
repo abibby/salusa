@@ -3,10 +3,8 @@ package kernel
 import (
 	"context"
 	"net/http"
-	"reflect"
 
 	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/openapidoc"
 	"github.com/abibby/salusa/router"
 	"github.com/abibby/salusa/salusaconfig"
@@ -26,23 +24,12 @@ func Config[T salusaconfig.Config](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
 		cfg := cb()
 		k.cfg = cfg
-		k.registerConfig = func(ctx context.Context) error {
+		k.registerConfig = func(ctx context.Context) {
 			di.RegisterSingleton(ctx, func() T {
 				return cfg
 			})
 			di.RegisterSingleton(ctx, func() salusaconfig.Config {
 				return cfg
-			})
-			return helpers.EachField(reflect.ValueOf(cfg), func(sf reflect.StructField, fv reflect.Value) error {
-				if !sf.IsExported() {
-					return nil
-				}
-				sc, ok := fv.Interface().(salusaconfig.ServiceConfig)
-				if !ok {
-					return nil
-				}
-
-				return sc.Register(ctx)
 			})
 		}
 		return k
