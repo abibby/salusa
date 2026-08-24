@@ -1,4 +1,5 @@
 profile: cover.out
+
 local:
   prefix: github.com/abibby/salusa
 
@@ -7,4 +8,5 @@ threshold:
   total: 80
 
 exclude:
-  path: ^github.com/abibby/salusa/static/template
+  paths:
+    - ^static/template
