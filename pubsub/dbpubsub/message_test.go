@@ -3,6 +3,7 @@ package dbpubsub_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync/atomic"
 	"testing"
 
@@ -30,6 +31,22 @@ func runMessageTest(t *testing.T, cb func(t *testing.T, ctx context.Context, env
 				return
 			}
 		}
+
+		defer func() {
+			v := recover()
+			m := slices.Clone(dbpubsub.Migrations)
+			slices.Reverse(m)
+			for _, m := range m {
+				err := m.Down.Run(t.Context(), tx)
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			if v != nil {
+				panic(v)
+			}
+		}()
 
 		var failing atomic.Bool
 		u := database.Update(func(f func(tx *sqlx.Tx) error) error {

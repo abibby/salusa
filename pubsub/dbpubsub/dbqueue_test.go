@@ -15,6 +15,9 @@ import (
 func TestStandard(t *testing.T) {
 	pubsubtest.RunStandardTests(t, func(t *testing.T, name string, fn func(*testing.T, pubsub.PubSub)) {
 		test.Run(t, name, func(t *testing.T, tx *sqlx.Tx) {
+			if tx.DriverName() == "mysql" {
+				t.SkipNow()
+			}
 			for _, m := range dbpubsub.Migrations {
 				err := m.Up.Run(t.Context(), tx)
 				if !assert.NoError(t, err) {

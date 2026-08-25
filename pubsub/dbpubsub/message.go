@@ -8,6 +8,7 @@ import (
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/model"
+	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/pubsub"
 	"github.com/jmoiron/sqlx"
 )
@@ -52,8 +53,8 @@ func (m *Message) Nack(ctx context.Context) error {
 	m.finished = true
 	return m.update(func(tx *sqlx.Tx) error {
 		m.event.Status = EventPending
-		m.event.Retries += 1
-		m.event.RunAt = time.Now().Add(time.Second * 5)
+		m.event.RunAt = time.Now().Add(helpers.ExponentialFalloff(m.event.Retries))
+		m.event.Retries++
 		return model.SaveContext(ctx, tx, m.event)
 	})
 }

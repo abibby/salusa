@@ -3,7 +3,6 @@ package event
 import (
 	"context"
 	"log/slog"
-	"math"
 	"reflect"
 	"time"
 
@@ -116,7 +115,7 @@ func (s *EventService) Run(ctx context.Context) error {
 			s.Logger.Warn("could not dequeue event", "error", err)
 
 			if ctx.Err() == nil {
-				time.Sleep(time.Duration(math.Max(math.Pow(2, float64(fails)), 60)) * time.Second)
+				time.Sleep(helpers.ExponentialFalloff(fails))
 				fails++
 			}
 			continue

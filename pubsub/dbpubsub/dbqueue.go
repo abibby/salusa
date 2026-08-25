@@ -68,17 +68,19 @@ func (t *Topic) Enqueue(ctx context.Context, data []byte) error {
 
 // Dequeue implements [pubsub.Topic].
 func (t *Topic) Dequeue(ctx context.Context) (pubsub.Message, error) {
-	tick := time.Tick(10 * time.Second)
+	tick := time.Tick(time.Second)
 
 	for {
 		events, err := database.Value(t.update, func(tx *sqlx.Tx) ([]*Event, error) {
 			now := time.Now()
 			return EventQuery().
-				Where("status", "=", "pending").
-				Where("topic", "=", t.topic).
-				Where("run_at", "<", now).
-				OrderBy("id").
-				Limit(1).
+				Where("id", "=", EventQuery().
+					Select("id").
+					Where("status", "=", "pending").
+					Where("topic", "=", t.topic).
+					Where("run_at", "<", now).
+					OrderBy("id").
+					Limit(1)).
 				ForUpdateSkipLocked().
 				UpdateReturning(tx, builder.Updates{
 					"status":     "processing",

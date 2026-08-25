@@ -25,6 +25,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var sqliteConfig = sqlite.NewConfig(":memory:")
+var mysqlConfig = &mysql.SimpleConfig{
+	Host:     "localhost",
+	Database: "test_db",
+	Username: "root",
+	Password: "root_password",
+}
+var pgsqlConfig = &postgres.Config{
+	Host:       "localhost",
+	Database:   "test_db",
+	Username:   "user",
+	Password:   "password",
+	DisableSSL: true,
+}
+var sqliteRunner = dbtest.NewRunner(initDB(sqliteConfig))
+var mysqlRunner = dbtest.NewRunner(initDB(mysqlConfig))
+var pgsqlRunner = dbtest.NewRunner(initDB(pgsqlConfig))
+
+type NamedRunner struct {
+	Name   string
+	Runner *dbtest.Runner
+	Short  bool
+}
+
+var namedRunners = []NamedRunner{
+	{Name: "sqlite", Runner: sqliteRunner, Short: true},
+	{Name: "mysql", Runner: mysqlRunner, Short: false},
+	{Name: "pgsql", Runner: pgsqlRunner, Short: false},
+}
+
+var mysqlLock *os.File
+var pgsqlLock *os.File
+
 type Case[T any] struct {
 	Name               string
 	Builder            T
@@ -124,38 +157,6 @@ func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.RawQuery, erro
 		})
 	}
 }
-
-var sqliteConfig = sqlite.NewConfig(":memory:")
-var mysqlConfig = &mysql.SimpleConfig{
-	Host:     "localhost",
-	Database: "test_db",
-	Username: "root",
-	Password: "root_password",
-}
-var pgsqlConfig = &postgres.Config{
-	Host:       "localhost",
-	Database:   "test_db",
-	Username:   "user",
-	Password:   "password",
-	DisableSSL: true,
-}
-var sqliteRunner = dbtest.NewRunner(initDB(sqliteConfig))
-var mysqlRunner = dbtest.NewRunner(initDB(mysqlConfig))
-var pgsqlRunner = dbtest.NewRunner(initDB(pgsqlConfig))
-
-type NamedRunner struct {
-	Name   string
-	Runner *dbtest.Runner
-}
-
-var activeRunners = []NamedRunner{
-	{"sqlite", sqliteRunner},
-	{"mysql", mysqlRunner},
-	{"pgsql", pgsqlRunner},
-}
-
-var mysqlLock *os.File
-var pgsqlLock *os.File
 
 func lockTestDB(driver string) (*os.File, error) {
 	lockFile := filepath.Join(os.TempDir(), "salusa-"+driver+"-test-db.lock")
@@ -281,8 +282,12 @@ func RunBenchmark(t *testing.B, name string, cb func(t *testing.B, tx *sqlx.Tx))
 
 func runners(t testing.TB, name string, cb func(runner *dbtest.Runner, name string)) {
 	t.Helper()
-	for _, r := range activeRunners {
-		cb(r.Runner, strings.TrimSpace(name+" "+r.Name))
+	for _, r := range namedRunners {
+		if testing.Short() && !r.Short {
+			t.Skipf("Skipping %s tests", r.Name)
+		} else {
+			cb(r.Runner, strings.TrimSpace(name+" "+r.Name))
+		}
 	}
 }
 
