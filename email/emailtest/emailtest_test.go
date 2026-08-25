@@ -29,9 +29,3 @@ func TestNewTestMailer(t *testing.T) {
 	assert.Same(t, msg, sent[0])
 	assert.Equal(t, "b@example.com", sent[1].To[0])
 }
-
-func TestNewTestMailerConfig(t *testing.T) {
-	c := emailtest.NewTestMailerConfig()
-	mailer := c.Mailer()
-	assert.NotNil(t, mailer)
-}

@@ -39,7 +39,7 @@ func TestMySQLCoreDataType(t *testing.T) {
 		dialects.DataTypeDateTime: "DATETIME",
 	}
 	for dt, expected := range cases {
-		assert.Equal(t, expected, c.DataType(dt), string(dt))
+		assert.Equal(t, expected, c.DataType(dt), dt.Name)
 	}
 	assert.Equal(t, "blob", c.DataType(dialects.DataTypeBlob))
 }

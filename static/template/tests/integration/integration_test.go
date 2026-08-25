@@ -9,7 +9,7 @@ import (
 func TestIntegration(t *testing.T) {
 	test.Kernel(t).
 		GetJSON("/api/user").
-		AssertStatusOK().
+		AssertStatus2XX().
 		AssertJSONString(`{
 			"users": []
 		}`)

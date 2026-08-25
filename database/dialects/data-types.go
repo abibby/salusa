@@ -2,64 +2,67 @@ package dialects
 
 import "github.com/abibby/salusa/extra/sets"
 
-type DataType string
+type DataType struct {
+	Name string
+	Size int
+}
 
-const (
-	DataTypeBlob   = DataType("blob")
-	DataTypeString = DataType("string")
-	DataTypeText   = DataType("text")
-	DataTypeEnum   = DataType("enum")
+var (
+	DataTypeBlob   = DataType{Name: "blob"}
+	DataTypeString = DataType{Name: "string"}
+	DataTypeText   = DataType{Name: "text"}
+	DataTypeEnum   = DataType{Name: "enum"}
 
-	DataTypeBoolean = DataType("bool")
+	DataTypeBoolean = DataType{Name: "bool"}
 
-	DataTypeDate     = DataType("date")
-	DataTypeDateTime = DataType("date-time")
+	DataTypeDate     = DataType{Name: "date"}
+	DataTypeDateTime = DataType{Name: "date-time"}
 
-	DataTypeFloat32 = DataType("float32")
-	DataTypeFloat64 = DataType("float64")
+	DataTypeFloat32 = DataType{Name: "float32"}
+	DataTypeFloat64 = DataType{Name: "float64"}
 
-	DataTypeInt8  = DataType("int8")
-	DataTypeInt16 = DataType("int16")
-	DataTypeInt32 = DataType("int32")
-	DataTypeInt64 = DataType("int64")
+	DataTypeInt8  = DataType{Name: "int8"}
+	DataTypeInt16 = DataType{Name: "int16"}
+	DataTypeInt32 = DataType{Name: "int32"}
+	DataTypeInt64 = DataType{Name: "int64"}
 
-	DataTypeUInt8  = DataType("uint8")
-	DataTypeUInt16 = DataType("uint16")
-	DataTypeUInt32 = DataType("uint32")
-	DataTypeUInt64 = DataType("uint64")
+	DataTypeUInt8  = DataType{Name: "uint8"}
+	DataTypeUInt16 = DataType{Name: "uint16"}
+	DataTypeUInt32 = DataType{Name: "uint32"}
+	DataTypeUInt64 = DataType{Name: "uint64"}
 
-	DataTypeJSON = DataType("json")
+	DataTypeJSON = DataType{Name: "json"}
 )
 
 var dataTypes = sets.New(
-	DataTypeBlob,
-	DataTypeString,
-	DataTypeText,
-	DataTypeEnum,
+	DataTypeBlob.Name,
+	DataTypeString.Name,
+	DataTypeText.Name,
+	DataTypeEnum.Name,
 
-	DataTypeBoolean,
+	DataTypeBoolean.Name,
 
-	DataTypeDate,
-	DataTypeDateTime,
+	DataTypeDate.Name,
+	DataTypeDateTime.Name,
 
-	DataTypeFloat32,
-	DataTypeFloat64,
+	DataTypeFloat32.Name,
+	DataTypeFloat64.Name,
 
-	DataTypeInt8,
-	DataTypeInt16,
-	DataTypeInt32,
-	DataTypeInt64,
+	DataTypeInt8.Name,
+	DataTypeInt16.Name,
+	DataTypeInt32.Name,
+	DataTypeInt64.Name,
 
-	DataTypeUInt8,
-	DataTypeUInt16,
-	DataTypeUInt32,
-	DataTypeUInt64,
+	DataTypeUInt8.Name,
+	DataTypeUInt16.Name,
+	DataTypeUInt32.Name,
+	DataTypeUInt64.Name,
 
-	DataTypeJSON,
+	DataTypeJSON.Name,
 )
 
 func (d DataType) IsValid() bool {
-	return dataTypes.Has(d)
+	return dataTypes.Has(d.Name)
 }
 
 // DataTyper must not be implemented on an interface

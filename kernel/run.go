@@ -52,7 +52,7 @@ func (k *Kernel) Run(ctx context.Context) error {
 		return k.runFetch(ctx, *fetch, *method, *headers, *body, *username)
 	}
 
-	go k.RunServices(ctx)
+	k.StartServices(ctx)
 
 	return k.RunHttpServer(ctx)
 }
@@ -87,7 +87,7 @@ func (k *Kernel) RunHttpServer(ctx context.Context) error {
 	return k.HttpServer(ctx).ListenAndServe()
 }
 
-func (k *Kernel) RunServices(ctx context.Context) {
+func (k *Kernel) StartServices(ctx context.Context) {
 	for _, s := range k.services {
 		ctx := clog.With(ctx, slog.String("service", s.Name()))
 		go func(ctx context.Context, s Service) {

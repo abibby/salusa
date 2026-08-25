@@ -85,6 +85,10 @@ func (b *ColumnBuilder) Index() *ColumnBuilder {
 	b.index = true
 	return b
 }
+func (b *ColumnBuilder) Size(s int) *ColumnBuilder {
+	b.datatype.Size = s
+	return b
+}
 func (b *ColumnBuilder) ColumnDefinition() *dialects.ColumnDefinition {
 	return &dialects.ColumnDefinition{
 		Name:               b.name,
@@ -123,6 +127,9 @@ func (b *ColumnBuilder) GoString() string {
 	}
 	if b.change {
 		src += ".Change()"
+	}
+	if b.datatype.Size != 0 {
+		src += fmt.Sprintf(".Size(%#v)", b.datatype.Size)
 	}
 	return src
 }

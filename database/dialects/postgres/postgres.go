@@ -28,36 +28,40 @@ func (*PosgtgresCore) Identifier(s string) string {
 }
 
 func (*PosgtgresCore) DataType(t dialects.DataType) string {
-	switch t {
-	case dialects.DataTypeBlob:
+	switch t.Name {
+	case dialects.DataTypeBlob.Name:
 		return "BYTEA"
-	case dialects.DataTypeString:
-		return "VARCHAR(255)"
-	case dialects.DataTypeEnum:
+	case dialects.DataTypeString.Name:
+		s := t.Size
+		if s == 0 {
+			s = 255
+		}
+		return fmt.Sprintf("VARCHAR(%d)", s)
+	case dialects.DataTypeEnum.Name:
 		panic("not implemented")
 
-	case dialects.DataTypeBoolean:
+	case dialects.DataTypeBoolean.Name:
 		return "BOOLEAN"
 
-	case dialects.DataTypeDate, dialects.DataTypeDateTime:
+	case dialects.DataTypeDate.Name, dialects.DataTypeDateTime.Name:
 		return "TIMESTAMP"
 
-	case dialects.DataTypeFloat32:
+	case dialects.DataTypeFloat32.Name:
 		return "REAL"
-	case dialects.DataTypeFloat64:
+	case dialects.DataTypeFloat64.Name:
 		return "DOUBLE PRECISION"
 
-	case dialects.DataTypeInt8, dialects.DataTypeInt16, dialects.DataTypeUInt8, dialects.DataTypeUInt16:
+	case dialects.DataTypeInt8.Name, dialects.DataTypeInt16.Name, dialects.DataTypeUInt8.Name, dialects.DataTypeUInt16.Name:
 		return "SMALLINT"
-	case dialects.DataTypeInt32, dialects.DataTypeUInt32:
+	case dialects.DataTypeInt32.Name, dialects.DataTypeUInt32.Name:
 		return "INTEGER"
-	case dialects.DataTypeInt64, dialects.DataTypeUInt64:
+	case dialects.DataTypeInt64.Name, dialects.DataTypeUInt64.Name:
 		return "BIGINT"
 
-	case dialects.DataTypeJSON:
+	case dialects.DataTypeJSON.Name:
 		return "JSON"
 	}
-	return string(t)
+	return string(t.Name)
 }
 
 func (*PosgtgresCore) CurrentTime() string {

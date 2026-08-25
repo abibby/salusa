@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 
 	"github.com/abibby/salusa/database"
 	"github.com/abibby/salusa/database/builder"
@@ -38,8 +39,8 @@ func New() *Migrations {
 	}
 }
 
-func (m *Migrations) Add(migration *Migration) {
-	m.migrations = append(m.migrations, migration)
+func (m *Migrations) Add(migrations ...*Migration) {
+	m.migrations = append(m.migrations, migrations...)
 }
 
 func (m *Migrations) isTableCreated(table string) bool {
@@ -136,6 +137,10 @@ func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 	if err != nil {
 		logger = slog.Default()
 	}
+
+	sort.Slice(m.migrations, func(i, j int) bool {
+		return m.migrations[i].Name < m.migrations[j].Name
+	})
 	for _, migration := range m.migrations {
 		err = update(func(tx *sqlx.Tx) error {
 			if runMigrations.Has(migration.Name) {

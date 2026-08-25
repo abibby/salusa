@@ -163,25 +163,25 @@ func (b *Blueprint) GoString() string {
 	src := strings.Builder{}
 	src.WriteString("func(table *schema.Blueprint) {\n")
 	for _, c := range b.columns {
-		m := map[dialects.DataType]string{
-			dialects.DataTypeBlob:     "Blob",
-			dialects.DataTypeBoolean:  "Bool",
-			dialects.DataTypeDate:     "Date",
-			dialects.DataTypeDateTime: "DateTime",
-			dialects.DataTypeFloat32:  "Float",
-			dialects.DataTypeFloat64:  "Float64",
-			dialects.DataTypeInt8:     "Int8",
-			dialects.DataTypeInt16:    "Int16",
-			dialects.DataTypeInt32:    "Int",
-			dialects.DataTypeInt64:    "Int64",
-			dialects.DataTypeJSON:     "JSON",
-			dialects.DataTypeString:   "String",
-			dialects.DataTypeUInt8:    "UInt8",
-			dialects.DataTypeUInt16:   "UInt16",
-			dialects.DataTypeUInt32:   "UInt",
-			dialects.DataTypeUInt64:   "UInt64",
+		m := map[string]string{
+			dialects.DataTypeBlob.Name:     "Blob",
+			dialects.DataTypeBoolean.Name:  "Bool",
+			dialects.DataTypeDate.Name:     "Date",
+			dialects.DataTypeDateTime.Name: "DateTime",
+			dialects.DataTypeFloat32.Name:  "Float",
+			dialects.DataTypeFloat64.Name:  "Float64",
+			dialects.DataTypeInt8.Name:     "Int8",
+			dialects.DataTypeInt16.Name:    "Int16",
+			dialects.DataTypeInt32.Name:    "Int",
+			dialects.DataTypeInt64.Name:    "Int64",
+			dialects.DataTypeJSON.Name:     "JSON",
+			dialects.DataTypeString.Name:   "String",
+			dialects.DataTypeUInt8.Name:    "UInt8",
+			dialects.DataTypeUInt16.Name:   "UInt16",
+			dialects.DataTypeUInt32.Name:   "UInt",
+			dialects.DataTypeUInt64.Name:   "UInt64",
 		}
-		fmt.Fprintf(&src, "\ttable.%s(%#v)%s\n", m[c.datatype], c.name, c.GoString())
+		fmt.Fprintf(&src, "\ttable.%s(%#v)%s\n", m[c.datatype.Name], c.name, c.GoString())
 	}
 
 	for _, index := range b.indexes {

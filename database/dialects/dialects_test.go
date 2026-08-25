@@ -57,7 +57,7 @@ func TestDataTypeIsValid(t *testing.T) {
 	assert.True(t, dialects.DataTypeUInt32.IsValid())
 	assert.True(t, dialects.DataTypeUInt64.IsValid())
 	assert.True(t, dialects.DataTypeJSON.IsValid())
-	assert.False(t, dialects.DataType("invalid").IsValid())
+	assert.False(t, dialects.DataType(dialects.DataType{Name: "invalid"}).IsValid())
 }
 
 type selectQueryBuilder struct {

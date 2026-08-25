@@ -14,6 +14,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type FakeModel struct {
+	model.BaseModel
+	ID   int    `db:"id,autoincrement"`
+	Name string `db:"name"`
+}
+
 func TestSave_create(t *testing.T) {
 	test.Run(t, "create", func(t *testing.T, tx *sqlx.Tx) {
 		f := &test.Foo{
@@ -237,4 +243,214 @@ func TestInsertManyContext(t *testing.T) {
 		}
 	})
 
+	test.Run(t, "insert many non autoincrement", func(t *testing.T, tx *sqlx.Tx) {
+		models := []*test.Foo{{ID: 1, Name: "1"}, {ID: 2, Name: "2"}}
+		err := model.InsertManyContext(context.TODO(), tx, models)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		assert.Equal(t, 1, models[0].ID)
+		assert.Equal(t, 2, models[1].ID)
+
+		foos, err := builder.From[*test.Foo]().OrderBy("id").Get(tx)
+		if !assert.NoError(t, err) {
+			return
+		}
+		assert.Len(t, foos, 2)
+		assert.Equal(t, 1, foos[0].ID)
+		assert.Equal(t, 2, foos[1].ID)
+	})
+
+	test.Run(t, "no models", func(t *testing.T, tx *sqlx.Tx) {
+		err := model.InsertManyContext(context.TODO(), tx, []*test.Foo{})
+		assert.NoError(t, err)
+	})
+
+	test.Run(t, "before save hook error", func(t *testing.T, tx *sqlx.Tx) {
+		models := []*FooBeforeSaveErrorTest{{}, {}}
+		err := model.InsertManyContext(context.TODO(), tx, models)
+
+		assert.ErrorContains(t, err, "before save hooks")
+		assert.ErrorContains(t, err, "before save error")
+	})
+
+	test.Run(t, "autoincrement returning query error", func(t *testing.T, tx *sqlx.Tx) {
+		models := []*FakeModel{{Name: "1"}, {Name: "2"}}
+		err := model.InsertManyContext(context.TODO(), tx, models)
+
+		assert.ErrorContains(t, err, "insert:")
+		assert.ErrorContains(t, err, "failed to insert model")
+	})
+
+	test.Run(t, "non autoincrement exec error", func(t *testing.T, tx *sqlx.Tx) {
+		models := []*FakeModel{{ID: 1, Name: "1"}, {ID: 2, Name: "2"}}
+		err := model.InsertManyContext(context.TODO(), tx, models)
+
+		assert.ErrorContains(t, err, "insert:")
+		assert.ErrorContains(t, err, "failed to insert model")
+	})
+}
+
+func TestInsertMany(t *testing.T) {
+	test.Run(t, "insert many", func(t *testing.T, tx *sqlx.Tx) {
+		models := []*test.Foo{{Name: "1"}, {Name: "2"}}
+		err := model.InsertMany(tx, models)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		for _, m := range models {
+			assert.NotZero(t, m.ID)
+		}
+	})
+}
+
+func TestMustSave(t *testing.T) {
+	test.Run(t, "success", func(t *testing.T, tx *sqlx.Tx) {
+		f := &test.Foo{
+			Name: "test",
+		}
+		model.MustSave(tx, f)
+
+		assert.True(t, f.InDatabase())
+	})
+	test.Run(t, "panics on error", func(t *testing.T, tx *sqlx.Tx) {
+		assert.Panics(t, func() {
+			model.MustSave(tx, &FakeModel{Name: "test"})
+		})
+	})
+}
+
+func TestMustSaveContext(t *testing.T) {
+	test.Run(t, "success", func(t *testing.T, tx *sqlx.Tx) {
+		f := &test.Foo{
+			Name: "test",
+		}
+		model.MustSaveContext(context.Background(), tx, f)
+
+		assert.True(t, f.InDatabase())
+	})
+	test.Run(t, "panics on error", func(t *testing.T, tx *sqlx.Tx) {
+		assert.Panics(t, func() {
+			model.MustSaveContext(context.Background(), tx, &FakeModel{Name: "test"})
+		})
+	})
+}
+
+func TestSave_before_save_hook_error(t *testing.T) {
+	test.Run(t, "before save hook error", func(t *testing.T, tx *sqlx.Tx) {
+		f := &FooBeforeSaveErrorTest{
+			Foo: test.Foo{
+				Name: "test",
+			},
+		}
+		err := model.Save(tx, f)
+
+		assert.ErrorContains(t, err, "before save hooks")
+		assert.ErrorContains(t, err, "before save error")
+	})
+}
+
+func TestSave_insert_error(t *testing.T) {
+	test.Run(t, "autoincrement returning query error", func(t *testing.T, tx *sqlx.Tx) {
+		err := model.Save(tx, &FakeModel{Name: "test"})
+
+		assert.ErrorContains(t, err, "insert:")
+		assert.ErrorContains(t, err, "failed to insert model")
+	})
+	test.Run(t, "non autoincrement exec error", func(t *testing.T, tx *sqlx.Tx) {
+		err := model.Save(tx, &FakeModel{ID: 100, Name: "test"})
+
+		assert.ErrorContains(t, err, "insert:")
+		assert.ErrorContains(t, err, "failed to insert model")
+	})
+}
+
+func TestSave_update_error(t *testing.T) {
+	test.Run(t, "exec error", func(t *testing.T, tx *sqlx.Tx) {
+		type Foo struct {
+			test.Foo
+			NotName string `db:"not_name"`
+		}
+
+		f := &test.Foo{
+			ID:   1,
+			Name: "test",
+		}
+		err := model.Save(tx, f)
+		assert.NoError(t, err)
+
+		err = model.Save(tx, &Foo{
+			Foo:     *f,
+			NotName: "anything",
+		})
+
+		assert.ErrorContains(t, err, "update:")
+	})
+	test.Run(t, "no primary key found", func(t *testing.T, tx *sqlx.Tx) {
+		f := &SaveUpdateNoPrimaryKeyTest{
+			Foo: test.Foo{
+				Name: "test",
+			},
+		}
+		err := model.Save(tx, f)
+
+		assert.ErrorContains(t, err, "update:")
+		assert.ErrorContains(t, err, "no primary key found")
+	})
+}
+
+func TestSave_after_save_hook_error(t *testing.T) {
+	test.Run(t, "after save hook error", func(t *testing.T, tx *sqlx.Tx) {
+		f := &FooAfterSaveErrorTest{
+			Foo: test.Foo{
+				Name: "test",
+			},
+		}
+		err := model.Save(tx, f)
+
+		assert.ErrorContains(t, err, "after save hooks")
+		assert.ErrorContains(t, err, "after save error")
+	})
+}
+
+type FooBeforeSaveErrorTest struct {
+	test.Foo
+}
+
+var _ hooks.BeforeSaver = &FooBeforeSaveErrorTest{}
+
+func (f *FooBeforeSaveErrorTest) BeforeSave(context.Context, database.DB) error {
+	return fmt.Errorf("before save error")
+}
+func (f *FooBeforeSaveErrorTest) Table() string {
+	return "foos"
+}
+
+type FooAfterSaveErrorTest struct {
+	test.Foo
+}
+
+var _ hooks.AfterSaver = &FooAfterSaveErrorTest{}
+
+func (f *FooAfterSaveErrorTest) AfterSave(context.Context, database.DB) error {
+	return fmt.Errorf("after save error")
+}
+func (f *FooAfterSaveErrorTest) Table() string {
+	return "foos"
+}
+
+type SaveUpdateNoPrimaryKeyTest struct {
+	test.Foo
+}
+
+func (f *SaveUpdateNoPrimaryKeyTest) InDatabase() bool {
+	return true
+}
+func (f *SaveUpdateNoPrimaryKeyTest) PrimaryKey() []string {
+	return []string{"missing_key"}
+}
+func (f *SaveUpdateNoPrimaryKeyTest) Table() string {
+	return "foos"
 }

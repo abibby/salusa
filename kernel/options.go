@@ -24,14 +24,13 @@ func Config[T salusaconfig.Config](cb func() T) KernelOption {
 	return func(k *Kernel) *Kernel {
 		cfg := cb()
 		k.cfg = cfg
-		k.registerConfig = func(ctx context.Context) error {
+		k.registerConfig = func(ctx context.Context) {
 			di.RegisterSingleton(ctx, func() T {
 				return cfg
 			})
 			di.RegisterSingleton(ctx, func() salusaconfig.Config {
 				return cfg
 			})
-			return nil
 		}
 		return k
 	}

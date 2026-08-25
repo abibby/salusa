@@ -37,6 +37,34 @@ func (b *Builder) Update(tx database.DB, updates Updates) error {
 	return nil
 }
 
+func (b *ModelBuilder[T]) UpdateReturning(tx database.DB, updates Updates) ([]T, error) {
+	if len(updates) == 0 {
+		return nil, nil
+	}
+	d, err := dialects.New(tx.DriverName())
+	if err != nil {
+		return nil, err
+	}
+
+	// b.Query().Select.Columns
+	q := b.UpdateQuery(updates)
+	q.Returning = []dialects.Column{
+		{Column: "*"},
+	}
+
+	r, err := d.EncodeUpdateQuery(q)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []T{}
+
+	err = load(b.Context(), tx, r, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
 func (b *ModelBuilder[T]) UpdateQuery(updates Updates) *dialects.UpdateQuery {
 	return b.builder.UpdateQuery(updates)
 }

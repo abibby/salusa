@@ -4,10 +4,12 @@ import (
 	"context"
 	"log/slog"
 	"reflect"
+	"time"
 
 	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/abibby/salusa/kernel"
+	"github.com/abibby/salusa/pubsub"
 )
 
 type Handler[E Event] interface {
@@ -68,11 +70,12 @@ func NewListener[H Handler[E], E Event]() *Listener {
 }
 
 type EventService struct {
-	Queue  Queue                  `inject:""`
+	PubSub pubsub.PubSub          `inject:""`
 	Logger *slog.Logger           `inject:""`
 	DP     *di.DependencyProvider `inject:""`
 
 	listeners map[EventType][]runner
+	topic     string
 }
 
 var _ kernel.Service = (*EventService)(nil)
@@ -102,30 +105,50 @@ func (s *EventService) Run(ctx context.Context) error {
 		events[eventType] = runners[0].EventType()
 	}
 
-	for {
-		e, err := s.Queue.Pop(events)
+	t := s.PubSub.Topic(s.topic)
+	defer t.Close()
+
+	fails := 0
+	for ctx.Err() == nil {
+		m, err := t.Dequeue(ctx)
 		if err != nil {
-			s.Logger.Warn("could not pop event off queue", slog.Any("error", err))
-			continue
-		}
-		runners, ok := s.listeners[e.Type()]
-		if !ok {
-			s.Logger.Warn("no listeners for event with matching type", slog.Any("type", e.Type()))
-			continue
-		}
+			s.Logger.Warn("could not dequeue event", "error", err)
 
-		for _, r := range runners {
-			if r.UpdateValue(e) {
-				go func(job runner) {
-					err := job.Run(ctx, s.DP)
-					if err != nil {
-						s.Logger.Warn("handler failed", slog.Any("error", err))
-					}
-				}(r)
-			} else {
-				s.Logger.Warn("mismatched event and type, there may be a conflict")
+			if ctx.Err() == nil {
+				time.Sleep(helpers.ExponentialFalloff(fails))
+				fails++
 			}
+			continue
 		}
+		fails = 0
 
+		go s.run(ctx, m, events)
+	}
+	return ctx.Err()
+}
+
+func (s *EventService) run(ctx context.Context, m pubsub.Message, events map[EventType]reflect.Type) {
+	defer m.Ack(ctx)
+
+	e, err := decodeEvent(m.Data(), events)
+	if err != nil {
+		s.Logger.Warn("could not decode event", "error", err)
+		return
+	}
+	runners, ok := s.listeners[e.Type()]
+	if !ok {
+		s.Logger.Warn("no listeners for event with matching type", slog.Any("type", e.Type()))
+		return
+	}
+
+	for _, r := range runners {
+		if r.UpdateValue(e) {
+			err := r.Run(ctx, s.DP)
+			if err != nil {
+				s.Logger.Warn("handler failed", slog.Any("error", err))
+			}
+		} else {
+			s.Logger.Warn("mismatched event and type, there may be a conflict")
+		}
 	}
 }

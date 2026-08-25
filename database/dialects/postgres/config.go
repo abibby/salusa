@@ -3,7 +3,6 @@ package postgres
 import (
 	"fmt"
 
-	"github.com/abibby/salusa/database"
 	_ "github.com/lib/pq"
 )
 
@@ -15,11 +14,6 @@ type Config struct {
 	DisableSSL bool
 }
 
-var _ database.Config = (*Config)(nil)
-
-func (c *Config) SetDialect() {
-	UsePostgres()
-}
 func (c *Config) DriverName() string {
 	return "postgres"
 }

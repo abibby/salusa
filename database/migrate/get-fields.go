@@ -50,10 +50,13 @@ func getFields(m model.Model) ([]*field, error) {
 		}
 
 		if tag.Type != "" {
-			if !tag.Type.IsValid() {
+			f.dataType = dialects.DataType{
+				Name: tag.Type,
+			}
+
+			if !f.dataType.IsValid() {
 				return fmt.Errorf("data type %s is not valid", tag.Type)
 			}
-			f.dataType = tag.Type
 		} else {
 			switch field := fv.Interface().(type) {
 			case dialects.DataTyper:
@@ -98,6 +101,10 @@ func getFields(m model.Model) ([]*field, error) {
 					return fmt.Errorf("no datatype for %v", t.Kind())
 				}
 			}
+		}
+
+		if tag.Size != 0 {
+			f.dataType.Size = tag.Size
 		}
 
 		fields = append(fields, f)

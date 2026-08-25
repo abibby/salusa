@@ -202,7 +202,7 @@ func TestGeneric_EncodeSelectsDistinct(t *testing.T) {
 		Columns:  []dialects.Column{{Column: "a"}},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, "SELECT DISTINCT `a`", r.SQL)
+	assert.Equal(t, "DISTINCT `a`", r.SQL)
 }
 
 func TestGeneric_EncodeSelectsEmpty(t *testing.T) {

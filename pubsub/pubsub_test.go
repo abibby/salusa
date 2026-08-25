@@ -2,48 +2,96 @@ package pubsub_test
 
 import (
 	"context"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/salusa/pubsub"
+	"github.com/stretchr/testify/assert"
 )
 
-// mockTopic implements pubsub.Topic.
-type mockTopic struct {
+type fakeTopic struct {
 	name string
 }
 
-func (t *mockTopic) Publish(ctx context.Context, data []byte) {}
-func (t *mockTopic) Subscribe(ctx context.Context) pubsub.Subscription {
-	return &mockSubscription{}
+var _ pubsub.Topic = (*fakeTopic)(nil)
+
+func (t *fakeTopic) Enqueue(ctx context.Context, data []byte) error {
+	return nil
 }
 
-// mockSubscription implements pubsub.Subscription.
-type mockSubscription struct{}
-
-func (s *mockSubscription) Close() error { return nil }
-func (s *mockSubscription) Next() []byte { return []byte("hello") }
-
-// mockPubSub implements pubsub.PubSub.
-type mockPubSub struct{}
-
-func (p *mockPubSub) Topic(name string) pubsub.Topic {
-	return &mockTopic{name: name}
-}
-
-// Compile-time assertions that the mock types satisfy the interfaces.
-var (
-	_ pubsub.PubSub       = (*mockPubSub)(nil)
-	_ pubsub.Topic        = (*mockTopic)(nil)
-	_ pubsub.Subscription = (*mockSubscription)(nil)
-)
-
-func TestPubSubInterfaces(t *testing.T) {
-	ps := &mockPubSub{}
-	sub := ps.Topic("test").Subscribe(context.Background())
-	if sub.Next() == nil {
-		t.Fatal("expected non-nil data")
+func (t *fakeTopic) Dequeue(ctx context.Context) (pubsub.Message, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(time.Second):
+		return nil, nil
 	}
-	if err := sub.Close(); err != nil {
-		t.Fatal(err)
+}
+
+func (t *fakeTopic) Close() error {
+	return nil
+}
+
+type fakePubSub struct {
+	mu     sync.Mutex
+	topics map[string]*fakeTopic
+}
+
+var _ pubsub.PubSub = (*fakePubSub)(nil)
+
+func newFakePubSub() *fakePubSub {
+	return &fakePubSub{topics: map[string]*fakeTopic{}}
+}
+
+func (p *fakePubSub) Topic(name string) pubsub.Topic {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	t, ok := p.topics[name]
+	if !ok {
+		t = &fakeTopic{name: name}
+		p.topics[name] = t
+	}
+	return t
+}
+
+func (p *fakePubSub) topic(name string) *fakeTopic {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.topics[name]
+}
+
+func TestRegisterTopic(t *testing.T) {
+	ctx := di.TestDependencyProviderContext()
+	ps := newFakePubSub()
+	di.RegisterSingleton(ctx, func() pubsub.PubSub { return ps })
+
+	pubsub.RegisterTopic(ctx)
+
+	type deps struct {
+		Default pubsub.Topic `inject:"default"`
+		Other   pubsub.Topic `inject:"other"`
+	}
+
+	d, err := di.Resolve[deps](ctx)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.NotNil(t, d.Default)
+	assert.NotNil(t, d.Other)
+	assert.NotEqual(t, d.Default, d.Other)
+
+	dt, ok := d.Default.(*fakeTopic)
+	if assert.True(t, ok, "topic should be the fake topic") {
+		assert.Equal(t, "default", dt.name)
+		assert.Same(t, ps.topic("default"), dt)
+	}
+
+	ot, ok := d.Other.(*fakeTopic)
+	if assert.True(t, ok, "topic should be the fake topic") {
+		assert.Equal(t, "other", ot.name)
+		assert.Same(t, ps.topic("other"), ot)
 	}
 }

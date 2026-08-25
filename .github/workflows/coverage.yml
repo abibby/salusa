@@ -43,7 +43,4 @@ jobs:
       - name: check test coverage
         uses: vladopajic/go-test-coverage@v2
         with:
-          profile: cover.out
-          local-prefix: github.com/abibby/salusa
-          threshold-package: 80
-          threshold-total: 80
+          config: ./.testcoverage.yml

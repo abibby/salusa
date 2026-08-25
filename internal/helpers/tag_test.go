@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/internal/helpers"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,6 +13,7 @@ func TestName(t *testing.T) {
 		ID  int
 		Foo string `db:"foo,autoincrement,primary,type:date"`
 		Bar string `db:"bar,readonly"`
+		Baz string `db:"baz,size:100"`
 	}
 
 	rt := reflect.TypeOf(Foo{})
@@ -36,7 +36,7 @@ func TestName(t *testing.T) {
 			AutoIncrement: true,
 			Readonly:      false,
 			Index:         false,
-			Type:          dialects.DataType("date"),
+			Type:          "date",
 		},
 		helpers.DBTag(rt.Field(1)),
 	)
@@ -50,5 +50,17 @@ func TestName(t *testing.T) {
 			Index:         false,
 		},
 		helpers.DBTag(rt.Field(2)),
+	)
+	assert.Equal(
+		t,
+		&helpers.Tag{
+			Name:          "baz",
+			Primary:       false,
+			AutoIncrement: false,
+			Readonly:      false,
+			Index:         false,
+			Size:          100,
+		},
+		helpers.DBTag(rt.Field(3)),
 	)
 }

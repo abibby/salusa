@@ -7,12 +7,19 @@ import (
 )
 
 func (g *Generic) EncodeUpdateQuery(q *dialects.UpdateQuery) (dialects.RawQuery, error) {
-	return newRawQueryBuilder().
+	b := newRawQueryBuilder().
 		AddString("UPDATE").
 		AddString(g.core.Identifier(q.Table)).
 		Add(g.EncodeUpdateSet(q.Values)).
-		Add(g.EncodeWheres(q.Wheres)).
-		Build()
+		Add(g.EncodeWheres(q.Wheres))
+
+	if len(q.Returning) > 0 {
+		b.AddString("RETURNING")
+		b.Add(g.EncodeSelects(&dialects.Select{
+			Columns: q.Returning,
+		}))
+	}
+	return b.Build()
 }
 
 func (g *Generic) EncodeUpdateSet(values map[string]any) (dialects.RawQuery, error) {

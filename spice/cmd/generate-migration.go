@@ -81,7 +81,7 @@ var generateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(path.Join(c.Migration.Dir, "migrations.go"), []byte(fmt.Sprintf(srcMigrations, c.Migration.Pkg)), 0644)
+		err = os.WriteFile(path.Join(c.Migration.Dir, "migrations.go"), fmt.Appendf(nil, srcMigrations, c.Migration.Pkg), 0644)
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ var generateCmd = &cobra.Command{
 		}
 		name := util.MigrationName([]string{string(matches[1])})
 		migrationFile := path.Join(c.Migration.Dir, name+".go")
-		src := []byte(fmt.Sprintf(srcMain,
+		src := fmt.Appendf(nil, srcMain,
 			// imports
 			c.Migration.Import,
 			c.Model.Import,
@@ -115,7 +115,7 @@ var generateCmd = &cobra.Command{
 			name, c.Migration.Pkg, matches[1],
 			// write file
 			migrationFile,
-		))
+		)
 		// fmt.Printf("%s\n", src)
 
 		tmp := os.TempDir()

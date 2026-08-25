@@ -1,0 +1,13 @@
+profile: cover.out
+
+local:
+  prefix: github.com/abibby/salusa
+
+threshold:
+  package: 80
+  total: 80
+
+exclude:
+  paths:
+    - ^static/template
+    - ^internal/test

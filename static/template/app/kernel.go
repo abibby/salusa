@@ -3,11 +3,18 @@ package app
 import (
 	"context"
 
+	"github.com/abibby/salusa/auth"
+	"github.com/abibby/salusa/clog"
+	"github.com/abibby/salusa/database"
+	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/event"
 	"github.com/abibby/salusa/event/cron"
+	"github.com/abibby/salusa/filesystem"
 	"github.com/abibby/salusa/kernel"
 	"github.com/abibby/salusa/openapidoc"
-	"github.com/abibby/salusa/salusadi"
+	"github.com/abibby/salusa/openapidoc/openapidocdi"
+	"github.com/abibby/salusa/pubsub/channelpubsub"
+	"github.com/abibby/salusa/request"
 	"github.com/abibby/salusa/static/template/app/events"
 	"github.com/abibby/salusa/static/template/app/jobs"
 	"github.com/abibby/salusa/static/template/app/models"
@@ -18,19 +25,25 @@ import (
 	"github.com/abibby/salusa/static/template/routes"
 	"github.com/abibby/salusa/view"
 	"github.com/go-openapi/spec"
-	"github.com/google/uuid"
 )
 
 var Kernel = kernel.New(
 	kernel.Config(config.Load),
 	kernel.Bootstrap(
-		salusadi.Register[*models.User](migrations.Use()),
 		view.Register(resources.Content, "**/*.html"),
 		providers.Register,
-		func(ctx context.Context) error {
-			openapidoc.RegisterFormat[uuid.UUID]("uuid")
-			return nil
-		},
+		kernel.Register(func(ctx context.Context, c *config.Config) {
+			database.Register(ctx, c.Database, migrations.Use())
+			email.Register(ctx, c.Mail)
+			channelpubsub.Register(ctx)
+
+			clog.RegisterDefault(ctx)
+			request.Register(ctx)
+			auth.Register[*models.User](ctx)
+			event.Register(ctx)
+			filesystem.Register(ctx)
+			openapidocdi.Register(ctx)
+		}),
 	),
 	kernel.Services(
 		cron.Service().

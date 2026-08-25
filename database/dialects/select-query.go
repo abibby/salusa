@@ -5,14 +5,15 @@ type QueryBuilder interface {
 }
 
 type SelectQuery struct {
-	Select   Select
-	From     string
-	Joins    []Join
-	Wheres   []Condition
-	Havings  []Condition
-	GroupBys []string
-	OrderBys []OrderColumn
-	Limit    Limit
+	Select    Select
+	From      string
+	Joins     []Join
+	Wheres    []Condition
+	Havings   []Condition
+	GroupBys  []string
+	OrderBys  []OrderColumn
+	Limit     Limit
+	ForUpdate ForUpdate
 }
 
 func NewSelectQuery() SelectQuery {
@@ -72,6 +73,13 @@ type Limit struct {
 	Limit  int
 	Offset int
 }
+
+type ForUpdate string
+
+const (
+	ForUpdateDefault    = ForUpdate("default")
+	ForUpdateSkipLocked = ForUpdate("skip-locked")
+)
 
 type RawString string
 

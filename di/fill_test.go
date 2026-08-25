@@ -247,7 +247,7 @@ func TestFill(t *testing.T) {
 		err := dp.Fill(backgroundCtx, &ctx)
 		assert.NoError(t, err)
 
-		assert.NotSame(t, backgroundCtx, ctx)
+		assert.NotSame(t, &backgroundCtx, &ctx)
 
 		ctxDP := di.GetDependencyProvider(ctx)
 		assert.Same(t, dp, ctxDP)

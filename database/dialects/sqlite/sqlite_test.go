@@ -33,7 +33,7 @@ func TestSQLiteCoreDataType(t *testing.T) {
 		dialects.DataTypeFloat32:  "FLOAT",
 	}
 	for dt, expected := range cases {
-		assert.Equal(t, expected, c.DataType(dt), string(dt))
+		assert.Equal(t, expected, c.DataType(dt), dt.Name)
 	}
 	assert.Equal(t, "int64", c.DataType(dialects.DataTypeInt64))
 }
@@ -91,11 +91,4 @@ func TestUseSQLite(t *testing.T) {
 	}
 	_, ok := d.(*generic.Generic)
 	assert.True(t, ok)
-}
-
-func TestConfig(t *testing.T) {
-	c := sqlite.NewConfig(":memory:")
-	c.SetDialect()
-	assert.Equal(t, "sqlite3", c.DriverName())
-	assert.Equal(t, ":memory:", c.DataSourceName())
 }

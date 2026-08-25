@@ -14,13 +14,6 @@ import (
 	"github.com/go-openapi/spec"
 )
 
-func init() {
-	err := Register(context.Background())
-	if err != nil {
-		panic(err)
-	}
-}
-
 type RequestHandler[TRequest, TResponse any] struct {
 	handler   func(r *TRequest) (TResponse, error)
 	operation *spec.OperationProps

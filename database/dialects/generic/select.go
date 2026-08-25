@@ -12,7 +12,6 @@ func (g *Generic) EncodeSelects(s *dialects.Select) (dialects.RawQuery, error) {
 	}
 
 	b := newRawQueryBuilder()
-	b.AddString("SELECT")
 	if s.Distinct {
 		b.AddString("DISTINCT")
 	}

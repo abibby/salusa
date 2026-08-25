@@ -20,9 +20,43 @@ import (
 	"github.com/abibby/salusa/database/migrate"
 	"github.com/abibby/salusa/database/model"
 	"github.com/abibby/salusa/database/model/mixins"
+	"github.com/abibby/salusa/di"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
+
+var sqliteConfig = sqlite.NewConfig(":memory:")
+var mysqlConfig = &mysql.SimpleConfig{
+	Host:     "localhost",
+	Database: "test_db",
+	Username: "root",
+	Password: "root_password",
+}
+var pgsqlConfig = &postgres.Config{
+	Host:       "localhost",
+	Database:   "test_db",
+	Username:   "user",
+	Password:   "password",
+	DisableSSL: true,
+}
+var sqliteRunner = dbtest.NewRunner(initDB(sqliteConfig))
+var mysqlRunner = dbtest.NewRunner(initDB(mysqlConfig))
+var pgsqlRunner = dbtest.NewRunner(initDB(pgsqlConfig))
+
+type NamedRunner struct {
+	Name   string
+	Runner *dbtest.Runner
+	Short  bool
+}
+
+var namedRunners = []NamedRunner{
+	{Name: "sqlite", Runner: sqliteRunner, Short: true},
+	{Name: "mysql", Runner: mysqlRunner, Short: false},
+	{Name: "pgsql", Runner: pgsqlRunner, Short: false},
+}
+
+var mysqlLock *os.File
+var pgsqlLock *os.File
 
 type Case[T any] struct {
 	Name               string
@@ -124,38 +158,6 @@ func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.RawQuery, erro
 	}
 }
 
-var sqliteConfig = sqlite.NewConfig(":memory:")
-var mysqlConfig = &mysql.SimpleConfig{
-	Host:     "localhost",
-	Database: "test_db",
-	Username: "root",
-	Password: "root_password",
-}
-var pgsqlConfig = &postgres.Config{
-	Host:       "localhost",
-	Database:   "test_db",
-	Username:   "user",
-	Password:   "password",
-	DisableSSL: true,
-}
-var sqliteRunner = dbtest.NewRunner(initDB(sqliteConfig))
-var mysqlRunner = dbtest.NewRunner(initDB(mysqlConfig))
-var pgsqlRunner = dbtest.NewRunner(initDB(pgsqlConfig))
-
-type NamedRunner struct {
-	Name   string
-	Runner *dbtest.Runner
-}
-
-var activeRunners = []NamedRunner{
-	{"sqlite", sqliteRunner},
-	{"mysql", mysqlRunner},
-	{"pgsql", pgsqlRunner},
-}
-
-var mysqlLock *os.File
-var pgsqlLock *os.File
-
 func lockTestDB(driver string) (*os.File, error) {
 	lockFile := filepath.Join(os.TempDir(), "salusa-"+driver+"-test-db.lock")
 	f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0o600)
@@ -171,15 +173,14 @@ func lockTestDB(driver string) (*os.File, error) {
 
 func initDB(cfg database.Config) func() (*sqlx.DB, error) {
 	return func() (*sqlx.DB, error) {
-		cfg.SetDialect()
-		db, err := sqlx.Open(cfg.DriverName(), cfg.DataSourceName())
+		ctx := di.TestDependencyProviderContext()
+		database.Register(ctx, cfg, nil)
+		db, err := di.Resolve[*sqlx.DB](ctx)
 		if err != nil {
-			return nil, fmt.Errorf("open db: %s: %w", cfg.DriverName(), err)
+			return nil, fmt.Errorf("open db: %w", err)
 		}
 
-		ctx := context.Background()
-
-		switch cfg.DriverName() {
+		switch db.DriverName() {
 		case "sqlite", "sqlite3":
 		case "mysql":
 			if mysqlLock == nil {
@@ -207,7 +208,7 @@ func initDB(cfg database.Config) func() (*sqlx.DB, error) {
 
 		err = migrate.RunModelCreate(ctx, db, &Foo{}, &Bar{}, &FooSoftDelete{})
 		if err != nil {
-			return nil, fmt.Errorf("create test tables: %s: %w", cfg.DriverName(), err)
+			return nil, fmt.Errorf("create test tables: %s: %w", db.DriverName(), err)
 		}
 		return db, nil
 	}
@@ -281,8 +282,12 @@ func RunBenchmark(t *testing.B, name string, cb func(t *testing.B, tx *sqlx.Tx))
 
 func runners(t testing.TB, name string, cb func(runner *dbtest.Runner, name string)) {
 	t.Helper()
-	for _, r := range activeRunners {
-		cb(r.Runner, strings.TrimSpace(name+r.Name))
+	for _, r := range namedRunners {
+		if testing.Short() && !r.Short {
+			t.Skipf("Skipping %s tests", r.Name)
+		} else {
+			cb(r.Runner, strings.TrimSpace(name+" "+r.Name))
+		}
 	}
 }
 

@@ -11,6 +11,7 @@ type Mailer interface {
 }
 
 type Message struct {
+	From     string
 	To       []string
 	Subject  string
 	HTMLBody string
@@ -33,8 +34,13 @@ func NewSMTPMailer(host string, port int, username, password, from string) *SMTP
 }
 
 func (s *SMTPMailer) Mail(m *Message) error {
+	from := m.From
+	if from == "" {
+		from = s.from
+	}
+
 	msg := mail.NewMessage()
-	msg.SetHeader("From", s.from)
+	msg.SetHeader("From", from)
 	msg.SetHeader("To", m.To...)
 	msg.SetHeader("Subject", m.Subject)
 	msg.SetBody("text/html", m.HTMLBody)

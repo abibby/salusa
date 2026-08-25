@@ -33,6 +33,7 @@ func (r *HttpResult) Body() []byte {
 }
 
 func (r *HttpResult) getUnmarshaledBody() (any, bool) {
+	r.t.Helper()
 	if r.isBodyUnmarshaled {
 		return r.unmarshaledBody, true
 	}
@@ -53,32 +54,40 @@ func (r *HttpResult) getUnmarshaledBody() (any, bool) {
 }
 
 func (r *HttpResult) AssertStatus(status int) *HttpResult {
+	r.t.Helper()
 	assert.Equal(r.t, status, r.response.StatusCode, "Statuses do not match")
 	return r
 }
 func (r *HttpResult) AssertStatusRange(min, max int) *HttpResult {
+	r.t.Helper()
 	msg := fmt.Sprintf("Statuses must be between %d and %d", min, max)
 	assert.GreaterOrEqual(r.t, r.response.StatusCode, min, msg)
 	assert.LessOrEqual(r.t, r.response.StatusCode, max, msg)
 	return r
 }
 func (r *HttpResult) AssertStatusOK() *HttpResult {
+	r.t.Helper()
 	return r.AssertStatusRange(200, 399)
 }
 func (r *HttpResult) AssertStatus2XX() *HttpResult {
+	r.t.Helper()
 	return r.AssertStatusRange(200, 299)
 }
 func (r *HttpResult) AssertStatus3XX() *HttpResult {
+	r.t.Helper()
 	return r.AssertStatusRange(300, 399)
 }
 func (r *HttpResult) AssertStatus4XX() *HttpResult {
+	r.t.Helper()
 	return r.AssertStatusRange(400, 499)
 }
 func (r *HttpResult) AssertStatus5XX() *HttpResult {
+	r.t.Helper()
 	return r.AssertStatusRange(500, 599)
 }
 
 func (r *HttpResult) AssertJSONString(jsonBody string) *HttpResult {
+	r.t.Helper()
 	var expected any
 	err := json.Unmarshal([]byte(jsonBody), &expected)
 	if err != nil {
@@ -87,6 +96,7 @@ func (r *HttpResult) AssertJSONString(jsonBody string) *HttpResult {
 	return r.AssertJSON(expected)
 }
 func (r *HttpResult) AssertJSON(expected any) *HttpResult {
+	r.t.Helper()
 	acctual, ok := r.getUnmarshaledBody()
 	if !ok {
 		return r
@@ -96,6 +106,7 @@ func (r *HttpResult) AssertJSON(expected any) *HttpResult {
 }
 
 func (r *HttpResult) AssertJSONContains(path string, expected any) *HttpResult {
+	r.t.Helper()
 	body, ok := r.getUnmarshaledBody()
 	if !ok {
 		return r
