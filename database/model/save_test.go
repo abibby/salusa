@@ -14,6 +14,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type FakeModel struct {
+	model.BaseModel
+	ID   int    `db:"id,autoincrement"`
+	Name string `db:"name"`
+}
+
 func TestSave_create(t *testing.T) {
 	test.Run(t, "create", func(t *testing.T, tx *sqlx.Tx) {
 		f := &test.Foo{
@@ -270,22 +276,16 @@ func TestInsertManyContext(t *testing.T) {
 	})
 
 	test.Run(t, "autoincrement returning query error", func(t *testing.T, tx *sqlx.Tx) {
-		_, err := tx.Exec("drop table foos")
-		assert.NoError(t, err)
-
-		models := []*test.Foo{{Name: "1"}, {Name: "2"}}
-		err = model.InsertManyContext(context.TODO(), tx, models)
+		models := []*FakeModel{{Name: "1"}, {Name: "2"}}
+		err := model.InsertManyContext(context.TODO(), tx, models)
 
 		assert.ErrorContains(t, err, "insert:")
 		assert.ErrorContains(t, err, "failed to insert model")
 	})
 
 	test.Run(t, "non autoincrement exec error", func(t *testing.T, tx *sqlx.Tx) {
-		_, err := tx.Exec("drop table foos")
-		assert.NoError(t, err)
-
-		models := []*test.Foo{{ID: 1, Name: "1"}, {ID: 2, Name: "2"}}
-		err = model.InsertManyContext(context.TODO(), tx, models)
+		models := []*FakeModel{{ID: 1, Name: "1"}, {ID: 2, Name: "2"}}
+		err := model.InsertManyContext(context.TODO(), tx, models)
 
 		assert.ErrorContains(t, err, "insert:")
 		assert.ErrorContains(t, err, "failed to insert model")
@@ -316,11 +316,8 @@ func TestMustSave(t *testing.T) {
 		assert.True(t, f.InDatabase())
 	})
 	test.Run(t, "panics on error", func(t *testing.T, tx *sqlx.Tx) {
-		_, err := tx.Exec("drop table foos")
-		assert.NoError(t, err)
-
 		assert.Panics(t, func() {
-			model.MustSave(tx, &test.Foo{Name: "test"})
+			model.MustSave(tx, &FakeModel{Name: "test"})
 		})
 	})
 }
@@ -335,11 +332,8 @@ func TestMustSaveContext(t *testing.T) {
 		assert.True(t, f.InDatabase())
 	})
 	test.Run(t, "panics on error", func(t *testing.T, tx *sqlx.Tx) {
-		_, err := tx.Exec("drop table foos")
-		assert.NoError(t, err)
-
 		assert.Panics(t, func() {
-			model.MustSaveContext(context.Background(), tx, &test.Foo{Name: "test"})
+			model.MustSaveContext(context.Background(), tx, &FakeModel{Name: "test"})
 		})
 	})
 }
@@ -360,19 +354,13 @@ func TestSave_before_save_hook_error(t *testing.T) {
 
 func TestSave_insert_error(t *testing.T) {
 	test.Run(t, "autoincrement returning query error", func(t *testing.T, tx *sqlx.Tx) {
-		_, err := tx.Exec("drop table foos")
-		assert.NoError(t, err)
-
-		err = model.Save(tx, &test.Foo{Name: "test"})
+		err := model.Save(tx, &FakeModel{Name: "test"})
 
 		assert.ErrorContains(t, err, "insert:")
 		assert.ErrorContains(t, err, "failed to insert model")
 	})
 	test.Run(t, "non autoincrement exec error", func(t *testing.T, tx *sqlx.Tx) {
-		_, err := tx.Exec("drop table foos")
-		assert.NoError(t, err)
-
-		err = model.Save(tx, &test.Foo{ID: 100, Name: "test"})
+		err := model.Save(tx, &FakeModel{ID: 100, Name: "test"})
 
 		assert.ErrorContains(t, err, "insert:")
 		assert.ErrorContains(t, err, "failed to insert model")
@@ -381,6 +369,11 @@ func TestSave_insert_error(t *testing.T) {
 
 func TestSave_update_error(t *testing.T) {
 	test.Run(t, "exec error", func(t *testing.T, tx *sqlx.Tx) {
+		type Foo struct {
+			test.Foo
+			NotName string `db:"not_name"`
+		}
+
 		f := &test.Foo{
 			ID:   1,
 			Name: "test",
@@ -388,11 +381,10 @@ func TestSave_update_error(t *testing.T) {
 		err := model.Save(tx, f)
 		assert.NoError(t, err)
 
-		_, err = tx.Exec("drop table foos")
-		assert.NoError(t, err)
-
-		f.Name = "new name"
-		err = model.Save(tx, f)
+		err = model.Save(tx, &Foo{
+			Foo:     *f,
+			NotName: "anything",
+		})
 
 		assert.ErrorContains(t, err, "update:")
 	})
