@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/slices"
+	"github.com/abibby/salusa/stream"
 )
 
 func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {
@@ -28,8 +28,9 @@ func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects
 		columnsAndConstraints = append(columnsAndConstraints, c)
 	}
 	if len(q.PrimaryKeys) > 0 {
+		
 		columnsAndConstraints = append(columnsAndConstraints, dialects.Raw(fmt.Sprintf("PRIMARY KEY (%s)",
-			strings.Join(slices.Map(q.PrimaryKeys, g.core.Identifier), ", ")),
+			strings.Join(stream.OfSlice(q.PrimaryKeys).Map(g.core.Identifier).Slice(), ", ")),
 		))
 	}
 	for _, f := range q.ForeignKeys {
@@ -80,8 +81,8 @@ func (g *Generic) EncodeColumnDefinition(c *dialects.ColumnDefinition) (dialects
 func (g *Generic) EncodeForeignKey(f *dialects.ForeignKey) (dialects.RawQuery, error) {
 	return dialects.Raw(fmt.Sprintf("CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)",
 		g.core.Identifier(f.Name),
-		strings.Join(slices.Map(f.Columns, g.core.Identifier), ", "),
+		strings.Join(stream.OfSlice(f.Columns).Map(g.core.Identifier).Slice(), ", "),
 		g.core.Identifier(f.ForeignTable),
-		strings.Join(slices.Map(f.ForeignColumns, g.core.Identifier), ", "),
+		strings.Join(stream.OfSlice(f.ForeignColumns).Map(g.core.Identifier).Slice(), ", "),
 	)), nil
 }

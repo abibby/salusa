@@ -2,11 +2,12 @@ package schema
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/abibby/salusa/database/dialects"
 	"github.com/abibby/salusa/extra/sets"
-	"github.com/abibby/salusa/slices"
+	"github.com/abibby/salusa/stream"
 )
 
 type BlueprintType int
@@ -41,7 +42,7 @@ func NewBlueprint(name string) *Blueprint {
 }
 
 func (b *Blueprint) findColumn(name string) (*ColumnBuilder, bool) {
-	return slices.Find(b.columns, func(c *ColumnBuilder) bool {
+	return stream.OfSlice(b.columns).Find(func(c *ColumnBuilder) bool {
 		return c.name == name
 	})
 }
@@ -198,9 +199,9 @@ func (b *Blueprint) GoString() string {
 
 	if len(b.primaryKeys) > 1 {
 		args := strings.Join(
-			slices.Map(b.primaryKeys, func(pKey string) string {
+			stream.OfSlice(b.primaryKeys).Map(func(pKey string) string {
 				return fmt.Sprintf("%#v", pKey)
-			}),
+			}).Slice(),
 			", ",
 		)
 		fmt.Fprintf(&src, "\ttable.PrimaryKey(%s)\n", args)
@@ -228,9 +229,9 @@ func (t *Blueprint) Merge(newBlueprint *Blueprint) {
 		}
 	}
 
-	t.columns = slices.Filter(t.columns, func(c *ColumnBuilder) bool {
-		return !slices.Has(newBlueprint.dropColumns, c.name)
-	})
+	t.columns = stream.OfSlice(t.columns).Filter(func(c *ColumnBuilder) bool {
+		return !slices.Contains(newBlueprint.dropColumns, c.name)
+	}).Slice()
 
 	t.foreignKeys = append(t.foreignKeys, newBlueprint.foreignKeys...)
 	t.indexes = append(t.indexes, newBlueprint.indexes...)
@@ -263,7 +264,7 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 	}
 
 	for _, newKey := range newBlueprint.foreignKeys {
-		_, ok := slices.Find(oldBlueprint.foreignKeys, func(oldKey *ForeignKeyBuilder) bool {
+		_, ok := stream.OfSlice(oldBlueprint.foreignKeys).Find(func(oldKey *ForeignKeyBuilder) bool {
 			return newKey.localKey == oldKey.localKey &&
 				newKey.relatedKey == oldKey.relatedKey &&
 				newKey.relatedTable == oldKey.relatedTable
@@ -274,7 +275,7 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 		}
 	}
 	for _, newIndex := range newBlueprint.indexes {
-		_, ok := slices.Find(oldBlueprint.indexes, func(oldIndex *IndexBuilder) bool {
+		_, ok := stream.OfSlice(oldBlueprint.indexes).Find(func(oldIndex *IndexBuilder) bool {
 			return newIndex.name == oldIndex.name
 		})
 		if !ok {

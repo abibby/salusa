@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/salusa/slices"
+	"github.com/abibby/salusa/stream"
 	"gopkg.in/yaml.v3"
 )
 
@@ -105,7 +105,7 @@ func FileDir(from, file string) (string, error) {
 			return "", err
 		}
 
-		_, ok := slices.Find(files, func(f fs.DirEntry) bool {
+		_, ok := stream.OfSlice(files).Find(func(f fs.DirEntry) bool {
 			return f.Name() == file
 		})
 		if ok {
