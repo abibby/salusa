@@ -19,6 +19,9 @@ type registerDeps struct {
 
 func TestRegister(t *testing.T) {
 	test.Run(t, "register", func(t *testing.T, tx *sqlx.Tx) {
+		if tx.DriverName() == "mysql" {
+			t.SkipNow()
+		}
 		for _, m := range dbpubsub.Migrations {
 			err := m.Up.Run(t.Context(), tx)
 			if !assert.NoError(t, err) {

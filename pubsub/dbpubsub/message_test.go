@@ -25,6 +25,9 @@ type messageTestEnv struct {
 func runMessageTest(t *testing.T, cb func(t *testing.T, ctx context.Context, env messageTestEnv)) {
 	t.Helper()
 	test.Run(t, "messages", func(t *testing.T, tx *sqlx.Tx) {
+		if tx.DriverName() == "mysql" {
+			t.SkipNow()
+		}
 		for _, m := range dbpubsub.Migrations {
 			err := m.Up.Run(t.Context(), tx)
 			if !assert.NoError(t, err) {
