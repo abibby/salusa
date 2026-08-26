@@ -3,10 +3,10 @@ package mixins_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/database/model/mixins"
-	"github.com/abibby/salusa/internal/test"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/database/model/mixins"
+	"abibby.com/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )

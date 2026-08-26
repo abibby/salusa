@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/abibby/salusa/optional"
+	"abibby.com/salusa/optional"
 	"github.com/stretchr/testify/assert"
 )
 

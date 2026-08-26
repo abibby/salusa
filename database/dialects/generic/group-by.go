@@ -3,7 +3,7 @@ package generic
 import (
 	"strings"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 func (g *Generic) EncodeGroupBy(groups []string) (dialects.RawQuery, error) {

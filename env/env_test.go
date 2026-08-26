@@ -3,7 +3,7 @@ package env_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/env"
+	"abibby.com/salusa/env"
 	"github.com/stretchr/testify/assert"
 )
 

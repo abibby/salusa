@@ -3,8 +3,8 @@ package generic_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/dialects/generic"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects/generic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -3,7 +3,7 @@ package generic
 import (
 	"errors"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 var ErrUnkownExprType = errors.New("unknown dialects.Expr type")

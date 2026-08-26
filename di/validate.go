@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/validate"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/validate"
 	"github.com/dominikbraun/graph"
 )
 

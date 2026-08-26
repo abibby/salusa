@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"reflect"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/internal/helpers"
 )
 
 type iHasOneOrMany interface {

@@ -7,10 +7,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/internal/test"
-	"github.com/abibby/salusa/pubsub"
-	"github.com/abibby/salusa/pubsub/dbpubsub"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/internal/test"
+	"abibby.com/salusa/pubsub"
+	"abibby.com/salusa/pubsub/dbpubsub"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )

@@ -3,9 +3,9 @@ package dbpubsub
 import (
 	"time"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/database/model/mixins"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/database/model/mixins"
 )
 
 //go:generate spice generate:migration

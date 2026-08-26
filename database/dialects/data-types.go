@@ -1,6 +1,6 @@
 package dialects
 
-import "github.com/abibby/salusa/extra/sets"
+import "abibby.com/salusa/extra/sets"
 
 type DataType struct {
 	Name string

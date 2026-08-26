@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/pubsub"
-	"github.com/abibby/salusa/pubsub/channelpubsub"
-	"github.com/abibby/salusa/pubsub/pubsubtest"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/pubsub"
+	"abibby.com/salusa/pubsub/channelpubsub"
+	"abibby.com/salusa/pubsub/pubsubtest"
 	"github.com/stretchr/testify/assert"
 )
 

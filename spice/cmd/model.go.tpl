@@ -3,8 +3,8 @@ package {{ .Package }}
 import (
 	"context"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/model"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/model"
 )
 
 //go:generate spice generate:migration

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abibby/salusa/internal/helpers"
+	"abibby.com/salusa/internal/helpers"
 	"github.com/go-openapi/spec"
 	"github.com/google/uuid"
 )

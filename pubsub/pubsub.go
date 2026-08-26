@@ -3,7 +3,7 @@ package pubsub
 import (
 	"context"
 
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/di"
 )
 
 type PubSub interface {

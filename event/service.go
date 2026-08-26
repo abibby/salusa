@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/kernel"
-	"github.com/abibby/salusa/pubsub"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/kernel"
+	"abibby.com/salusa/pubsub"
 )
 
 type Handler[E Event] interface {

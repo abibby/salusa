@@ -1,6 +1,6 @@
 package main
 
-import "github.com/abibby/salusa/spice/cmd"
+import "abibby.com/salusa/spice/cmd"
 
 func main() {
 	cmd.Execute()

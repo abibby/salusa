@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/abibby/salusa/validate"
+	"abibby.com/salusa/validate"
 )
 
 var _ validate.Validator = (*Kernel)(nil)

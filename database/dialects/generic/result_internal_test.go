@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 	"github.com/stretchr/testify/assert"
 )
 

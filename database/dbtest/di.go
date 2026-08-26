@@ -1,7 +1,7 @@
 package dbtest
 
 import (
-	"github.com/abibby/salusa/database"
+	"abibby.com/salusa/database"
 	"github.com/jmoiron/sqlx"
 )
 

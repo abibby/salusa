@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/extra/sets"
-	"github.com/abibby/salusa/slices"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/extra/sets"
+	"abibby.com/salusa/slices"
 )
 
 type BlueprintType int

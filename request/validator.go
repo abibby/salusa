@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/request/rules"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/request/rules"
 )
 
 type Validator interface {

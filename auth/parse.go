@@ -3,7 +3,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/abibby/salusa/internal/helpers"
+	"abibby.com/salusa/internal/helpers"
 	"github.com/golang-jwt/jwt/v4"
 )
 

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/dialects/sqlite"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/dialects/sqlite"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

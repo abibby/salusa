@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/pubsub"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/pubsub"
 	"github.com/jmoiron/sqlx"
 )
 

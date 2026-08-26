@@ -3,7 +3,7 @@ package model
 import (
 	"context"
 
-	"github.com/abibby/salusa/database"
+	"abibby.com/salusa/database"
 )
 
 type Contexter interface {

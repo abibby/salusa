@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/abibby/salusa/request"
+	"abibby.com/salusa/request"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )

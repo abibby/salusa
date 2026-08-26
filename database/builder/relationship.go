@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/internal/relationship"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/internal/relationship"
 )
 
 type ForeignKey struct {

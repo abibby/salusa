@@ -1,7 +1,7 @@
 package emailtest
 
 import (
-	"github.com/abibby/salusa/email"
+	"abibby.com/salusa/email"
 )
 
 type TestMailer struct {

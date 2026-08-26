@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/di"
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )

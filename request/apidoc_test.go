@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/openapidoc"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/openapidoc"
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,9 +16,9 @@ type apiTestModel struct {
 }
 
 type apiTestRequest struct {
-	Name string `json:"name"`
-	Q    int    `query:"q"`
-	ID   string `path:"id"`
+	Name string        `json:"name"`
+	Q    int           `query:"q"`
+	ID   string        `path:"id"`
 	Foo  *apiTestModel `inject:"foo"`
 }
 

@@ -3,9 +3,9 @@ package schema_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/schema"
-	"github.com/abibby/salusa/internal/test"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/schema"
+	"abibby.com/salusa/internal/test"
 )
 
 func TestColumnBuilder(t *testing.T) {

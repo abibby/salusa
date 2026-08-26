@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/abibby/salusa/spice/util"
+	"abibby.com/salusa/spice/util"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/abibby/salusa/database/migrate"
+	"abibby.com/salusa/database/migrate"
 	migrations %#v
 	models %#v
 )
@@ -48,7 +48,7 @@ func main() {
 var srcMigrations = `package %s
 
 import (
-	"github.com/abibby/salusa/database/migrate"
+	"abibby.com/salusa/database/migrate"
 )
 
 var migrations = migrate.New()

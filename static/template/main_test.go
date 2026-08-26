@@ -8,9 +8,9 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/abibby/salusa/kernel"
-	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/static/template/app"
+	"abibby.com/salusa/kernel"
+	"abibby.com/salusa/router"
+	"abibby.com/salusa/static/template/app"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )

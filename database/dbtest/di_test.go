@@ -3,8 +3,8 @@ package dbtest_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/dbtest"
-	"github.com/abibby/salusa/internal/test"
+	"abibby.com/salusa/database/dbtest"
+	"abibby.com/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )

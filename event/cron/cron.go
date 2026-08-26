@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/abibby/salusa/event"
-	"github.com/abibby/salusa/kernel"
+	"abibby.com/salusa/event"
+	"abibby.com/salusa/kernel"
 	"github.com/robfig/cron/v3"
 )
 

@@ -1,4 +1,4 @@
-module github.com/abibby/salusa
+module abibby.com/salusa
 
 go 1.26.6
 

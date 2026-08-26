@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abibby/salusa/internal/helpers"
+	"abibby.com/salusa/internal/helpers"
 	"github.com/gorilla/mux"
 )
 

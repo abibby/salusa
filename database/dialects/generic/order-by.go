@@ -3,7 +3,7 @@ package generic
 import (
 	"strings"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 func (g *Generic) EncodeOrderBy(orderBys []dialects.OrderColumn) (dialects.RawQuery, error) {

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/abibby/salusa/openapidoc"
+	"abibby.com/salusa/openapidoc"
 	"github.com/go-openapi/spec"
 )
 

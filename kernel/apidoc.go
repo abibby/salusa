@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/openapidoc"
-	"github.com/abibby/salusa/router"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/openapidoc"
+	"abibby.com/salusa/router"
 	"github.com/go-openapi/spec"
 )
 

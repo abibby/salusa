@@ -3,11 +3,11 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/auth"
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/auth"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/migrate"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/di"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"

@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/internal/helpers"
 )
 
 type field struct {

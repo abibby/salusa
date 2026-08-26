@@ -5,7 +5,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/abibby/salusa/static"
+	"abibby.com/salusa/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abibby/salusa/clog"
+	"abibby.com/salusa/clog"
 )
 
 type HTMLError interface {

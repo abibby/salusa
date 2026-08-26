@@ -3,8 +3,8 @@ package event
 import (
 	"context"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/pubsub"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/pubsub"
 )
 
 type Dispatch func(ctx context.Context, e Event) error

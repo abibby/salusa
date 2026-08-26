@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/pubsub"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/pubsub"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,7 +3,7 @@ package builder
 import (
 	"context"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 // WithContext adds a context to the query that will be used when fetching results.
