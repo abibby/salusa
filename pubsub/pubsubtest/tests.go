@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/abibby/salusa/pubsub"
+	"abibby.com/salusa/pubsub"
 	"github.com/stretchr/testify/assert"
 )
 

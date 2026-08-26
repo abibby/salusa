@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/hooks"
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/internal/relationship"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/hooks"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/internal/relationship"
 	"github.com/jmoiron/sqlx"
 )
 

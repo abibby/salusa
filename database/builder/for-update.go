@@ -1,6 +1,6 @@
 package builder
 
-import "github.com/abibby/salusa/database/dialects"
+import "abibby.com/salusa/database/dialects"
 
 func (b *Builder) ForUpdate() *Builder {
 	b.query.ForUpdate = dialects.ForUpdateDefault

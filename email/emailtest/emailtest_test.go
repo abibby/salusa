@@ -3,8 +3,8 @@ package emailtest_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/email"
-	"github.com/abibby/salusa/email/emailtest"
+	"abibby.com/salusa/email"
+	"abibby.com/salusa/email/emailtest"
 	"github.com/stretchr/testify/assert"
 )
 

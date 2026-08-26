@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/router/routertest"
+	"abibby.com/salusa/router"
+	"abibby.com/salusa/router/routertest"
 	"github.com/stretchr/testify/assert"
 )
 

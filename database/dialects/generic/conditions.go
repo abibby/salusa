@@ -3,7 +3,7 @@ package generic
 import (
 	"fmt"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 func (g *Generic) EncodeWheres(c []dialects.Condition) (dialects.RawQuery, error) {

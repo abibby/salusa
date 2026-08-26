@@ -1,6 +1,6 @@
 package builder
 
-import "github.com/abibby/salusa/database/dialects"
+import "abibby.com/salusa/database/dialects"
 
 func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 	return &ModelBuilder[T]{

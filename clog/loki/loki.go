@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/url"
 
-	"github.com/abibby/salusa/clog"
+	"abibby.com/salusa/clog"
 	"github.com/bearsoft-fi/slogloki"
 )
 

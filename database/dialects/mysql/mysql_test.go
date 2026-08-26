@@ -3,9 +3,9 @@ package mysql_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/dialects/generic"
-	"github.com/abibby/salusa/database/dialects/mysql"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects/generic"
+	"abibby.com/salusa/database/dialects/mysql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

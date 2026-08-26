@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/request"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/request"
 	"github.com/stretchr/testify/assert"
 )
 

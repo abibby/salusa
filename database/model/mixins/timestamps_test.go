@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abibby/salusa/database/model/mixins"
+	"abibby.com/salusa/database/model/mixins"
 	"github.com/stretchr/testify/assert"
 )
 

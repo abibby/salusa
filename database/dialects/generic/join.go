@@ -1,7 +1,7 @@
 package generic
 
 import (
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 func (g *Generic) EncodeJoins(joins []dialects.Join) (dialects.RawQuery, error) {

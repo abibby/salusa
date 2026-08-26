@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/abibby/salusa/database/builder"
+	"abibby.com/salusa/database/builder"
 	"github.com/stretchr/testify/assert"
 )
 

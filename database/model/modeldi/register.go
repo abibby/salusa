@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/request"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/request"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )

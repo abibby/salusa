@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/salusaconfig"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/salusaconfig"
 )
 
 var (

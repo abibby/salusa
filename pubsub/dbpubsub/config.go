@@ -3,9 +3,9 @@ package dbpubsub
 import (
 	"context"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/pubsub"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/pubsub"
 )
 
 func Register(ctx context.Context) {

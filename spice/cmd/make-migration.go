@@ -7,9 +7,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/spice/pkg"
-	"github.com/abibby/salusa/spice/util"
+	"abibby.com/salusa/database/migrate"
+	"abibby.com/salusa/spice/pkg"
+	"abibby.com/salusa/spice/util"
 	"github.com/spf13/cobra"
 )
 

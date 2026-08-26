@@ -6,8 +6,8 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/salusaconfig"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/salusaconfig"
 )
 
 type Config interface {

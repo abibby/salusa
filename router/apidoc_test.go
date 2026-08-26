@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/openapidoc"
-	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/salusaconfig"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/openapidoc"
+	"abibby.com/salusa/router"
+	"abibby.com/salusa/salusaconfig"
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )

@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/relationship"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/internal/relationship"
 	"github.com/stretchr/testify/assert"
 )
 

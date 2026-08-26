@@ -3,8 +3,8 @@ package routes_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/static/template/routes"
+	"abibby.com/salusa/router"
+	"abibby.com/salusa/static/template/routes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

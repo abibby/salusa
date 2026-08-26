@@ -3,7 +3,7 @@ package slices_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/slices"
+	"abibby.com/salusa/slices"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,8 +1,8 @@
 # Salusa
 
-[![Test](https://github.com/abibby/salusa/actions/workflows/test.yaml/badge.svg)](https://github.com/abibby/salusa/actions/workflows/test.yaml)
-[![Coverage](https://github.com/abibby/salusa/actions/workflows/coverage.yml/badge.svg)](https://github.com/abibby/salusa/actions/workflows/coverage.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/abibby/salusa.svg)](https://pkg.go.dev/github.com/abibby/salusa)
+[![Test](https://abibby.com/salusa/actions/workflows/test.yaml/badge.svg)](https://abibby.com/salusa/actions/workflows/test.yaml)
+[![Coverage](https://abibby.com/salusa/actions/workflows/coverage.yml/badge.svg)](https://abibby.com/salusa/actions/workflows/coverage.yml)
+[![Go Reference](https://pkg.go.dev/badge/abibby.com/salusa.svg)](https://pkg.go.dev/abibby.com/salusa)
 
 <!-- TODO: add tagline -->
 
@@ -70,7 +70,7 @@ After you have your environment set up you can install the `spice` utility with
 go:
 
 ```
-go install github.com/abibby/salusa/spice@latest
+go install abibby.com/salusa/spice@latest
 ```
 
 Once you have installed `spice` you can create a new project with the `init`
@@ -111,7 +111,7 @@ The `app` direcoty contains all of the buisness logic of your application. In a
 new project the only file in this directory is `kernel.go` which is the core of
 the application. The kernel manages all of the long running services in you
 application. You can find more information in the
-[kernel](https://pkg.go.dev/github.com/abibby/salusa/kernel#Kernel) docs
+[kernel](https://pkg.go.dev/abibby.com/salusa/kernel#Kernel) docs
 
 ### Events
 
@@ -123,7 +123,7 @@ The `events` directory contains all of the events that you application can emit.
 application they all implement the `http.Handler` interface. Salusa provides the
 `request.Handler` helper for creating APIs that speeds up handling user input
 and returning json. Documentation can be found
-[here](https://pkg.go.dev/github.com/abibby/salusa/request#Handler).
+[here](https://pkg.go.dev/abibby.com/salusa/request#Handler).
 
 ### Jobs
 

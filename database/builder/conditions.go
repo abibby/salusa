@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 type Conditions struct {

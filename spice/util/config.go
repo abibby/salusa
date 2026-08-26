@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/salusa/slices"
+	"abibby.com/salusa/slices"
 	"gopkg.in/yaml.v3"
 )
 

@@ -3,7 +3,7 @@ package pkg_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/spice/pkg"
+	"abibby.com/salusa/spice/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,9 +12,9 @@ func TestPackage_Add(t *testing.T) {
 	p := pkg.New()
 	require.NotNil(t, p)
 
-	fc := p.Add("github.com/abibby/salusa/database/schema.Create", "users")
+	fc := p.Add("abibby.com/salusa/database/schema.Create", "users")
 	require.NotNil(t, fc)
-	assert.Contains(t, fc.GoString(), "github_com_abibby_salusa_database_schema.Create(\"users\")")
+	assert.Contains(t, fc.GoString(), "abibby_com_salusa_database_schema.Create(\"users\")")
 }
 
 func TestPackage_GoString(t *testing.T) {

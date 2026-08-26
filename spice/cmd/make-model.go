@@ -9,7 +9,7 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/abibby/salusa/spice/util"
+	"abibby.com/salusa/spice/util"
 	"github.com/spf13/cobra"
 	strcase "github.com/stoewer/go-strcase"
 )

@@ -3,8 +3,8 @@ package dialects_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/dialects/sqlite"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

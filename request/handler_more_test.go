@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abibby/salusa/request"
+	"abibby.com/salusa/request"
 	"github.com/stretchr/testify/assert"
 )
 
