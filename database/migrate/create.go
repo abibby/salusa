@@ -72,7 +72,7 @@ func blueprintFromFields(tableName string, fields []*field) *schema.Blueprint {
 	}
 
 	if len(primaryColumns) > 1 {
-		table.PrimaryKey(stream.OfSlice(primaryColumns).Map((*schema.ColumnBuilder).Name).Slice()...)
+		table.PrimaryKey(stream.Of(primaryColumns).Map((*schema.ColumnBuilder).Name).Slice()...)
 	} else {
 		for _, b := range primaryColumns {
 			b.Primary()

@@ -42,7 +42,7 @@ func NewBlueprint(name string) *Blueprint {
 }
 
 func (b *Blueprint) findColumn(name string) (*ColumnBuilder, bool) {
-	return stream.OfSlice(b.columns).Find(func(c *ColumnBuilder) bool {
+	return stream.Of(b.columns).Find(func(c *ColumnBuilder) bool {
 		return c.name == name
 	})
 }
@@ -199,7 +199,7 @@ func (b *Blueprint) GoString() string {
 
 	if len(b.primaryKeys) > 1 {
 		args := strings.Join(
-			stream.OfSlice(b.primaryKeys).Map(func(pKey string) string {
+			stream.Of(b.primaryKeys).Map(func(pKey string) string {
 				return fmt.Sprintf("%#v", pKey)
 			}).Slice(),
 			", ",
@@ -229,7 +229,7 @@ func (t *Blueprint) Merge(newBlueprint *Blueprint) {
 		}
 	}
 
-	t.columns = stream.OfSlice(t.columns).Filter(func(c *ColumnBuilder) bool {
+	t.columns = stream.Of(t.columns).Filter(func(c *ColumnBuilder) bool {
 		return !slices.Contains(newBlueprint.dropColumns, c.name)
 	}).Slice()
 
@@ -264,7 +264,7 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 	}
 
 	for _, newKey := range newBlueprint.foreignKeys {
-		_, ok := stream.OfSlice(oldBlueprint.foreignKeys).Find(func(oldKey *ForeignKeyBuilder) bool {
+		_, ok := stream.Of(oldBlueprint.foreignKeys).Find(func(oldKey *ForeignKeyBuilder) bool {
 			return newKey.localKey == oldKey.localKey &&
 				newKey.relatedKey == oldKey.relatedKey &&
 				newKey.relatedTable == oldKey.relatedTable
@@ -275,7 +275,7 @@ func (t *Blueprint) Update(oldBlueprint, newBlueprint *Blueprint) bool {
 		}
 	}
 	for _, newIndex := range newBlueprint.indexes {
-		_, ok := stream.OfSlice(oldBlueprint.indexes).Find(func(oldIndex *IndexBuilder) bool {
+		_, ok := stream.Of(oldBlueprint.indexes).Find(func(oldIndex *IndexBuilder) bool {
 			return newIndex.name == oldIndex.name
 		})
 		if !ok {

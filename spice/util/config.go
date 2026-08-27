@@ -105,7 +105,7 @@ func FileDir(from, file string) (string, error) {
 			return "", err
 		}
 
-		_, ok := stream.OfSlice(files).Find(func(f fs.DirEntry) bool {
+		_, ok := stream.Of(files).Find(func(f fs.DirEntry) bool {
 			return f.Name() == file
 		})
 		if ok {
