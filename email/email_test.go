@@ -21,15 +21,6 @@ func (c *testConfig) GetBaseURL() string {
 	return "https://example.com"
 }
 
-type testMailConfiger struct {
-	mail *email.SMTPConfig
-}
-
-func (c *testMailConfiger) GetHTTPPort() int { return 8080 }
-func (c *testMailConfiger) GetBaseURL() string {
-	return "https://example.com"
-}
-
 func TestSMTPMailer(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)

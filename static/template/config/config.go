@@ -8,6 +8,7 @@ import (
 	"github.com/abibby/salusa/database/dialects/sqlite"
 	"github.com/abibby/salusa/email"
 	"github.com/abibby/salusa/env"
+	"github.com/abibby/salusa/filesystem"
 	"github.com/joho/godotenv"
 )
 
@@ -15,8 +16,9 @@ type Config struct {
 	Port     int
 	BasePath string
 
-	Database database.Config
-	Mail     email.Config
+	Database   database.Config
+	Mail       email.Config
+	FileSystem filesystem.Config
 }
 
 func Load() *Config {
@@ -38,6 +40,7 @@ func Load() *Config {
 			Username: env.String("MAIL_USERNAME", "user"),
 			Password: env.String("MAIL_PASSWORD", "pass"),
 		},
+		FileSystem: filesystem.NewLocalFS("./files"),
 	}
 }
 

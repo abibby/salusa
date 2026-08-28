@@ -41,7 +41,7 @@ var Kernel = kernel.New(
 			request.Register(ctx)
 			auth.Register[*models.User](ctx)
 			event.Register(ctx)
-			filesystem.Register(ctx)
+			filesystem.Register(ctx, c.FileSystem)
 			openapidocdi.Register(ctx)
 		}),
 	),
