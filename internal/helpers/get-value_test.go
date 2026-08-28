@@ -3,7 +3,7 @@ package helpers_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/internal/helpers"
+	"abibby.com/salusa/internal/helpers"
 	"github.com/stretchr/testify/assert"
 )
 

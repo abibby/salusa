@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/model"
+	"abibby.com/salusa/database/migrate"
+	"abibby.com/salusa/database/model"
 	"github.com/stretchr/testify/assert"
 )
 

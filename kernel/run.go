@@ -12,8 +12,8 @@ import (
 	"os/signal"
 	"reflect"
 
-	"github.com/abibby/salusa/clog"
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/clog"
+	"abibby.com/salusa/di"
 	"github.com/spf13/pflag"
 )
 

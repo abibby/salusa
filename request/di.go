@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/router"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/router"
 )
 
 type contextKey uint8

@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/abibby/salusa/openapidoc"
+	"abibby.com/salusa/openapidoc"
 	"github.com/go-openapi/spec"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"

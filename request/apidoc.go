@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/openapidoc"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/openapidoc"
 	"github.com/go-openapi/spec"
 )
 

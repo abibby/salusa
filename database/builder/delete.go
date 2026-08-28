@@ -1,8 +1,8 @@
 package builder
 
 import (
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/dialects"
 )
 
 func (b *ModelBuilder[T]) Delete(tx database.DB) error {

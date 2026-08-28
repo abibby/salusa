@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/salusaconfig"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/salusaconfig"
 )
 
 func FetchAuth(cb func(ctx context.Context, username string, request *http.Request) error) KernelOption {

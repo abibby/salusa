@@ -4,11 +4,11 @@ import (
 	"errors"
 	"os"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/email"
-	"github.com/abibby/salusa/env"
-	"github.com/abibby/salusa/filesystem"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/dialects/sqlite"
+	"abibby.com/salusa/email"
+	"abibby.com/salusa/env"
+	"abibby.com/salusa/filesystem"
 	"github.com/joho/godotenv"
 )
 

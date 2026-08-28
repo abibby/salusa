@@ -3,7 +3,7 @@ package channelpubsub
 import (
 	"context"
 
-	"github.com/abibby/salusa/pubsub"
+	"abibby.com/salusa/pubsub"
 )
 
 type Message struct {

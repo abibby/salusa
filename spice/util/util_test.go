@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/abibby/salusa/spice/util"
+	"abibby.com/salusa/spice/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

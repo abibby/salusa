@@ -10,9 +10,9 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/view"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/router"
+	"abibby.com/salusa/view"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

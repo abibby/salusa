@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/abibby/salusa/database/model"
+	"abibby.com/salusa/database/model"
 	"github.com/google/uuid"
 )
 

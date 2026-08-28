@@ -3,9 +3,9 @@ package builder_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/internal/test"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/internal/test"
 )
 
 func TestJoin(t *testing.T) {

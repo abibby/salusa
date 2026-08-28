@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/request"
-	"github.com/abibby/salusa/static/template/app/models"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/request"
+	"abibby.com/salusa/static/template/app/models"
 	"github.com/jmoiron/sqlx"
 )
 

@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/abibby/salusa/clog"
-	"github.com/abibby/salusa/clog/loki"
+	"abibby.com/salusa/clog"
+	"abibby.com/salusa/clog/loki"
 	"github.com/stretchr/testify/assert"
 )
 

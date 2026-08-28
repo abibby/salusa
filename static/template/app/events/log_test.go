@@ -3,7 +3,7 @@ package events
 import (
 	"testing"
 
-	"github.com/abibby/salusa/event"
+	"abibby.com/salusa/event"
 	"github.com/stretchr/testify/assert"
 )
 

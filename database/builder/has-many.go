@@ -4,8 +4,8 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/model"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/model"
 )
 
 // # Tags:

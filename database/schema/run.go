@@ -3,7 +3,7 @@ package schema
 import (
 	"context"
 
-	"github.com/abibby/salusa/database"
+	"abibby.com/salusa/database"
 )
 
 type Runner interface {

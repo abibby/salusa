@@ -1,6 +1,6 @@
 package builder
 
-import "github.com/abibby/salusa/database/dialects"
+import "abibby.com/salusa/database/dialects"
 
 // Where adds a basic where clause to the query.
 func (b *Builder) Where(column, operator string, value any) *Builder {

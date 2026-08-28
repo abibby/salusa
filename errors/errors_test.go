@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	salusaerrors "github.com/abibby/salusa/errors"
+	salusaerrors "abibby.com/salusa/errors"
 	"github.com/stretchr/testify/assert"
 )
 

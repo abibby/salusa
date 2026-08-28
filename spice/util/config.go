@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/salusa/stream"
+	"abibby.com/salusa/stream"
 	"gopkg.in/yaml.v3"
 )
 

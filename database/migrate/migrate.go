@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go/format"
 
-	"github.com/abibby/salusa/database/schema"
+	"abibby.com/salusa/database/schema"
 	"golang.org/x/tools/imports"
 )
 
@@ -19,10 +19,10 @@ func SrcFile(migrationName, packageName string, up, down fmt.GoStringer) (string
 	initSrc := `package %s
 	
 import (
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/schema"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/migrate"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/schema"
 )
 
 func init() {

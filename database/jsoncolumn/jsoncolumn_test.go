@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/abibby/salusa/database/jsoncolumn"
+	"abibby.com/salusa/database/jsoncolumn"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -6,13 +6,13 @@ import (
 	"log/slog"
 	"sort"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/database/schema"
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/extra/sets"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/database/schema"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/extra/sets"
 	"github.com/jmoiron/sqlx"
 )
 

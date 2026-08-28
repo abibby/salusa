@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/di"
 	"github.com/stretchr/testify/assert"
 )
 

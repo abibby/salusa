@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/static/template/app/events"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/static/template/app/events"
 	"github.com/stretchr/testify/require"
 )
 

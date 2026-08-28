@@ -3,9 +3,9 @@ package openapidocdi
 import (
 	"context"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/kernel"
-	"github.com/abibby/salusa/openapidoc"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/kernel"
+	"abibby.com/salusa/openapidoc"
 )
 
 type apiDocerOpts struct {

@@ -3,9 +3,9 @@ package builder_test
 import (
 	"fmt"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/internal/test"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/dialects/sqlite"
+	"abibby.com/salusa/internal/test"
 )
 
 func ExampleBuilder() {

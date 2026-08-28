@@ -5,17 +5,17 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/hooks"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/hooks"
 	"github.com/stretchr/testify/assert"
 )
 
 type recordingModel struct {
-	beforeSave  int
-	afterSave   int
-	afterLoad   int
-	saveErr     error
-	loadErr     error
+	beforeSave int
+	afterSave  int
+	afterLoad  int
+	saveErr    error
+	loadErr    error
 	EmbeddedHook
 }
 
@@ -33,9 +33,9 @@ func (m *recordingModel) AfterLoad(ctx context.Context, tx database.DB) error {
 }
 
 type EmbeddedHook struct {
-	before  int
-	after   int
-	loaded  int
+	before int
+	after  int
+	loaded int
 }
 
 func (e *EmbeddedHook) BeforeSave(ctx context.Context, tx database.DB) error {

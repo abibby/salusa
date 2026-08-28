@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abibby/salusa/static"
+	"abibby.com/salusa/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -71,7 +71,7 @@ func TestCopyDir(t *testing.T) {
 		b, err := os.ReadFile(filepath.Join(dist, "routes", "routes.go"))
 		require.NoError(t, err)
 		assert.Contains(t, string(b), "github.com/example/app/app/handlers")
-		assert.NotContains(t, string(b), "github.com/abibby/salusa/static/template")
+		assert.NotContains(t, string(b), "abibby.com/salusa/static/template")
 	})
 	t.Run("missing source", func(t *testing.T) {
 		err := copyDir(static.Content, "does-not-exist", t.TempDir(), "x")

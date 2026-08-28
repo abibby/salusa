@@ -1,8 +1,8 @@
 package builder
 
 import (
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/di"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 )

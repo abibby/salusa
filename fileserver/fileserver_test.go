@@ -7,7 +7,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/abibby/salusa/fileserver"
+	"abibby.com/salusa/fileserver"
 	"github.com/stretchr/testify/assert"
 )
 

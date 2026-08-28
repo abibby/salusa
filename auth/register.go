@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/internal/helpers"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/internal/helpers"
 	"github.com/jmoiron/sqlx"
 )
 

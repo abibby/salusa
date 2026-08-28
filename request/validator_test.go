@@ -3,7 +3,7 @@ package request
 import (
 	"testing"
 
-	"github.com/abibby/salusa/request/rules"
+	"abibby.com/salusa/request/rules"
 	"github.com/stretchr/testify/assert"
 )
 

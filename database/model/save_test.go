@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/builder"
-	"github.com/abibby/salusa/database/hooks"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/internal/test"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/builder"
+	"abibby.com/salusa/database/hooks"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )

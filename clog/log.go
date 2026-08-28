@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/di"
 	"github.com/lmittmann/tint"
 )
 

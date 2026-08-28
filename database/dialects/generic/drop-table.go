@@ -1,6 +1,6 @@
 package generic
 
-import "github.com/abibby/salusa/database/dialects"
+import "abibby.com/salusa/database/dialects"
 
 // return runQuery(ctx, tx, helpers.Concat(helpers.Raw("DROP TABLE IF EXISTS "), helpers.Identifier(table)))
 func (g *Generic) EncodeDropTableQuery(q *dialects.DropTableQuery) (dialects.RawQuery, error) {

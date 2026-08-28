@@ -7,8 +7,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/filesystem"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

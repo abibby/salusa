@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/abibby/salusa/auth"
-	"github.com/abibby/salusa/openapidoc"
-	"github.com/abibby/salusa/request"
-	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/static/template/app/handlers"
-	"github.com/abibby/salusa/static/template/app/models"
-	"github.com/abibby/salusa/view"
+	"abibby.com/salusa/auth"
+	"abibby.com/salusa/openapidoc"
+	"abibby.com/salusa/request"
+	"abibby.com/salusa/router"
+	"abibby.com/salusa/static/template/app/handlers"
+	"abibby.com/salusa/static/template/app/models"
+	"abibby.com/salusa/view"
 	"github.com/google/uuid"
 )
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/email"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/email"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

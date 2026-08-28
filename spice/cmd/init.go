@@ -12,7 +12,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/abibby/salusa/static"
+	"abibby.com/salusa/static"
 	"github.com/spf13/cobra"
 )
 
@@ -83,7 +83,7 @@ func copyDir(root fs.FS, src, dist, pkgPath string) error {
 			if err != nil {
 				return err
 			}
-			b = bytes.ReplaceAll(b, []byte("github.com/abibby/salusa/static/template"), []byte(pkgPath))
+			b = bytes.ReplaceAll(b, []byte("abibby.com/salusa/static/template"), []byte(pkgPath))
 
 			err = os.WriteFile(distPath, b, 0644)
 			if err != nil {

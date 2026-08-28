@@ -3,12 +3,12 @@ package builder
 import (
 	"context"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/extra/sets"
-	"github.com/abibby/salusa/internal/helpers"
-	"github.com/abibby/salusa/internal/relationship"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/extra/sets"
+	"abibby.com/salusa/internal/helpers"
+	"abibby.com/salusa/internal/relationship"
 )
 
 //go:generate go run ../../internal/build/build.go

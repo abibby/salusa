@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	maps "github.com/abibby/salusa/extra/maps"
+	maps "abibby.com/salusa/extra/maps"
 	"github.com/stretchr/testify/assert"
 )
 

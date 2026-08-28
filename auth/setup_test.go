@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/abibby/salusa/auth"
-	"github.com/abibby/salusa/database/dbtest"
-	"github.com/abibby/salusa/database/dialects/sqlite"
-	"github.com/abibby/salusa/database/migrate"
-	"github.com/abibby/salusa/database/model"
+	"abibby.com/salusa/auth"
+	"abibby.com/salusa/database/dbtest"
+	"abibby.com/salusa/database/dialects/sqlite"
+	"abibby.com/salusa/database/migrate"
+	"abibby.com/salusa/database/model"
 	"github.com/jmoiron/sqlx"
 )
 

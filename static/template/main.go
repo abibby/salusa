@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/abibby/salusa/clog"
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/static/template/app"
+	"abibby.com/salusa/clog"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/static/template/app"
 )
 
 func main() {

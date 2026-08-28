@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/abibby/salusa/testing/handlertest"
+	"abibby.com/salusa/testing/handlertest"
 	"github.com/stretchr/testify/assert"
 )
 

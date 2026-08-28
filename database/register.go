@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/abibby/salusa/clog"
-	"github.com/abibby/salusa/di"
+	"abibby.com/salusa/clog"
+	"abibby.com/salusa/di"
 	"github.com/jmoiron/sqlx"
 )
 

@@ -1,6 +1,6 @@
 package builder
 
-import "github.com/abibby/salusa/database/dialects"
+import "abibby.com/salusa/database/dialects"
 
 // OrderBy adds an order by clause to the query.
 func (b *Builder) OrderBy(column string) *Builder {

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/abibby/salusa/router"
+	"abibby.com/salusa/router"
 	"github.com/google/uuid"
 )
 

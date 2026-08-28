@@ -3,7 +3,7 @@ package migrations_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/static/template/migrations"
+	"abibby.com/salusa/static/template/migrations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

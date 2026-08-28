@@ -10,9 +10,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/request"
-	"github.com/abibby/salusa/router"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/request"
+	"abibby.com/salusa/router"
 	"github.com/davecgh/go-spew/spew"
 )
 

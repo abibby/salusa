@@ -3,7 +3,7 @@ package mysql_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/database/dialects/mysql"
+	"abibby.com/salusa/database/dialects/mysql"
 	gomysql "github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

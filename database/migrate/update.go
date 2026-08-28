@@ -3,10 +3,10 @@ package migrate
 import (
 	"fmt"
 
-	"github.com/abibby/salusa/database"
-	"github.com/abibby/salusa/database/model"
-	"github.com/abibby/salusa/database/schema"
-	"github.com/abibby/salusa/internal/relationship"
+	"abibby.com/salusa/database"
+	"abibby.com/salusa/database/model"
+	"abibby.com/salusa/database/schema"
+	"abibby.com/salusa/internal/relationship"
 )
 
 var (

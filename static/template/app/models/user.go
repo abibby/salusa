@@ -3,8 +3,8 @@ package models
 import (
 	"context"
 
-	"github.com/abibby/salusa/auth"
-	"github.com/abibby/salusa/database/builder"
+	"abibby.com/salusa/auth"
+	"abibby.com/salusa/database/builder"
 )
 
 //go:generate spice generate:migration

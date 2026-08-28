@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/database/dialects/generic"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects/generic"
 )
 
 type SQLiteCore struct{}

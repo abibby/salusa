@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/abibby/salusa/di"
-	"github.com/abibby/salusa/request"
-	"github.com/abibby/salusa/router"
-	"github.com/abibby/salusa/salusaconfig"
+	"abibby.com/salusa/di"
+	"abibby.com/salusa/request"
+	"abibby.com/salusa/router"
+	"abibby.com/salusa/salusaconfig"
 	"github.com/go-openapi/spec"
 )
 

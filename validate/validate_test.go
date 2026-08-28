@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/abibby/salusa/validate"
+	"abibby.com/salusa/validate"
 	"github.com/stretchr/testify/assert"
 )
 

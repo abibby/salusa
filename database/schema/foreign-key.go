@@ -1,6 +1,6 @@
 package schema
 
-import "github.com/abibby/salusa/database/dialects"
+import "abibby.com/salusa/database/dialects"
 
 type ForeignKeyBuilder struct {
 	relatedTable string

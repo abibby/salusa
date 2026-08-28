@@ -3,7 +3,7 @@ package schema
 import (
 	"fmt"
 
-	"github.com/abibby/salusa/database/dialects"
+	"abibby.com/salusa/database/dialects"
 )
 
 type ColumnBuilder struct {

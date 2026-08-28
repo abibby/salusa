@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/abibby/salusa/database/dialects"
-	"github.com/abibby/salusa/extra/sets"
-	"github.com/abibby/salusa/stream"
+	"abibby.com/salusa/database/dialects"
+	"abibby.com/salusa/extra/sets"
+	"abibby.com/salusa/stream"
 )
 
 type BlueprintType int

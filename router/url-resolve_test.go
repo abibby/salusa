@@ -3,8 +3,8 @@ package router_test
 import (
 	"testing"
 
-	"github.com/abibby/salusa/internal/test"
-	"github.com/abibby/salusa/router"
+	"abibby.com/salusa/internal/test"
+	"abibby.com/salusa/router"
 	"github.com/stretchr/testify/assert"
 )
 
