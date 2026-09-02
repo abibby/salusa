@@ -36,6 +36,10 @@ func (g *Generic) EncodeFunctionCall(fc *dialects.FunctionCall) (dialects.RawQue
 }
 
 func (g *Generic) EncodeColumn(c *dialects.Column) (dialects.RawQuery, error) {
+	if c.Raw != "" {
+		return dialects.Raw(c.Raw), nil
+	}
+
 	b := newRawQueryBuilder()
 	if c.Column != "" {
 		b.AddString(g.core.Identifier(c.Column))

@@ -28,10 +28,28 @@ func (b *Builder) Select(columns ...string) *Builder {
 	return b
 }
 
+// Select sets the columns to be selected.
+func (b *Builder) SelectRaw(columns ...string) *Builder {
+	identifiers := make([]dialects.Column, len(columns))
+	for i, c := range columns {
+		identifiers[i] = dialects.Column{Raw: c}
+	}
+	b.query.Select.Columns = identifiers
+	return b
+}
+
 // AddSelect adds new columns to be selected.
 func (b *Builder) AddSelect(columns ...string) *Builder {
 	for _, c := range columns {
 		b.query.Select.Columns = append(b.query.Select.Columns, parseColumn(c))
+	}
+	return b
+}
+
+// AddSelect adds new columns to be selected.
+func (b *Builder) AddSelectRaw(columns ...string) *Builder {
+	for _, c := range columns {
+		b.query.Select.Columns = append(b.query.Select.Columns, dialects.Column{Raw: c})
 	}
 	return b
 }
