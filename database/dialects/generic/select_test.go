@@ -89,11 +89,11 @@ func TestGeneric_EncodeSelects(t *testing.T) {
 			Name: "as",
 			Builder: &dialects.Select{
 				Columns: []dialects.Column{
-					{Column: "foo as bar"},
+					{Column: "foo", As: "bar"},
 				},
 				Distinct: true,
 			},
-			ExpectedSQL:      "DISTINCT `foo` as `bar`",
+			ExpectedSQL:      "DISTINCT `foo` AS `bar`",
 			ExpectedBindings: []any{},
 		},
 	})
