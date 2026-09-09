@@ -368,9 +368,21 @@ func (b *ModelBuilder[T]) Select(columns ...string) *ModelBuilder[T] {
 	return b
 }
 
+// Select sets the columns to be selected.
+func (b *ModelBuilder[T]) SelectRaw(columns ...string) *ModelBuilder[T] {
+	b.builder = b.builder.SelectRaw(columns...)
+	return b
+}
+
 // AddSelect adds new columns to be selected.
 func (b *ModelBuilder[T]) AddSelect(columns ...string) *ModelBuilder[T] {
 	b.builder = b.builder.AddSelect(columns...)
+	return b
+}
+
+// AddSelect adds new columns to be selected.
+func (b *ModelBuilder[T]) AddSelectRaw(columns ...string) *ModelBuilder[T] {
+	b.builder = b.builder.AddSelectRaw(columns...)
 	return b
 }
 

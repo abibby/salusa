@@ -60,6 +60,7 @@ type Column struct {
 	Column   string
 	Function *FunctionCall
 	SubQuery QueryBuilder
+	Raw      string
 
 	As string
 }

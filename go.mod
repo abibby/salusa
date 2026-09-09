@@ -1,6 +1,6 @@
 module abibby.com/salusa
 
-go 1.26.6
+go 1.27.0
 
 require (
 	github.com/abibby/nulls v1.1.0
@@ -11,6 +11,7 @@ require (
 	github.com/dominikbraun/graph v0.23.0
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/go-openapi/spec v0.22.9
+	github.com/go-openapi/testify/v2 v2.6.1
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0

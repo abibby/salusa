@@ -51,5 +51,17 @@ func TestSelect(t *testing.T) {
 			ExpectedSQLite:   "SELECT \"foos\".* FROM \"foos\"",
 			ExpectedBindings: []any{},
 		},
+		{
+			Name:             "as",
+			Builder:          NewTestBuilder().Select("foo.bar as baz"),
+			ExpectedSQLite:   `SELECT "foo"."bar" AS "baz" FROM "foos"`,
+			ExpectedBindings: []any{},
+		},
+		{
+			Name:             "raw",
+			Builder:          NewTestBuilder().SelectRaw("foo.bar as baz"),
+			ExpectedSQLite:   `SELECT foo.bar as baz FROM "foos"`,
+			ExpectedBindings: []any{},
+		},
 	})
 }

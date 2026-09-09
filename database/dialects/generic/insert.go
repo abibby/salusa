@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"abibby.com/salusa/database/dialects"
-	"abibby.com/salusa/slices"
+	"abibby.com/salusa/stream"
 )
 
 var ErrInsertNoRows = errors.New("no rows to insert")
@@ -38,7 +38,7 @@ func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.RawQuery,
 	b := newRawQueryBuilder().
 		AddString("INSERT INTO").
 		AddString(g.core.Identifier(q.Table)).
-		AddString("(" + strings.Join(slices.Map(columns, g.core.Identifier), ", ") + ")").
+		AddString("(" + strings.Join(stream.Of(columns).Map(g.core.Identifier).Slice(), ", ") + ")").
 		AddString("VALUES")
 
 	for i, v := range values {

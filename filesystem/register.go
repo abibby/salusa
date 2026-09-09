@@ -2,20 +2,14 @@ package filesystem
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 	"os"
 
 	"abibby.com/salusa/di"
-	"abibby.com/salusa/salusaconfig"
 )
 
 type Config interface {
 	FS() fs.FS
-}
-
-type FSConfiger interface {
-	FSConfig() Config
 }
 
 type LocalFS struct {
@@ -32,13 +26,8 @@ func (l *LocalFS) FS() fs.FS {
 	return os.DirFS(l.Root)
 }
 
-func Register(ctx context.Context) {
-	di.RegisterLazySingletonWith(ctx, func(cfg salusaconfig.Config) (fs.FS, error) {
-		var cfgAny any = cfg
-		cfger, ok := cfgAny.(FSConfiger)
-		if !ok {
-			return nil, fmt.Errorf("config not instance of email.FSConfiger")
-		}
-		return cfger.FSConfig().FS(), nil
+func Register(ctx context.Context, cfg Config) {
+	di.RegisterLazySingleton(ctx, func() (fs.FS, error) {
+		return cfg.FS(), nil
 	})
 }

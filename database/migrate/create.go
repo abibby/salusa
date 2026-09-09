@@ -1,12 +1,14 @@
 package migrate
 
 import (
+	"slices"
+
 	"abibby.com/salusa/database"
 	"abibby.com/salusa/database/builder"
 	"abibby.com/salusa/database/model"
 	"abibby.com/salusa/database/schema"
 	"abibby.com/salusa/internal/relationship"
-	"abibby.com/salusa/slices"
+	"abibby.com/salusa/stream"
 )
 
 func CreateFromModel(m model.Model) (*schema.CreateTableBuilder, error) {
@@ -35,7 +37,7 @@ func blueprintFromFields(tableName string, fields []*field) *schema.Blueprint {
 		if f.relation != nil {
 			foreignKeys := f.relation.ForeignKeys()
 			for _, foreignKey := range foreignKeys {
-				if slices.Has(addedForeignKeys, foreignKey) {
+				if slices.Contains(addedForeignKeys, foreignKey) {
 					continue
 				}
 
@@ -70,9 +72,7 @@ func blueprintFromFields(tableName string, fields []*field) *schema.Blueprint {
 	}
 
 	if len(primaryColumns) > 1 {
-		table.PrimaryKey(slices.Map(primaryColumns, func(c *schema.ColumnBuilder) string {
-			return c.Name()
-		})...)
+		table.PrimaryKey(stream.Of(primaryColumns).Map((*schema.ColumnBuilder).Name).Slice()...)
 	} else {
 		for _, b := range primaryColumns {
 			b.Primary()

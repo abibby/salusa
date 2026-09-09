@@ -1,7 +1,6 @@
 # Salusa
 
-[![Test](https://abibby.com/salusa/actions/workflows/test.yaml/badge.svg)](https://abibby.com/salusa/actions/workflows/test.yaml)
-[![Coverage](https://abibby.com/salusa/actions/workflows/coverage.yml/badge.svg)](https://abibby.com/salusa/actions/workflows/coverage.yml)
+[![Coverage](https://github.com/abibby/salusa/actions/workflows/coverage.yml/badge.svg)](https://github.com/abibby/salusa/actions/workflows/coverage.yml)
 [![Go Reference](https://pkg.go.dev/badge/abibby.com/salusa.svg)](https://pkg.go.dev/abibby.com/salusa)
 
 <!-- TODO: add tagline -->

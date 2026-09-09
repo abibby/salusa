@@ -1,14 +1,38 @@
 package builder
 
 import (
+	"strings"
+
 	"abibby.com/salusa/database/dialects"
 )
+
+func parseColumn(c string) dialects.Column {
+	parts := strings.SplitN(c, "as", 2)
+	as := ""
+	if len(parts) > 1 {
+		as = strings.TrimSpace(parts[1])
+	}
+	return dialects.Column{
+		Column: strings.TrimSpace(parts[0]),
+		As:     as,
+	}
+}
 
 // Select sets the columns to be selected.
 func (b *Builder) Select(columns ...string) *Builder {
 	identifiers := make([]dialects.Column, len(columns))
 	for i, c := range columns {
-		identifiers[i] = dialects.Column{Column: c}
+		identifiers[i] = parseColumn(c)
+	}
+	b.query.Select.Columns = identifiers
+	return b
+}
+
+// Select sets the columns to be selected.
+func (b *Builder) SelectRaw(columns ...string) *Builder {
+	identifiers := make([]dialects.Column, len(columns))
+	for i, c := range columns {
+		identifiers[i] = dialects.Column{Raw: c}
 	}
 	b.query.Select.Columns = identifiers
 	return b
@@ -17,7 +41,15 @@ func (b *Builder) Select(columns ...string) *Builder {
 // AddSelect adds new columns to be selected.
 func (b *Builder) AddSelect(columns ...string) *Builder {
 	for _, c := range columns {
-		b.query.Select.Columns = append(b.query.Select.Columns, dialects.Column{Column: c})
+		b.query.Select.Columns = append(b.query.Select.Columns, parseColumn(c))
+	}
+	return b
+}
+
+// AddSelect adds new columns to be selected.
+func (b *Builder) AddSelectRaw(columns ...string) *Builder {
+	for _, c := range columns {
+		b.query.Select.Columns = append(b.query.Select.Columns, dialects.Column{Raw: c})
 	}
 	return b
 }

@@ -149,6 +149,7 @@ func EncoderTest[T any](t *testing.T, encoder func(v T) (dialects.RawQuery, erro
 	t.Helper()
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Helper()
 			result, err := encoder(tc.Builder)
 			if assert.NoError(t, err) {
 				assert.Equal(t, tc.ExpectedSQL, result.SQL)

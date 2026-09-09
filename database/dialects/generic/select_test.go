@@ -6,6 +6,8 @@ import (
 	"abibby.com/salusa/database/dialects"
 	"abibby.com/salusa/database/dialects/generic"
 	"abibby.com/salusa/internal/test"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGeneric_EncodeSelects(t *testing.T) {
@@ -83,5 +85,48 @@ func TestGeneric_EncodeSelects(t *testing.T) {
 			ExpectedSQL:      "DISTINCT `foo`",
 			ExpectedBindings: []any{},
 		},
+		{
+			Name: "as",
+			Builder: &dialects.Select{
+				Columns: []dialects.Column{
+					{Column: "foo", As: "bar"},
+				},
+				Distinct: true,
+			},
+			ExpectedSQL:      "DISTINCT `foo` AS `bar`",
+			ExpectedBindings: []any{},
+		},
+	})
+}
+
+func TestGeneric_EncodeColumn(t *testing.T) {
+	g := generic.New(&testCore{})
+	t.Run("function", func(t *testing.T) {
+		r, err := g.EncodeColumn(&dialects.Column{
+			Function: &dialects.FunctionCall{Name: "count", Arguments: "*"},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "count(*)", r.SQL)
+	})
+	t.Run("subquery", func(t *testing.T) {
+		r, err := g.EncodeColumn(&dialects.Column{
+			SubQuery: &selectQuery{&dialects.SelectQuery{
+				Select: dialects.Select{Columns: []dialects.Column{{Column: "id"}}},
+				From:   "foos",
+			}},
+			As: "x",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "(SELECT `id` FROM `foos`) AS `x`", r.SQL)
+	})
+	t.Run("as", func(t *testing.T) {
+		r, err := g.EncodeColumn(&dialects.Column{Column: "a", As: "b"})
+		require.NoError(t, err)
+		assert.Equal(t, "`a` AS `b`", r.SQL)
+	})
+	t.Run("empty", func(t *testing.T) {
+		r, err := g.EncodeColumn(&dialects.Column{})
+		require.NoError(t, err)
+		assert.Equal(t, "", r.SQL)
 	})
 }
