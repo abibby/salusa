@@ -2,6 +2,8 @@ package builder
 
 import "gosalusa.com/database/dialects"
 
+// Clone returns an independent copy of the query. Mutating the returned
+// builder, or the original, will not affect the other.
 func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 	return &ModelBuilder[T]{
 		builder:       b.builder.Clone(),
@@ -9,6 +11,9 @@ func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 		withoutScopes: b.withoutScopes.Clone(),
 	}
 }
+
+// Clone returns an independent copy of the query. Mutating the returned
+// builder, or the original, will not affect the other.
 func (b *Builder) Clone() *Builder {
 	return &Builder{
 		query: dialects.SelectQuery{
