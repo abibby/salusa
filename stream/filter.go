@@ -2,7 +2,7 @@ package stream
 
 func (s *Stream[T]) Filter(fn func(T) bool) *Stream[T] {
 	return New(func(yield func(T) bool) {
-		for v := range s.seq {
+		for v := range s.iterable.All() {
 			if !fn(v) {
 				continue
 			}
@@ -14,7 +14,7 @@ func (s *Stream[T]) Filter(fn func(T) bool) *Stream[T] {
 }
 
 func (s *Stream[T]) Find(fn func(T) bool) (T, bool) {
-	for v := range s.seq {
+	for v := range s.iterable.All() {
 		if fn(v) {
 			return v, true
 		}

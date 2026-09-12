@@ -3,7 +3,7 @@ package stream
 func (s *Stream[T]) Limit(limit int) *Stream[T] {
 	return New(func(yield func(T) bool) {
 		i := 0
-		for v := range s.seq {
+		for v := range s.iterable.All() {
 			if i >= limit {
 				return
 			}
@@ -18,7 +18,7 @@ func (s *Stream[T]) Limit(limit int) *Stream[T] {
 func (s *Stream[T]) Skip(skip int) *Stream[T] {
 	return New(func(yield func(T) bool) {
 		i := 0
-		for v := range s.seq {
+		for v := range s.iterable.All() {
 			i++
 			if i <= skip {
 				continue

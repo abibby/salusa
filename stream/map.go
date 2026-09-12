@@ -8,7 +8,7 @@ package stream
 // stops immediately.
 func (s *Stream[T]) Map[R any](fn func(T) R) *Stream[R] {
 	return New(func(yield func(R) bool) {
-		for v := range s.seq {
+		for v := range s.iterable.All() {
 			if !yield(fn(v)) {
 				return
 			}
@@ -18,7 +18,7 @@ func (s *Stream[T]) Map[R any](fn func(T) R) *Stream[R] {
 
 func (s *Stream[T]) FlatMap[R any](fn func(T) []R) *Stream[R] {
 	return New(func(yield func(R) bool) {
-		for a := range s.seq {
+		for a := range s.iterable.All() {
 			for _, v := range fn(a) {
 				if !yield(v) {
 					return
