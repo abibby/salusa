@@ -16,6 +16,12 @@ func (s *Stream[T]) Map[R any](fn func(T) R) *Stream[R] {
 	})
 }
 
+// FlatMap returns a new Stream containing the elements of each slice produced
+// by applying fn to every element of the original Stream.
+//
+// FlatMap is an intermediate operation and is evaluated lazily. The results are
+// concatenated in order, and a function call that returns an empty slice
+// contributes no elements.
 func (s *Stream[T]) FlatMap[R any](fn func(T) []R) *Stream[R] {
 	return New(func(yield func(R) bool) {
 		for a := range s.iterable.All() {
