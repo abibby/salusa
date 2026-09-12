@@ -6,6 +6,7 @@ import (
 	"gosalusa.com/database/dialects"
 )
 
+// EncodeIndex renders i as a CREATE [UNIQUE] INDEX statement.
 func (g *Generic) EncodeIndex(i *dialects.Index) (dialects.RawQuery, error) {
 
 	r := newRawQueryBuilder().AddString("CREATE")

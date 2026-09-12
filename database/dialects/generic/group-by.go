@@ -6,6 +6,8 @@ import (
 	"gosalusa.com/database/dialects"
 )
 
+// EncodeGroupBy renders the GROUP BY clause of a query, or nothing if there
+// are no groups.
 func (g *Generic) EncodeGroupBy(groups []string) (dialects.RawQuery, error) {
 	if len(groups) == 0 {
 		return dialects.RawQuery{}, nil

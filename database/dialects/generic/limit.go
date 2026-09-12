@@ -2,6 +2,8 @@ package generic
 
 import "gosalusa.com/database/dialects"
 
+// EncodeLimit renders the LIMIT and OFFSET of a query, or nothing if both are
+// zero.
 func (g *Generic) EncodeLimit(l *dialects.Limit) (dialects.RawQuery, error) {
 	if l.Limit == 0 && l.Offset == 0 {
 		return dialects.RawQuery{}, nil

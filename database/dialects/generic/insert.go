@@ -9,9 +9,16 @@ import (
 	"gosalusa.com/stream"
 )
 
+// ErrInsertNoRows is returned by EncodeInsertQuery when there are no rows to
+// insert.
 var ErrInsertNoRows = errors.New("no rows to insert")
+
+// ErrInsertMismatchedValueKeys is returned by EncodeInsertQuery when the rows
+// to insert have different sets of column names.
 var ErrInsertMismatchedValueKeys = errors.New("mismatched value keys")
 
+// EncodeInsertQuery renders q as an INSERT statement. Column names are sorted
+// for deterministic output, and RETURNING is added when Returning is set.
 func (g *Generic) EncodeInsertQuery(q *dialects.InsertQuery) (dialects.RawQuery, error) {
 	if len(q.Values) == 0 {
 		return dialects.RawQuery{}, ErrInsertNoRows
