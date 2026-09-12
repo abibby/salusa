@@ -3,8 +3,8 @@ package builder
 import (
 	"errors"
 
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/database/dialects"
+	"gosalusa.com/database"
+	"gosalusa.com/database/dialects"
 )
 
 var (

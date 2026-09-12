@@ -1,10 +1,10 @@
 package builder
 
 import (
-	"abibby.com/salusa/database/dialects"
-	"abibby.com/salusa/di"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
+	"gosalusa.com/database/dialects"
+	"gosalusa.com/di"
 )
 
 func (b *Builder) Dump() *Builder {

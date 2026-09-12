@@ -1,6 +1,6 @@
 package builder
 
-import "abibby.com/salusa/database/dialects"
+import "gosalusa.com/database/dialects"
 
 func (b *ModelBuilder[T]) Clone() *ModelBuilder[T] {
 	return &ModelBuilder[T]{

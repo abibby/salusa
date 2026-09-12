@@ -7,7 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"abibby.com/salusa/internal/helpers"
+	"gosalusa.com/internal/helpers"
 )
 
 type Factory interface {

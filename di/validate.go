@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"abibby.com/salusa/internal/helpers"
-	"abibby.com/salusa/validate"
 	"github.com/dominikbraun/graph"
+	"gosalusa.com/internal/helpers"
+	"gosalusa.com/validate"
 )
 
 var (

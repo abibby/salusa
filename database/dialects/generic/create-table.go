@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"abibby.com/salusa/database/dialects"
-	"abibby.com/salusa/stream"
+	"gosalusa.com/database/dialects"
+	"gosalusa.com/stream"
 )
 
 func (g *Generic) EncodeCreateTableQuery(q *dialects.CreateTableQuery) (dialects.RawQuery, error) {

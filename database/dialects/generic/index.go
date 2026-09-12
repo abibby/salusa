@@ -3,7 +3,7 @@ package generic
 import (
 	"strings"
 
-	"abibby.com/salusa/database/dialects"
+	"gosalusa.com/database/dialects"
 )
 
 func (g *Generic) EncodeIndex(i *dialects.Index) (dialects.RawQuery, error) {

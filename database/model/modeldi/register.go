@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"reflect"
 
-	"abibby.com/salusa/database/builder"
-	"abibby.com/salusa/database/model"
-	"abibby.com/salusa/di"
-	"abibby.com/salusa/request"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	"gosalusa.com/database/builder"
+	"gosalusa.com/database/model"
+	"gosalusa.com/di"
+	"gosalusa.com/request"
 )
 
 type modelDeps struct {

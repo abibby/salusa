@@ -1,6 +1,6 @@
 package generic
 
-import "abibby.com/salusa/database/dialects"
+import "gosalusa.com/database/dialects"
 
 func (g *Generic) EncodeDeleteQuery(q *dialects.DeleteQuery) (dialects.RawQuery, error) {
 	return newRawQueryBuilder().

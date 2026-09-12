@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"abibby.com/salusa/database/dialects"
-	"abibby.com/salusa/database/schema"
-	"abibby.com/salusa/internal/test"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
+	"gosalusa.com/database/dialects"
+	"gosalusa.com/database/schema"
+	"gosalusa.com/internal/test"
 )
 
 func TestBuilder(t *testing.T) {

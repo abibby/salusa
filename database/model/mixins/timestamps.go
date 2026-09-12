@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/database/hooks"
+	"gosalusa.com/database"
+	"gosalusa.com/database/hooks"
 )
 
 type Timestamps struct {

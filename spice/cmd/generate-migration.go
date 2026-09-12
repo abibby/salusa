@@ -12,8 +12,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"abibby.com/salusa/spice/util"
 	"github.com/spf13/cobra"
+	"gosalusa.com/spice/util"
 )
 
 var srcMain = `package main
@@ -23,7 +23,7 @@ import (
 	"log"
 	"os"
 
-	"abibby.com/salusa/database/migrate"
+	"gosalusa.com/database/migrate"
 	migrations %#v
 	models %#v
 )
@@ -48,7 +48,7 @@ func main() {
 var srcMigrations = `package %s
 
 import (
-	"abibby.com/salusa/database/migrate"
+	"gosalusa.com/database/migrate"
 )
 
 var migrations = migrate.New()

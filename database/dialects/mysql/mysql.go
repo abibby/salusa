@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"abibby.com/salusa/database/dialects"
-	"abibby.com/salusa/database/dialects/generic"
+	"gosalusa.com/database/dialects"
+	"gosalusa.com/database/dialects/generic"
 )
 
 type MySQLCore struct{}

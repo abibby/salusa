@@ -1,6 +1,6 @@
 package generic
 
-import "abibby.com/salusa/database/dialects"
+import "gosalusa.com/database/dialects"
 
 func (g *Generic) EncodeLimit(l *dialects.Limit) (dialects.RawQuery, error) {
 	if l.Limit == 0 && l.Offset == 0 {

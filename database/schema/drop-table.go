@@ -3,8 +3,8 @@ package schema
 import (
 	"context"
 
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/database/dialects"
+	"gosalusa.com/database"
+	"gosalusa.com/database/dialects"
 )
 
 func Drop(table string) Runner {

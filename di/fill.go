@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"abibby.com/salusa/internal/helpers"
+	"gosalusa.com/internal/helpers"
 )
 
 // var ErrNotFillable = errors.New("struct is not fillable")

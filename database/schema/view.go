@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"abibby.com/salusa/database"
+	"gosalusa.com/database"
 )
 
 type ViewBuilder struct {

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"abibby.com/salusa/database/dialects"
-	"abibby.com/salusa/stream"
+	"gosalusa.com/database/dialects"
+	"gosalusa.com/stream"
 )
 
 var ErrInsertNoRows = errors.New("no rows to insert")

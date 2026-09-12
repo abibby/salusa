@@ -3,8 +3,8 @@ package mixins
 import (
 	"time"
 
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/database/builder"
+	"gosalusa.com/database"
+	"gosalusa.com/database/builder"
 )
 
 type SoftDelete struct {

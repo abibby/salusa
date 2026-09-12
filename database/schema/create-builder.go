@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/database/dialects"
+	"gosalusa.com/database"
+	"gosalusa.com/database/dialects"
 )
 
 type CreateTableBuilder struct {

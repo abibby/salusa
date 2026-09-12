@@ -1,6 +1,6 @@
 package generic
 
-import "abibby.com/salusa/database/dialects"
+import "gosalusa.com/database/dialects"
 
 func (g *Generic) EncodeFrom(from string) (dialects.RawQuery, error) {
 	if from == "" {

@@ -1,7 +1,7 @@
 package generic
 
 import (
-	"abibby.com/salusa/database/dialects"
+	"gosalusa.com/database/dialects"
 )
 
 func (g *Generic) EncodeSelectQuery(q *dialects.SelectQuery) (dialects.RawQuery, error) {

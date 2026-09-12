@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"reflect"
 
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/database/dialects"
-	"abibby.com/salusa/database/hooks"
-	"abibby.com/salusa/internal/helpers"
-	"abibby.com/salusa/internal/relationship"
 	"github.com/jmoiron/sqlx"
+	"gosalusa.com/database"
+	"gosalusa.com/database/dialects"
+	"gosalusa.com/database/hooks"
+	"gosalusa.com/internal/helpers"
+	"gosalusa.com/internal/relationship"
 )
 
 type QueryError struct {

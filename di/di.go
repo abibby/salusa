@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"abibby.com/salusa/extra/maps"
+	"gosalusa.com/extra/maps"
 )
 
 type contextKey uint8

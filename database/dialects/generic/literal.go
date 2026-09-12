@@ -1,6 +1,6 @@
 package generic
 
-import "abibby.com/salusa/database/dialects"
+import "gosalusa.com/database/dialects"
 
 func (g *Generic) EncodeLiteral(v any) (dialects.RawQuery, error) {
 	return dialects.RawQuery{

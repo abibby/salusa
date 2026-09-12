@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"strings"
 
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/internal/helpers"
-	"abibby.com/salusa/internal/relationship"
+	"gosalusa.com/database"
+	"gosalusa.com/internal/helpers"
+	"gosalusa.com/internal/relationship"
 )
 
 func Load(tx database.DB, models any, relation string) error {

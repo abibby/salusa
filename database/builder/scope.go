@@ -1,8 +1,8 @@
 package builder
 
 import (
-	"abibby.com/salusa/database"
-	"abibby.com/salusa/extra/sets"
+	"gosalusa.com/database"
+	"gosalusa.com/extra/sets"
 )
 
 type Scoper interface {
