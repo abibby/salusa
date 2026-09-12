@@ -22,7 +22,7 @@ func TestPosgtgresCoreDataType(t *testing.T) {
 	c := &postgres.PosgtgresCore{}
 	cases := map[dialects.DataType]string{
 		dialects.DataTypeBlob:     "BYTEA",
-		dialects.DataTypeString:   "VARCHAR(255)",
+		dialects.DataTypeString:   "TEXT",
 		dialects.DataTypeBoolean:  "BOOLEAN",
 		dialects.DataTypeDate:     "TIMESTAMP",
 		dialects.DataTypeDateTime: "TIMESTAMP",

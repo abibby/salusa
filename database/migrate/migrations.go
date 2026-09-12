@@ -99,7 +99,7 @@ func (m *Migrations) Blueprint(tableName string) *schema.Blueprint {
 
 func (m *Migrations) Up(ctx context.Context, db database.DB) error {
 	q := schema.Create(m.table, func(b *schema.Blueprint) {
-		b.String("name")
+		b.String("name").Primary()
 		b.Bool("run")
 	}).IfNotExists()
 

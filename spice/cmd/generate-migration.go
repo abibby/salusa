@@ -60,9 +60,10 @@ func Use() *migrate.Migrations {
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
-	Use:   "generate:migration",
-	Short: "Run from go generate",
-	Long:  ``,
+	Use:    "generate:migration",
+	Short:  "Run from go generate",
+	Long:   ``,
+	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// info, err := util.PkgInfo(".")
 		// if err != nil {

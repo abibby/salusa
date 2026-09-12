@@ -54,9 +54,9 @@ func getFields(m model.Model) ([]*field, error) {
 				Name: tag.Type,
 			}
 
-			if !f.dataType.IsValid() {
-				return fmt.Errorf("data type %s is not valid", tag.Type)
-			}
+			// if !f.dataType.IsValid() {
+			// 	return fmt.Errorf("data type %s is not valid", tag.Type)
+			// }
 		} else {
 			switch field := fv.Interface().(type) {
 			case dialects.DataTyper:

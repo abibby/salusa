@@ -32,11 +32,7 @@ func (*PosgtgresCore) DataType(t dialects.DataType) string {
 	case dialects.DataTypeBlob.Name:
 		return "BYTEA"
 	case dialects.DataTypeString.Name:
-		s := t.Size
-		if s == 0 {
-			s = 255
-		}
-		return fmt.Sprintf("VARCHAR(%d)", s)
+		return "TEXT"
 	case dialects.DataTypeEnum.Name:
 		panic("not implemented")
 
@@ -59,7 +55,7 @@ func (*PosgtgresCore) DataType(t dialects.DataType) string {
 		return "BIGINT"
 
 	case dialects.DataTypeJSON.Name:
-		return "JSON"
+		return "JSONB"
 	}
 	return string(t.Name)
 }
