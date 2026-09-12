@@ -36,7 +36,7 @@ func TestPosgtgresCoreDataType(t *testing.T) {
 		dialects.DataTypeUInt32:   "INTEGER",
 		dialects.DataTypeInt64:    "BIGINT",
 		dialects.DataTypeUInt64:   "BIGINT",
-		dialects.DataTypeJSON:     "JSON",
+		dialects.DataTypeJSON:     "JSONB",
 	}
 	for dt, expected := range cases {
 		assert.Equal(t, expected, c.DataType(dt), dt.Name)

@@ -14,7 +14,7 @@ func TestPackage_Add(t *testing.T) {
 
 	fc := p.Add("gosalusa.com/database/schema.Create", "users")
 	require.NotNil(t, fc)
-	assert.Contains(t, fc.GoString(), "abibby_com_salusa_database_schema.Create(\"users\")")
+	assert.Contains(t, fc.GoString(), "gosalusa_com_database_schema.Create(\"users\")")
 }
 
 func TestPackage_GoString(t *testing.T) {

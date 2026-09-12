@@ -43,7 +43,8 @@ func TestBuilder(t *testing.T) {
 				table.String("bar").Size(100)
 			}),
 			ExpectedSQLite:     `CREATE TABLE "foo" ("id" INTEGER NOT NULL, "bar" TEXT NOT NULL);`,
-			ExpectedPostgreSQL: `CREATE TABLE "foo" ("id" INTEGER NOT NULL, "bar" VARCHAR(100) NOT NULL);`,
+			ExpectedPostgreSQL: `CREATE TABLE "foo" ("id" INTEGER NOT NULL, "bar" TEXT NOT NULL);`,
+			ExpectedMySQL:      "CREATE TABLE `foo` (`id` INT NOT NULL, `bar` VARCHAR(100) NOT NULL);",
 			ExpectedBindings:   []any{},
 		},
 		{
